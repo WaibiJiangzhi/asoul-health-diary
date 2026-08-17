@@ -2,12 +2,12 @@
   "use strict";
 
   const DATA_MODEL = globalThis.ASOUL_DATA_MODEL || {
-    CURRENT_STATE_VERSION: 5,
+    CURRENT_STATE_VERSION: 6,
     UNSUPPORTED_VERSION_CODE: "ASOUL_UNSUPPORTED_STATE_VERSION",
     DEFAULT_SPACES: [
-      { id: "health", type: "health", name: "健康", icon: "♡" },
-      { id: "study", type: "study", name: "考研", icon: "✎" },
-      { id: "work", type: "work", name: "工作", icon: "▣" },
+      { id: "health", type: "health", templateId: "health", name: "健康", icon: "♡" },
+      { id: "study", type: "study", templateId: "study", name: "考研", icon: "✎" },
+      { id: "work", type: "work", templateId: "work", name: "工作", icon: "▣" },
     ],
     migrateState: (candidate) => candidate,
   };
@@ -27,8 +27,12 @@
     "#a77957",
   ];
   const CHART_ZOOM_LEVELS = [1, 2, 4, 8, 12];
+  const MAX_SPACES = 8;
   const WEEK_ITEMS_NOT_TRACKED = new Set(["跑前热身", "跑后拉伸"]);
-  const DEFAULT_SPACES = DATA_MODEL.DEFAULT_SPACES.map((space) => ({ ...space }));
+  const DEFAULT_SPACES = DATA_MODEL.DEFAULT_SPACES.map((space) => ({
+    ...space,
+    aiContext: { goal: "", current: "", availability: "", constraints: "" },
+  }));
   const SPACE_TEMPLATES = {
     health: {
       id: "health",
@@ -38,12 +42,12 @@
       heading: "这一周，照顾好身体和心情",
       description: "训练写在左边，完成情况记在右边。到周末打开周报看一眼，下周安排就更有依据。",
       activeDayLabel: "训练日",
-      firstFieldLabel: "饮食安排",
-      firstFieldPlaceholder: "今天准备怎么吃？",
-      secondFieldLabel: "饮食记录",
-      secondFieldPlaceholder: "实际吃得怎么样？",
-      itemPlaceholder: "项目，例如：俯卧撑",
-      targetPlaceholder: "目标，例如：4 组",
+      firstFieldLabel: "健康重点",
+      firstFieldPlaceholder: "今天最需要注意的健康事项是什么？",
+      secondFieldLabel: "健康复盘",
+      secondFieldPlaceholder: "身体状态如何，哪里需要调整？",
+      itemPlaceholder: "项目，例如：早餐、跑步或早睡",
+      targetPlaceholder: "目标，例如：清淡饮食 / 5 km / 23:30 前睡",
       actualPlaceholder: "补一句记录，例如：平均每组 9 个",
       showWeight: true,
       chartEyebrow: "一个魂的健康轨迹",
@@ -93,6 +97,27 @@
       emptyChartExample: "例如：横轴写“日期”，指标写“深度工作 / 小时”或“完成任务 / 项”。",
       defaultSeries: { name: "深度工作 / 小时", color: "#4f8edb" },
     },
+    custom: {
+      id: "custom",
+      name: "自定义",
+      icon: "✦",
+      eyebrow: "一个魂的每周打卡",
+      heading: "这一周，把想做的事一点点推进",
+      description: "写下今日重点，拆成可以完成的小任务；周末再回头看看自己的真实节奏。",
+      activeDayLabel: "行动日",
+      firstFieldLabel: "今日重点",
+      firstFieldPlaceholder: "今天最重要的目标是什么？",
+      secondFieldLabel: "复盘总结",
+      secondFieldPlaceholder: "完成了什么，下一步怎么调整？",
+      itemPlaceholder: "事项，例如：阅读、练琴或整理房间",
+      targetPlaceholder: "目标，例如：完成 30 分钟",
+      actualPlaceholder: "完成记录，例如：完成 25 分钟",
+      showWeight: false,
+      chartEyebrow: "一个魂的变化轨迹",
+      chartHeading: "坚持正在怎样积累？",
+      emptyChartExample: "例如：横轴写“日期”，指标写“投入时间 / 分钟”或“完成数量 / 项”。",
+      defaultSeries: { name: "投入时间 / 分钟", color: "#a77957" },
+    },
   };
   const DEFAULT_STATE = {
     version: DATA_MODEL.CURRENT_STATE_VERSION,
@@ -106,6 +131,7 @@
       avatar: "",
     },
     weeks: [],
+    periods: [],
     charts: [],
   };
 
@@ -183,6 +209,11 @@
       xLabel: "日期",
       series: [{ name: "完成任务 / 项", color: "#35a8bb" }],
     },
+    habit: {
+      title: "每日投入记录",
+      xLabel: "日期",
+      series: [{ name: "投入时间 / 分钟", color: "#a77957" }],
+    },
   };
 
   const DEFAULT_COLD_JOKES = Array.isArray(globalThis.ASOUL_COLD_JOKES)
@@ -203,11 +234,11 @@
   let editingChartId = null;
   let editingNodeId = null;
   let activeNodeChartId = null;
-  let editingWeekId = null;
   const initialSpaceWeeks = state.weeks.filter((week) => week.spaceId === activeSpaceId);
+  const initialSpacePeriods = state.periods.filter((period) => period.spaceId === activeSpaceId);
   let selectedWeekId = initialSpaceWeeks.at(-1)?.id || null;
-  let weekYearFilter = initialSpaceWeeks.at(-1)?.startDate.slice(0, 4) || String(new Date().getFullYear());
-  let weekMonthFilter = initialSpaceWeeks.at(-1)?.startDate.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
+  let weekYearFilter = initialSpacePeriods.at(-1)?.yearMonth.slice(0, 4) || String(new Date().getFullYear());
+  let weekMonthFilter = initialSpacePeriods.at(-1)?.yearMonth.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
   let openWeekStickerWeekId = null;
   let openWeekStickerDayId = null;
   let activeStickerPack = "贝拉";
@@ -231,6 +262,8 @@
 
   const profileForm = $("#profileForm");
   const spaceSwitcher = $("#spaceSwitcher");
+  const spaceDialog = $("#spaceDialog");
+  const spaceForm = $("#spaceForm");
   const avatarPreview = $("#avatarPreview");
   const avatarPlaceholder = $("#avatarPlaceholder");
   const autosaveStatus = $("#autosaveStatus");
@@ -245,6 +278,7 @@
   const weekStickerGrid = $("#weekStickerGrid");
   const weekImportDialog = $("#weekImportDialog");
   const weekImportForm = $("#weekImportForm");
+  const weekPlanTextDialog = $("#weekPlanTextDialog");
   const weeklyReportDialog = $("#weeklyReportDialog");
   const weeklyReportContent = $("#weeklyReportContent");
   const chartsGrid = $("#chartsGrid");
@@ -293,13 +327,13 @@
   function bindEvents() {
     $("#addChartButton").addEventListener("click", () => openChartDialog());
     $("#emptyAddButton").addEventListener("click", () => openChartDialog());
-    $("#addWeekButton").addEventListener("click", () => openWeekDialog());
-    $("#emptyAddWeekButton").addEventListener("click", () => openWeekDialog());
+    $("#addSpaceButton").addEventListener("click", openSpaceDialog);
+    $("#addWeekButton").addEventListener("click", openPeriodDialog);
+    $("#emptyAddWeekButton").addEventListener("click", openPeriodDialog);
     $("#importWeekButton").addEventListener("click", openWeekImportDialog);
     $("#exportSelectedWeekButton").addEventListener("click", () => selectedWeekId && exportWeekPlan(selectedWeekId));
-    $("#chooseWeekFileButton").addEventListener("click", () => $("#weekPlanInput").click());
-    $("#fillWeekTemplateButton").addEventListener("click", fillWeekImportTemplate);
-    $("#weekPlanInput").addEventListener("change", loadWeekImportFile);
+    $("#copyAiPromptButton").addEventListener("click", copyAiPlanningPrompt);
+    $("#copyWeekPlanTextButton").addEventListener("click", copyWeekPlanText);
     $("#weekYearSelect").addEventListener("change", (event) => {
       weekYearFilter = event.currentTarget.value;
       weekMonthFilter = "";
@@ -312,7 +346,7 @@
     $("#weekSoundToggle").addEventListener("click", toggleWeekSound);
     $("#showSelectedWeekReportButton").addEventListener("click", () => selectedWeekId && openWeeklyReport(selectedWeekId));
     $("#copySelectedWeekReportButton").addEventListener("click", () => selectedWeekId && copyWeekReportText(selectedWeekId));
-    $("#deleteSelectedWeekButton").addEventListener("click", () => selectedWeekId && deleteWeekById(selectedWeekId));
+    $("#deleteSelectedPeriodButton").addEventListener("click", deleteSelectedPeriod);
     $("#avatarButton").addEventListener("click", openAvatarDialog);
     $("#exportButton").addEventListener("click", exportBackup);
     $("#importButton").addEventListener("click", () => $("#importInput").click());
@@ -339,11 +373,16 @@
 
     chartForm.addEventListener("submit", saveChartFromDialog);
     nodeForm.addEventListener("submit", saveNodeFromDialog);
-    weekForm.addEventListener("submit", saveWeekFromDialog);
+    spaceForm.addEventListener("submit", saveSpaceFromDialog);
+    weekForm.addEventListener("submit", savePeriodFromDialog);
     weekStickerForm.addEventListener("submit", saveWeekSticker);
     weekImportForm.addEventListener("submit", importWeekPlan);
     avatarForm.addEventListener("submit", saveAvatarFromDialog);
     jokeEditorForm.addEventListener("submit", saveJokesFromEditor);
+    $$('[name="templateId"]', spaceForm).forEach((input) => input.addEventListener("change", syncSpaceFormTemplate));
+    $$('[name="goal"], [name="current"], [name="availability"], [name="constraints"]', weekImportForm).forEach((input) => {
+      input.addEventListener("input", refreshAiPromptPreview);
+    });
     $("#clearAvatarButton").addEventListener("click", clearAvatar);
     deleteNodeButton.addEventListener("click", deleteActiveNode);
     $("#clearWeekStickerButton").addEventListener("click", clearWeekSticker);
@@ -356,7 +395,7 @@
       button.addEventListener("click", () => applyPreset(button.dataset.preset));
     });
 
-    [chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
+    [spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weekPlanTextDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
       });
@@ -503,7 +542,7 @@
       .filter((item) => item.name || item.value);
   }
 
-  function normalizeWeekDay(candidate, index, startDate, spaceId = "health") {
+  function normalizeWeekDay(candidate, index, startDate, templateId = "custom") {
     const day = candidate && typeof candidate === "object" ? candidate : {};
     const planItems = day.planItems ?? day.schedule ?? day.plans;
     const records = day.records ?? day.actual ?? day.results;
@@ -513,7 +552,7 @@
       id: safeId(day.id),
       dayNumber: index + 1,
       date: safeDate(day.date) || addDaysIso(startDate, index),
-      title: normalizeDayType(day.title, spaceId),
+      title: normalizeDayType(day.title, templateId),
       duration: safeString(day.duration, 40),
       planItems: normalizePairList(planItems).filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name)),
       records: normalizePairList(records)
@@ -528,17 +567,18 @@
     };
   }
 
-  function normalizeDayType(value, spaceId = "health") {
+  function normalizeDayType(value, templateId = "custom") {
     const text = safeString(value, 36);
     if (/休息|恢复|慢走/.test(text)) return "休息日";
-    const activeDayLabel = getSpaceTemplate(spaceId).activeDayLabel;
+    const activeDayLabel = SPACE_TEMPLATES[safeTemplateId(templateId)].activeDayLabel;
     return text ? activeDayLabel : "休息日";
   }
 
-  function normalizeWeek(candidate) {
+  function normalizeWeek(candidate, spaces = DEFAULT_SPACES) {
     const week = candidate && typeof candidate === "object" ? candidate : {};
-    const spaceId = safeSpaceId(week.spaceId);
-    const startDate = safeDate(week.startDate) || todayIso();
+    const spaceId = safeSpaceIdForList(week.spaceId, spaces);
+    const templateId = spaces.find((space) => space.id === spaceId)?.templateId || "custom";
+    const startDate = startOfWeekIso(safeDate(week.startDate) || todayIso());
     const sourceDays = Array.isArray(week.days) ? week.days : [];
     return {
       id: safeId(week.id),
@@ -548,7 +588,90 @@
       goal: safeString(week.goal, 240),
       note: safeString(week.note, 360),
       createdAt: Number(week.createdAt) || Date.now(),
-      days: Array.from({ length: 7 }, (_, index) => normalizeWeekDay(sourceDays[index], index, startDate, spaceId)),
+      days: Array.from({ length: 7 }, (_, index) => normalizeWeekDay(sourceDays[index], index, startDate, templateId)),
+    };
+  }
+
+  function safeTemplateId(value) {
+    return Object.hasOwn(SPACE_TEMPLATES, value) ? value : "custom";
+  }
+
+  function safeSpaceIdForList(value, spaces) {
+    const candidates = Array.isArray(spaces) && spaces.length ? spaces : DEFAULT_SPACES;
+    return candidates.some((space) => space.id === value) ? value : candidates[0].id;
+  }
+
+  function normalizeAiContext(candidate) {
+    const context = candidate && typeof candidate === "object" ? candidate : {};
+    return {
+      goal: safeString(context.goal, 600),
+      current: safeString(context.current, 1000),
+      availability: safeString(context.availability, 600),
+      constraints: safeString(context.constraints, 600),
+    };
+  }
+
+  function normalizeSpaces(candidate) {
+    const source = Array.isArray(candidate) && candidate.length ? candidate : DEFAULT_SPACES;
+    const seen = new Set();
+    const spaces = [];
+    source.slice(0, MAX_SPACES).forEach((item, index) => {
+      const rawId = safeString(item?.id, 60).replace(/[^a-zA-Z0-9_-]/g, "");
+      let id = rawId || `space-${index + 1}`;
+      while (seen.has(id)) id = `${id}-${index + 1}`;
+      seen.add(id);
+      const templateId = safeTemplateId(item?.templateId || item?.type || item?.id);
+      const template = SPACE_TEMPLATES[templateId];
+      spaces.push({
+        id,
+        type: templateId,
+        templateId,
+        name: safeString(item?.name, 16) || template.name,
+        icon: safeString(item?.icon, 2) || template.icon,
+        aiContext: normalizeAiContext(item?.aiContext),
+        createdAt: Number(item?.createdAt) || Date.now(),
+      });
+    });
+    return spaces.length ? spaces : [{ ...DEFAULT_SPACES[0], aiContext: normalizeAiContext() }];
+  }
+
+  function normalizePeriod(candidate, spaces) {
+    const period = candidate && typeof candidate === "object" ? candidate : {};
+    const yearMonth = /^\d{4}-\d{2}$/.test(String(period.yearMonth || "")) ? String(period.yearMonth) : "";
+    if (!yearMonth) return null;
+    const spaceId = safeSpaceIdForList(period.spaceId, spaces);
+    return {
+      id: safeId(period.id),
+      spaceId,
+      yearMonth,
+      createdAt: Number(period.createdAt) || Date.now(),
+    };
+  }
+
+  function migrateLegacyHealthWeekFields(candidate, spaces) {
+    const week = candidate && typeof candidate === "object" ? candidate : {};
+    const space = spaces.find((item) => item.id === safeSpaceIdForList(week.spaceId, spaces));
+    if (space?.templateId !== "health" || !Array.isArray(week.days)) return week;
+    return {
+      ...week,
+      days: week.days.map((day) => {
+        if (!day || typeof day !== "object") return day;
+        const dietPlan = safeString(day.dietPlan, 500);
+        const dietRecord = safeString(day.dietRecord, 500);
+        return {
+          ...day,
+          dietPlan: "",
+          dietRecord: "",
+          planItems: [
+            ...(Array.isArray(day.planItems) ? day.planItems : []),
+            ...(dietPlan ? [{ name: "饮食安排", value: dietPlan }] : []),
+          ],
+          records: [
+            ...(Array.isArray(day.records) ? day.records : []),
+            ...(dietRecord ? [{ name: "饮食安排", value: dietRecord, done: true }] : []),
+          ],
+        };
+      }),
     };
   }
 
@@ -573,10 +696,11 @@
   function normalizeState(candidate) {
     const clean = cloneDefault();
     if (!candidate || typeof candidate !== "object") return clean;
+    const sourceVersion = Number(candidate.version) || 1;
     candidate = DATA_MODEL.migrateState(candidate);
 
-    clean.spaces = DEFAULT_SPACES.map((space) => ({ ...space }));
-    clean.activeSpaceId = safeSpaceId(candidate.activeSpaceId);
+    clean.spaces = normalizeSpaces(candidate.spaces);
+    clean.activeSpaceId = safeSpaceIdForList(candidate.activeSpaceId, clean.spaces);
 
     if (candidate.profile && typeof candidate.profile === "object") {
       clean.profile.name = safeString(candidate.profile.name, 20);
@@ -592,12 +716,33 @@
         ? candidate.weeklyPlans
         : [];
     clean.weeks = sourceWeeks
-      .slice(0, 312)
-      .map(normalizeWeek)
+      .slice(0, 3000)
+      .map((week) => normalizeWeek(sourceVersion < 6 ? migrateLegacyHealthWeekFields(week, clean.spaces) : week, clean.spaces))
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
+    const uniqueWeeks = new Map();
+    clean.weeks.forEach((week) => uniqueWeeks.set(`${week.spaceId}:${week.startDate}`, week));
+    clean.weeks = [...uniqueWeeks.values()];
+
+    const periodMap = new Map();
+    clean.weeks.forEach((week) => {
+      const yearMonth = week.startDate.slice(0, 7);
+      const key = `${week.spaceId}:${yearMonth}`;
+      if (!periodMap.has(key)) periodMap.set(key, normalizePeriod({ spaceId: week.spaceId, yearMonth }, clean.spaces));
+    });
+    clean.periods = [...periodMap.values()].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+    clean.periods.forEach((period) => {
+      getMonthMondays(period.yearMonth).forEach((startDate) => {
+        const key = `${period.spaceId}:${startDate}`;
+        if (uniqueWeeks.has(key)) return;
+        const week = normalizeWeek({ spaceId: period.spaceId, startDate, days: [] }, clean.spaces);
+        clean.weeks.push(week);
+        uniqueWeeks.set(key, week);
+      });
+    });
+    clean.weeks.sort((a, b) => a.startDate.localeCompare(b.startDate));
 
     if (Array.isArray(candidate.charts)) {
-      clean.charts = candidate.charts.slice(0, 90).map((chart) => {
+      clean.charts = candidate.charts.slice(0, 160).map((chart) => {
         const sourceSeries = Array.isArray(chart.series) && chart.series.length
           ? chart.series
           : [{ id: makeId(), name: chart.yLabel || "纵轴", color: chart.color }];
@@ -609,7 +754,7 @@
 
         return {
           id: safeId(chart.id),
-          spaceId: safeSpaceId(chart.spaceId),
+          spaceId: safeSpaceIdForList(chart.spaceId, clean.spaces),
           title: safeString(chart.title, 30) || "未命名图表",
           xLabel: safeString(chart.xLabel, 20) || "横轴",
           series,
@@ -704,6 +849,8 @@
     chartZoomById.clear();
     chartScrollById.clear();
     selectedWeekId = null;
+    weekYearFilter = String(new Date().getFullYear());
+    weekMonthFilter = String(new Date().getMonth() + 1).padStart(2, "0");
     window.clearTimeout(saveTimer);
     saveTimer = null;
     try {
@@ -744,11 +891,17 @@
   }
 
   function safeSpaceId(value) {
-    return Object.hasOwn(SPACE_TEMPLATES, value) ? value : "health";
+    return safeSpaceIdForList(value, state.spaces);
+  }
+
+  function getSpace(spaceId = activeSpaceId) {
+    return state.spaces.find((space) => space.id === safeSpaceId(spaceId)) || state.spaces[0];
   }
 
   function getSpaceTemplate(spaceId = activeSpaceId) {
-    return SPACE_TEMPLATES[safeSpaceId(spaceId)];
+    const space = getSpace(spaceId);
+    const template = SPACE_TEMPLATES[safeTemplateId(space.templateId)];
+    return { ...template, name: space.name, icon: space.icon, spaceId: space.id };
   }
 
   function getActiveSpaceWeeks() {
@@ -759,21 +912,33 @@
     return state.charts.filter((chart) => chart.spaceId === activeSpaceId);
   }
 
+  function getActiveSpacePeriods() {
+    return state.periods.filter((period) => period.spaceId === activeSpaceId);
+  }
+
   function renderSpaceSwitcher() {
     if (!spaceSwitcher) return;
-    spaceSwitcher.innerHTML = DEFAULT_SPACES.map((space) => {
+    spaceSwitcher.innerHTML = state.spaces.map((space) => {
       const template = getSpaceTemplate(space.id);
-      const weekCount = state.weeks.filter((week) => week.spaceId === space.id).length;
+      const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
       const isActive = space.id === activeSpaceId;
       return `
-        <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}">
-          <span class="space-switcher-icon" aria-hidden="true">${template.icon}</span>
-          <span><strong>${template.name}</strong><small>${weekCount ? `${weekCount} 周记录` : "从这里开始"}</small></span>
-        </button>`;
+        <div class="space-switcher-item">
+          <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}">
+            <span class="space-switcher-icon" aria-hidden="true">${escapeHtml(template.icon)}</span>
+            <span><strong>${escapeHtml(template.name)}</strong><small>${periodCount ? `${periodCount} 个月份` : "从这里开始"}</small></span>
+          </button>
+          <button class="space-delete-button" type="button" data-delete-space="${space.id}" aria-label="删除空间 ${escapeAttr(space.name)}" title="删除空间">×</button>
+        </div>`;
     }).join("");
     $$('[data-space-id]', spaceSwitcher).forEach((button) => {
       button.addEventListener("click", () => selectSpace(button.dataset.spaceId));
     });
+    $$('[data-delete-space]', spaceSwitcher).forEach((button) => {
+      button.addEventListener("click", () => deleteSpace(button.dataset.deleteSpace));
+    });
+    $("#spaceLimitText").textContent = `${state.spaces.length} / ${MAX_SPACES} 个空间`;
+    $("#addSpaceButton").disabled = state.spaces.length >= MAX_SPACES;
     syncSpaceCopy();
   }
 
@@ -783,9 +948,10 @@
     activeSpaceId = nextSpaceId;
     state.activeSpaceId = activeSpaceId;
     const weeks = getActiveSpaceWeeks();
+    const periods = getActiveSpacePeriods();
     selectedWeekId = weeks.at(-1)?.id || null;
-    weekYearFilter = weeks.at(-1)?.startDate.slice(0, 4) || String(new Date().getFullYear());
-    weekMonthFilter = weeks.at(-1)?.startDate.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
+    weekYearFilter = periods.at(-1)?.yearMonth.slice(0, 4) || String(new Date().getFullYear());
+    weekMonthFilter = periods.at(-1)?.yearMonth.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
     saveState(false);
     renderSpaceSwitcher();
     renderWeeks();
@@ -800,108 +966,184 @@
     $("#chartsEyebrow").textContent = template.chartEyebrow;
     $("#chartsTitle").textContent = template.chartHeading;
     $("#emptyChartExample").textContent = template.emptyChartExample;
-    $("#weekEmptyDescription").textContent = `选择开始日期后，会自动准备 Day1 到 Day7。每天都能填写${template.firstFieldLabel}、计划任务、完成情况和小笔记。`;
+    $("#weekEmptyDescription").textContent = `新建一个年月后，会自动展开这个月所有从周一开始的周条。每天都能填写${template.firstFieldLabel}、计划任务、完成情况和小笔记。`;
+    const activeTemplateId = getSpace().templateId;
     $$('[data-preset-space]').forEach((button) => {
-      button.hidden = button.dataset.presetSpace !== activeSpaceId;
+      button.hidden = button.dataset.presetSpace !== activeTemplateId;
     });
+  }
+
+  function openSpaceDialog() {
+    if (state.spaces.length >= MAX_SPACES) {
+      showToast(`最多保留 ${MAX_SPACES} 个空间`);
+      return;
+    }
+    spaceForm.reset();
+    spaceForm.elements.templateId.value = "custom";
+    syncSpaceFormTemplate();
+    spaceDialog.showModal();
+    window.setTimeout(() => spaceForm.elements.name.focus(), 40);
+  }
+
+  function syncSpaceFormTemplate() {
+    const template = SPACE_TEMPLATES[safeTemplateId(spaceForm.elements.templateId.value)];
+    spaceForm.elements.name.placeholder = `例如：${template.name === "自定义" ? "阅读计划、副业、早睡挑战" : template.name}`;
+    spaceForm.elements.icon.value = template.icon;
+  }
+
+  function saveSpaceFromDialog(event) {
+    event.preventDefault();
+    if (!spaceForm.reportValidity() || state.spaces.length >= MAX_SPACES) return;
+    const formData = new FormData(spaceForm);
+    const templateId = safeTemplateId(formData.get("templateId"));
+    const template = SPACE_TEMPLATES[templateId];
+    const space = {
+      id: `space-${makeId()}`,
+      type: templateId,
+      templateId,
+      name: safeString(formData.get("name"), 16) || template.name,
+      icon: safeString(formData.get("icon"), 2) || template.icon,
+      aiContext: normalizeAiContext(),
+      createdAt: Date.now(),
+    };
+    state.spaces.push(space);
+    activeSpaceId = space.id;
+    state.activeSpaceId = space.id;
+    selectedWeekId = null;
+    weekYearFilter = String(new Date().getFullYear());
+    weekMonthFilter = String(new Date().getMonth() + 1).padStart(2, "0");
+    saveState(false);
+    spaceDialog.close();
+    renderSpaceSwitcher();
+    renderWeeks();
+    renderCharts();
+    showToast(`“${space.name}”空间已经建立`);
+  }
+
+  function deleteSpace(spaceId) {
+    const space = state.spaces.find((item) => item.id === spaceId);
+    if (!space) return;
+    if (state.spaces.length === 1) {
+      showToast("至少要保留一个空间");
+      return;
+    }
+    const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
+    const chartCount = state.charts.filter((chart) => chart.spaceId === space.id).length;
+    if (!window.confirm(`确定删除“${space.name}”空间吗？\n\n其中 ${periodCount} 个月份、全部每日记录和 ${chartCount} 张图表都会一起删除。`)) return;
+    state.spaces = state.spaces.filter((item) => item.id !== space.id);
+    state.periods = state.periods.filter((period) => period.spaceId !== space.id);
+    state.weeks = state.weeks.filter((week) => week.spaceId !== space.id);
+    state.charts = state.charts.filter((chart) => chart.spaceId !== space.id);
+    if (activeSpaceId === space.id) {
+      activeSpaceId = state.spaces[0].id;
+      state.activeSpaceId = activeSpaceId;
+    }
+    const periods = getActiveSpacePeriods();
+    weekYearFilter = periods.at(-1)?.yearMonth.slice(0, 4) || "";
+    weekMonthFilter = periods.at(-1)?.yearMonth.slice(5, 7) || "";
+    selectedWeekId = getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(periods.at(-1)?.yearMonth || "-")).at(-1)?.id || null;
+    saveState(false);
+    renderSpaceSwitcher();
+    renderWeeks();
+    renderCharts();
+    showToast(`“${space.name}”空间已删除`);
   }
 
   function findWeek(id) {
     return state.weeks.find((week) => week.id === id);
   }
 
-  function openWeekDialog(weekId = null) {
-    editingWeekId = weekId;
+  function openPeriodDialog() {
     weekForm.reset();
-    const week = weekId ? findWeek(weekId) : null;
-    $("#weekDialogTitle").textContent = week ? "设置开始日期" : "新建周计划";
-
-    if (week) {
-      weekForm.elements.startDate.value = week.startDate;
-    } else {
-      weekForm.elements.startDate.value = todayIso();
-    }
-
+    $("#weekDialogTitle").textContent = `新建${getSpace().name}年月`;
+    weekForm.elements.yearMonth.value = todayIso().slice(0, 7);
     weekDialog.showModal();
-    window.setTimeout(() => weekForm.elements.startDate.focus(), 40);
+    window.setTimeout(() => weekForm.elements.yearMonth.focus(), 40);
   }
 
-  function saveWeekFromDialog(event) {
+  function savePeriodFromDialog(event) {
     event.preventDefault();
     if (!weekForm.reportValidity()) return;
-    const data = new FormData(weekForm);
-    const startDate = safeDate(data.get("startDate"));
-    const next = { startDate };
-    const conflictingWeek = state.weeks.find((week) => week.spaceId === activeSpaceId && week.startDate === startDate && week.id !== editingWeekId);
-    if (conflictingWeek) {
-      showToast("这个开始日期已经有一周计划了");
-      weekForm.elements.startDate.focus();
+    const yearMonth = safeString(new FormData(weekForm).get("yearMonth"), 7);
+    if (!/^\d{4}-\d{2}$/.test(yearMonth)) return;
+    const exists = state.periods.some((period) => period.spaceId === activeSpaceId && period.yearMonth === yearMonth);
+    if (exists) {
+      showToast("这个年月已经建立过啦");
+      weekForm.elements.yearMonth.focus();
       return;
     }
 
-    if (editingWeekId) {
-      const week = findWeek(editingWeekId);
-      if (!week) return;
-      Object.assign(week, next);
-      week.days.forEach((day, index) => {
-        day.dayNumber = index + 1;
-        day.date = addDaysIso(startDate, index);
-      });
-      selectedWeekId = week.id;
-      showToast("这一周的设置已经更新");
-    } else {
-      const week = normalizeWeek({
+    state.periods.push({ id: makeId(), spaceId: activeSpaceId, yearMonth, createdAt: Date.now() });
+    getMonthMondays(yearMonth).forEach((startDate) => {
+      const existsWeek = state.weeks.some((week) => week.spaceId === activeSpaceId && week.startDate === startDate);
+      if (existsWeek) return;
+      state.weeks.push(normalizeWeek({
         id: makeId(),
         spaceId: activeSpaceId,
-        ...next,
+        startDate,
         title: `${formatMonthDay(startDate)} 开始的一周`,
         goal: "",
         note: "",
         createdAt: Date.now(),
         days: [],
-      });
-      state.weeks.push(week);
-      selectedWeekId = week.id;
-      showToast("Day1 到 Day7 已经准备好啦");
-    }
+      }, state.spaces));
+    });
 
     state.weeks.sort((a, b) => a.startDate.localeCompare(b.startDate));
-    weekYearFilter = startDate.slice(0, 4);
-    weekMonthFilter = startDate.slice(5, 7);
+    state.periods.sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+    weekYearFilter = yearMonth.slice(0, 4);
+    weekMonthFilter = yearMonth.slice(5, 7);
+    selectedWeekId = getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(yearMonth)).at(-1)?.id || null;
     saveState(false);
     weekDialog.close();
     renderSpaceSwitcher();
     renderWeeks();
+    showToast(`${Number(weekMonthFilter)} 月的周一节点已经展开`);
   }
 
-  function deleteWeekById(weekId) {
-    const week = findWeek(weekId);
-    if (!week) return;
-    if (!window.confirm(`确定删除 ${formatDateRange(week.startDate)} 这一周以及 7 天的安排和记录吗？`)) return;
-    state.weeks = state.weeks.filter((item) => item.id !== week.id);
-    selectedWeekId = getActiveSpaceWeeks().at(-1)?.id || null;
-    selectedDayByWeek.delete(week.id);
-    editingWeekId = null;
+  function deleteSelectedPeriod() {
+    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
+    const period = state.periods.find((item) => item.spaceId === activeSpaceId && item.yearMonth === yearMonth);
+    if (!period) return;
+    const label = `${weekYearFilter} 年 ${Number(weekMonthFilter)} 月`;
+    if (!window.confirm(`确定删除“${getSpace().name}”里的 ${label} 吗？\n\n这个年月下所有周计划与完成记录都会一起删除。`)) return;
+    const removedWeekIds = state.weeks
+      .filter((week) => week.spaceId === activeSpaceId && week.startDate.startsWith(yearMonth))
+      .map((week) => week.id);
+    state.periods = state.periods.filter((item) => item.id !== period.id);
+    state.weeks = state.weeks.filter((week) => !(week.spaceId === activeSpaceId && week.startDate.startsWith(yearMonth)));
+    removedWeekIds.forEach((id) => selectedDayByWeek.delete(id));
+    const periods = getActiveSpacePeriods();
+    const nextPeriod = periods.at(-1);
+    weekYearFilter = nextPeriod?.yearMonth.slice(0, 4) || "";
+    weekMonthFilter = nextPeriod?.yearMonth.slice(5, 7) || "";
+    selectedWeekId = getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(nextPeriod?.yearMonth || "-")).at(-1)?.id || null;
     saveState(false);
     renderSpaceSwitcher();
     renderWeeks();
-    showToast("这一周已删除");
+    showToast(`${label} 已删除`);
   }
 
   function exportWeekPlan(weekId) {
     const week = findWeek(weekId);
     if (!week) return;
-    const payload = {
-      format: "asoul-week-plan",
-      exportedAt: new Date().toISOString(),
-      weeks: [week],
-    };
-    downloadTextFile(
-      `Asoul生活日记-${getSpaceTemplate(week.spaceId).name}-周计划-${week.startDate}.json`,
-      JSON.stringify(payload, null, 2),
-      "application/json;charset=utf-8",
-    );
-    showToast("这周计划和记录已导出");
+    $("#weekPlanTextTitle").textContent = `${getSpace(week.spaceId).name} · ${formatDateRange(week.startDate)}`;
+    $("#weekPlanTextOutput").value = buildWeekPlanText(week);
+    weekPlanTextDialog.showModal();
+  }
+
+  function buildWeekPlanText(week) {
+    const template = getSpaceTemplate(week.spaceId);
+    const lines = [`# ${getSpace(week.spaceId).name}周计划`, `周期：${formatDateRange(week.startDate)}`];
+    week.days.forEach((day) => {
+      lines.push("", `## Day${day.dayNumber} · ${formatCompactDate(day.date)} · ${day.title}`);
+      lines.push(`${template.firstFieldLabel}：${day.dietPlan || "未填写"}`);
+      const plans = day.planItems.filter((item) => item.name || item.value);
+      lines.push("计划安排：");
+      lines.push(...(plans.length ? plans.map((item) => `- ${item.name || "事项"}${item.value ? `：${item.value}` : ""}`) : ["- 暂无"]));
+      if (day.note) lines.push(`备注：${day.note}`);
+    });
+    return lines.join("\n");
   }
 
   function renderWeeks() {
@@ -911,13 +1153,15 @@
       const [year, month] = week.startDate.split("-");
       return year === weekYearFilter && month === weekMonthFilter;
     });
-    ["#exportSelectedWeekButton", "#showSelectedWeekReportButton", "#deleteSelectedWeekButton"].forEach((selector) => {
+    ["#exportSelectedWeekButton", "#showSelectedWeekReportButton"].forEach((selector) => {
       $(selector).disabled = filteredWeeks.length === 0;
     });
-    weekEmpty.hidden = spaceWeeks.length > 0;
-    weekDetail.hidden = spaceWeeks.length === 0 || filteredWeeks.length === 0;
+    $("#deleteSelectedPeriodButton").disabled = !getActiveSpacePeriods().some((period) => period.yearMonth === `${weekYearFilter}-${weekMonthFilter}`);
+    $("#importWeekButton").disabled = filteredWeeks.length === 0;
+    weekEmpty.hidden = getActiveSpacePeriods().length > 0;
+    weekDetail.hidden = getActiveSpacePeriods().length === 0 || filteredWeeks.length === 0;
 
-    if (!spaceWeeks.length) {
+    if (!getActiveSpacePeriods().length) {
       weekTimeline.innerHTML = "";
       weekDetail.innerHTML = "";
       selectedWeekId = null;
@@ -932,14 +1176,14 @@
 
     if (!filteredWeeks.some((week) => week.id === selectedWeekId)) selectedWeekId = filteredWeeks.at(-1).id;
     weekTimeline.innerHTML = filteredWeeks.map((week) => {
-      const absoluteIndex = spaceWeeks.findIndex((item) => item.id === week.id);
+      const monthIndex = filteredWeeks.findIndex((item) => item.id === week.id);
       const recorded = week.days.filter(hasWeekDayRecord).length;
       const isSelected = week.id === selectedWeekId;
       return `
         <button class="week-node${isSelected ? " is-selected" : ""}" type="button" role="listitem" data-select-week="${week.id}" aria-pressed="${isSelected}">
           <span class="week-node-dot"><i></i></span>
           <strong>${escapeHtml(formatCompactDate(week.startDate))}</strong>
-          <small>第 ${absoluteIndex + 1} 周 · 已记 ${recorded}/7 天</small>
+          <small>本月第 ${monthIndex + 1} 周 · 已记 ${recorded}/7 天</small>
         </button>`;
     }).join("");
 
@@ -954,16 +1198,16 @@
   }
 
   function renderWeekFilters() {
-    const spaceWeeks = getActiveSpaceWeeks();
-    const years = [...new Set(spaceWeeks.map((week) => week.startDate.slice(0, 4)))].sort();
+    const periods = getActiveSpacePeriods();
+    const years = [...new Set(periods.map((period) => period.yearMonth.slice(0, 4)))].sort();
     if (!years.includes(weekYearFilter)) weekYearFilter = years.at(-1) || "";
     const yearSelect = $("#weekYearSelect");
     yearSelect.innerHTML = years.map((year) => `<option value="${year}">${year} 年</option>`).join("");
     yearSelect.value = weekYearFilter;
 
-    const months = [...new Set(spaceWeeks
-      .filter((week) => week.startDate.startsWith(`${weekYearFilter}-`))
-      .map((week) => week.startDate.slice(5, 7)))].sort();
+    const months = [...new Set(periods
+      .filter((period) => period.yearMonth.startsWith(`${weekYearFilter}-`))
+      .map((period) => period.yearMonth.slice(5, 7)))].sort();
     if (!months.includes(weekMonthFilter)) weekMonthFilter = months.at(-1) || "";
     const monthSelect = $("#weekMonthSelect");
     monthSelect.innerHTML = months.map((month) => `<option value="${month}">${Number(month)} 月</option>`).join("");
@@ -1232,122 +1476,167 @@
   }
 
   function openWeekImportDialog() {
+    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
+    if (!state.periods.some((period) => period.spaceId === activeSpaceId && period.yearMonth === yearMonth)) {
+      showToast("请先新建要规划的年月");
+      return;
+    }
     weekImportForm.reset();
-    $("#weekImportFileName").textContent = "还没有选择文件";
-    $("#weekPlanInput").value = "";
+    const context = getSpace().aiContext || normalizeAiContext();
+    Object.entries(context).forEach(([key, value]) => {
+      if (weekImportForm.elements[key]) weekImportForm.elements[key].value = value;
+    });
+    $("#weekImportDialogTitle").textContent = `和 AI 一起规划 ${Number(weekMonthFilter)} 月`;
+    refreshAiPromptPreview();
     weekImportDialog.showModal();
   }
 
-  async function loadWeekImportFile(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    try {
-      weekImportForm.elements.payload.value = await file.text();
-      $("#weekImportFileName").textContent = file.name;
-    } catch (error) {
-      showToast("这个文件暂时读不了，请换一个 JSON 文件");
-    }
+  function collectAiContext() {
+    const formData = new FormData(weekImportForm);
+    return normalizeAiContext({
+      goal: formData.get("goal"),
+      current: formData.get("current"),
+      availability: formData.get("availability"),
+      constraints: formData.get("constraints"),
+    });
   }
 
-  function getWeekImportTemplate() {
-    const startDate = todayIso();
+  function refreshAiPromptPreview() {
+    const output = $("#aiPromptOutput");
+    if (output) output.value = buildAiPlanningPrompt(collectAiContext());
+  }
+
+  function buildAiPlanningPrompt(context) {
+    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
     const template = getSpaceTemplate();
-    return {
-      space: { id: activeSpaceId, name: template.name },
-      weeks: [{
-        spaceId: activeSpaceId,
-        startDate,
-        title: `${formatMonthDay(startDate)} 开始的一周`,
-        days: Array.from({ length: 7 }, (_, index) => ({
-          date: addDaysIso(startDate, index),
-          title: index === 0 ? template.activeDayLabel : "休息日",
-          dietPlan: "",
-          dietRecord: "",
-          weight: null,
-          status: "",
-          planItems: [{ name: "", value: "" }],
-          records: [{ name: "", value: "", done: null }],
-          note: "",
-        })),
-      }],
-    };
+    const skeleton = getMonthMondays(yearMonth).map((startDate) => {
+      const days = Array.from({ length: 7 }, (_, index) => [
+        `【Day${index + 1}】${template.activeDayLabel}`,
+        "【重点】",
+        "【任务】事项名称｜具体目标",
+        "【备注】",
+      ].join("\n")).join("\n");
+      return `【周开始】${startDate}\n${days}`;
+    }).join("\n");
+    return [
+      `请为我制定“${getSpace().name}”空间 ${yearMonth} 的可执行月计划。每周统一从周一开始。`,
+      "请先结合我的真实情况控制任务量，宁可留出余量，也不要机械地把每天塞满。",
+      "",
+      `本月目标：${context.goal || "暂未填写，请根据其他信息给出稳妥计划"}`,
+      `当前进度：${context.current || "暂未填写"}`,
+      `可投入时间：${context.availability || "暂未填写"}`,
+      `限制与偏好：${context.constraints || "暂未填写"}`,
+      "",
+      `“重点”用于填写${template.firstFieldLabel}；“任务”每行一项，可以重复多行。没有任务的日子请写“【DayX】休息日”。`,
+      "请严格保留下方所有【】标记、日期和 Day 编号，只替换标记后面的内容。任务名称和目标之间使用全角竖线“｜”。不要添加解释、表格、代码块或 JSON。",
+      "",
+      `【月份】${yearMonth}`,
+      skeleton,
+    ].join("\n");
   }
 
-  function fillWeekImportTemplate() {
-    weekImportForm.elements.payload.value = JSON.stringify(getWeekImportTemplate(), null, 2);
-    weekImportForm.elements.payload.focus();
-    showToast("模板已填入下方，直接复制给 AI 就可以啦");
+  async function copyAiPlanningPrompt() {
+    const space = getSpace();
+    space.aiContext = collectAiContext();
+    const prompt = buildAiPlanningPrompt(space.aiContext);
+    $("#aiPromptOutput").value = prompt;
+    saveState(false);
+    await copyText(prompt);
+    showToast("专属提示词已复制，可以粘贴给 AI 了");
   }
 
-  function parseWeekPayload(rawText) {
-    const text = String(rawText || "").trim();
-    if (!text) throw new Error("empty");
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    const candidates = [fenced?.[1], text].filter(Boolean);
-    for (const candidate of candidates) {
-      try {
-        return JSON.parse(candidate.trim());
-      } catch (error) {
-        const firstObject = candidate.indexOf("{");
-        const lastObject = candidate.lastIndexOf("}");
-        if (firstObject >= 0 && lastObject > firstObject) {
-          try {
-            return JSON.parse(candidate.slice(firstObject, lastObject + 1));
-          } catch (nestedError) {
-            // Try the next representation.
-          }
-        }
+  function parseAiPlanText(rawText) {
+    const text = String(rawText || "").replace(/```[^\n]*|```/g, "").trim();
+    if (!text) return [];
+    const weeks = [];
+    let currentWeek = null;
+    let currentDay = null;
+    text.split(/\r?\n/).forEach((rawLine) => {
+      const line = rawLine.trim().replace(/^[-*]\s*/, "");
+      const weekMatch = line.match(/^【周开始】\s*(\d{4}-\d{2}-\d{2})/);
+      if (weekMatch) {
+        currentWeek = { startDate: weekMatch[1], days: [] };
+        weeks.push(currentWeek);
+        currentDay = null;
+        return;
       }
-    }
-    throw new Error("invalid");
+      const dayMatch = line.match(/^【Day\s*([1-7])】\s*(.*)$/i);
+      if (dayMatch && currentWeek) {
+        const index = Number(dayMatch[1]) - 1;
+        currentDay = currentWeek.days[index] || { planItems: [] };
+        currentDay.title = safeString(dayMatch[2], 36) || "休息日";
+        currentWeek.days[index] = currentDay;
+        return;
+      }
+      if (!currentDay) return;
+      const focusMatch = line.match(/^【重点】\s*(.*)$/);
+      if (focusMatch) {
+        currentDay.dietPlan = safeString(focusMatch[1], 500);
+        return;
+      }
+      const taskMatch = line.match(/^【任务】\s*(.*)$/);
+      if (taskMatch) {
+        const [name, ...targetParts] = taskMatch[1].split(/[｜|]/);
+        const value = targetParts.join("｜");
+        if (safeString(name, 36) || safeString(value, 80)) {
+          currentDay.planItems.push({ name: safeString(name, 36), value: safeString(value, 80) });
+        }
+        return;
+      }
+      const noteMatch = line.match(/^【备注】\s*(.*)$/);
+      if (noteMatch) currentDay.note = safeString(noteMatch[1], 600);
+    });
+    return weeks.map((week) => normalizeWeek({ ...week, spaceId: activeSpaceId }, state.spaces));
   }
 
   function importWeekPlan(event) {
     event.preventDefault();
-    let imported;
-    try {
-      const payload = parseWeekPayload(new FormData(weekImportForm).get("payload"));
-      const rawWeeks = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload.weeks)
-          ? payload.weeks
-          : Array.isArray(payload.weeklyPlans)
-            ? payload.weeklyPlans
-            : payload.week
-              ? [payload.week]
-              : payload.startDate
-                ? [payload]
-                : [];
-      imported = rawWeeks.slice(0, 12).map((week) => normalizeWeek({ ...week, spaceId: activeSpaceId }));
-      if (!imported.length) throw new Error("missing weeks");
-    } catch (error) {
-      showToast("没有找到可导入的周计划 JSON");
+    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
+    const expectedDates = new Set(getMonthMondays(yearMonth));
+    const imported = parseAiPlanText(new FormData(weekImportForm).get("payload"))
+      .filter((week) => expectedDates.has(week.startDate));
+    if (!imported.length) {
+      showToast("没有识别到计划，请确认从【月份】开始完整复制");
       return;
     }
-
-    const duplicates = imported.filter((week) => state.weeks.some((item) => item.spaceId === activeSpaceId && item.startDate === week.startDate));
-    if (duplicates.length && !window.confirm(`有 ${duplicates.length} 个开始日期相同的计划。继续会用导入内容更新它们，确定吗？`)) return;
-
+    getSpace().aiContext = collectAiContext();
     imported.forEach((week) => {
-      const existingIndex = state.weeks.findIndex((item) => item.spaceId === activeSpaceId && item.startDate === week.startDate);
-      if (existingIndex >= 0) {
-        week.id = state.weeks[existingIndex].id;
-        state.weeks[existingIndex] = week;
-      } else {
-        if (state.weeks.some((item) => item.id === week.id)) week.id = makeId();
-        state.weeks.push(week);
-      }
-      selectedWeekId = week.id;
+      const existing = state.weeks.find((item) => item.spaceId === activeSpaceId && item.startDate === week.startDate);
+      if (!existing) return;
+      week.days.forEach((plannedDay, index) => {
+        const day = existing.days[index];
+        day.title = plannedDay.title;
+        day.dietPlan = plannedDay.dietPlan;
+        day.planItems = plannedDay.planItems;
+        day.note = plannedDay.note;
+      });
+      selectedWeekId = existing.id;
     });
-    state.weeks.sort((a, b) => a.startDate.localeCompare(b.startDate));
-    const selectedImportedWeek = findWeek(selectedWeekId);
-    if (selectedImportedWeek) weekYearFilter = selectedImportedWeek.startDate.slice(0, 4);
-    weekMonthFilter = selectedImportedWeek?.startDate.slice(5, 7) || "";
     saveState(false);
     weekImportDialog.close();
-    renderSpaceSwitcher();
     renderWeeks();
-    showToast(`${imported.length} 周计划已经导入`);
+    showToast(`${imported.length} 个周计划已更新，原有完成记录已保留`);
+  }
+
+  async function copyWeekPlanText() {
+    await copyText($("#weekPlanTextOutput").value);
+    showToast("周计划文本已复制");
+  }
+
+  async function copyText(value) {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      const helper = document.createElement("textarea");
+      helper.value = value;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.appendChild(helper);
+      helper.select();
+      document.execCommand("copy");
+      helper.remove();
+    }
   }
 
   function buildWeekReportText(week) {
@@ -2345,9 +2634,10 @@
       renderProfileAvatar();
       activeSpaceId = safeSpaceId(state.activeSpaceId);
       const activeWeeks = getActiveSpaceWeeks();
+      const activePeriods = getActiveSpacePeriods();
       selectedWeekId = activeWeeks.at(-1)?.id || null;
-      if (activeWeeks.length) weekYearFilter = activeWeeks.at(-1).startDate.slice(0, 4);
-      weekMonthFilter = activeWeeks.at(-1)?.startDate.slice(5, 7) || "";
+      if (activePeriods.length) weekYearFilter = activePeriods.at(-1).yearMonth.slice(0, 4);
+      weekMonthFilter = activePeriods.at(-1)?.yearMonth.slice(5, 7) || "";
       renderSpaceSwitcher();
       renderWeeks();
       renderCharts();
@@ -2415,6 +2705,31 @@
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
     return local.toISOString().slice(0, 10);
+  }
+
+  function startOfWeekIso(value) {
+    const dateValue = safeDate(value) || todayIso();
+    const date = new Date(`${dateValue}T12:00:00`);
+    const offset = (date.getDay() + 6) % 7;
+    date.setDate(date.getDate() - offset);
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function getMonthMondays(yearMonth) {
+    if (!/^\d{4}-\d{2}$/.test(String(yearMonth || ""))) return [];
+    const date = new Date(`${yearMonth}-01T12:00:00`);
+    const offset = (8 - date.getDay()) % 7;
+    date.setDate(date.getDate() + offset);
+    const mondays = [];
+    while (true) {
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+      const value = local.toISOString().slice(0, 10);
+      if (!value.startsWith(yearMonth)) break;
+      mondays.push(value);
+      date.setDate(date.getDate() + 7);
+    }
+    return mondays;
   }
 
   function addDaysIso(value, amount) {

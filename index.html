@@ -7,7 +7,7 @@
     <link rel="icon" href="图片/其他图片/Asoul.png" />
     <meta
       name="description"
-      content="Asoul 一个魂生活日记——在本地记录健康、考研与工作的每一步。"
+      content="Asoul 一个魂生活日记——在本地记录属于你的每一点变化。"
     />
     <title>Asoul 一个魂生活日记</title>
     <link rel="stylesheet" href="styles.css" />
@@ -24,7 +24,7 @@
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
           <strong>一个魂生活日记</strong>
-          <small>健康、考研与工作，都好好记下来</small>
+          <small>把每一个目标，都好好记下来</small>
         </span>
       </a>
       <div class="header-tools">
@@ -47,7 +47,7 @@
             <span class="hero-kicker">枝江生活记录处 · FOR 一个魂</span>
             <img class="hero-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
             <h1 id="profileTitle">今天过得<br /><em>怎么样呀~</em></h1>
-            <p>给生活里的目标留个坐标。身体、学习和工作上的每一点变化，都值得<br />被认真看见。</p>
+            <p>给生活里的目标留个坐标。每一次开始、坚持和改变，都值得<br />被认真看见。</p>
             <a class="hero-jump" href="#weeklyTrackStart">开始记录 <span aria-hidden="true">↓</span></a>
           </div>
 
@@ -118,7 +118,11 @@
         <div class="space-section-copy">
           <span class="eyebrow">MY LIFE SPACES</span>
           <h2 id="spaceSectionTitle">今天，想推进哪一条生活线？</h2>
-          <p>三个空间各自保存周计划、打卡记录、周报与折线图，互不混在一起。</p>
+          <p>用模板或从空白开始建立自己的空间；每个空间的日程、周报与折线图互不混在一起。</p>
+          <div class="space-section-actions">
+            <span id="spaceLimitText">3 / 8 个空间</span>
+            <button class="secondary-button" id="addSpaceButton" type="button">＋ 新建空间</button>
+          </div>
         </div>
         <div class="space-switcher" id="spaceSwitcher" role="group" aria-label="选择记录空间"></div>
       </section>
@@ -148,10 +152,10 @@
                 <label><span>年份</span><select id="weekYearSelect" aria-label="按年份筛选周计划"></select></label>
                 <label><span>月份</span><select id="weekMonthSelect" aria-label="按月份筛选周计划"></select></label>
                 <span class="week-node-actions" aria-label="当前周操作">
-                  <button id="addWeekButton" type="button"><span aria-hidden="true">＋</span> 新建周计划</button>
-                  <button id="importWeekButton" type="button">⇩ 导入周计划</button>
-                  <button id="exportSelectedWeekButton" type="button">⇧ 导出周计划</button>
-                  <button class="is-danger" id="deleteSelectedWeekButton" type="button">删除周计划</button>
+                  <button id="addWeekButton" type="button"><span aria-hidden="true">＋</span> 新建年月</button>
+                  <button id="importWeekButton" type="button">✦ AI 规划本月</button>
+                  <button id="exportSelectedWeekButton" type="button">查看周计划文本</button>
+                  <button class="is-danger" id="deleteSelectedPeriodButton" type="button">删除年月</button>
                   <button id="showSelectedWeekReportButton" type="button">显示周报</button>
                 </span>
               </div>
@@ -162,10 +166,10 @@
           <div class="week-empty" id="weekEmpty">
             <span class="week-empty-icon" aria-hidden="true">✦</span>
             <div>
-              <h3>先定下这一周的起点吧</h3>
-              <p id="weekEmptyDescription">选择开始日期后，会自动准备 Day1 到 Day7。每天都能分别填写计划、完成情况和小笔记。</p>
+              <h3>先建立一个年月吧</h3>
+              <p id="weekEmptyDescription">新建年月后，会自动展开当月所有从周一开始的周条。</p>
             </div>
-            <button class="secondary-button" id="emptyAddWeekButton" type="button">＋ 新建我的第一周</button>
+            <button class="secondary-button" id="emptyAddWeekButton" type="button">＋ 新建第一个年月</button>
           </div>
 
           <div class="week-detail" id="weekDetail" hidden></div>
@@ -235,6 +239,34 @@
       <span>作者：就一枝匠纸 · AI 生成</span>
     </footer>
 
+    <dialog class="dialog" id="spaceDialog" aria-labelledby="spaceDialogTitle">
+      <form class="dialog-card" id="spaceForm" method="dialog">
+        <div class="dialog-head">
+          <div>
+            <span class="eyebrow">NEW LIFE SPACE</span>
+            <h2 id="spaceDialogTitle">新建一个空间</h2>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
+        </div>
+        <p class="avatar-dialog-copy">选择一个接近的模板，再改成属于你的名字。最多可以保留 8 个空间。</p>
+        <fieldset class="space-template-options">
+          <legend>从哪里开始？</legend>
+          <label><input type="radio" name="templateId" value="health" /><span><b>♡ 健康模板</b><small>健康重点、身体复盘与体重</small></span></label>
+          <label><input type="radio" name="templateId" value="study" /><span><b>✎ 学习模板</b><small>学习重点、科目任务与复盘</small></span></label>
+          <label><input type="radio" name="templateId" value="work" /><span><b>▣ 工作模板</b><small>工作重点、事项交付与总结</small></span></label>
+          <label><input type="radio" name="templateId" value="custom" checked /><span><b>✦ 空白模板</b><small>通用重点、任务和复盘</small></span></label>
+        </fieldset>
+        <div class="dialog-fields">
+          <label class="field field--wide"><span>空间名称</span><input name="name" maxlength="16" required placeholder="例如：阅读计划、副业、早睡挑战" /></label>
+          <label class="field"><span>空间符号</span><input name="icon" maxlength="2" placeholder="✦" /></label>
+        </div>
+        <div class="dialog-actions">
+          <button class="text-button" type="button" data-close-dialog>取消</button>
+          <button class="primary-button" type="submit">建立空间</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog class="dialog" id="chartDialog" aria-labelledby="chartDialogTitle">
       <form class="dialog-card" id="chartForm" method="dialog">
         <div class="dialog-head">
@@ -256,6 +288,7 @@
           <button type="button" data-preset="score" data-preset-space="study" hidden>模考成绩</button>
           <button type="button" data-preset="workHours" data-preset-space="work" hidden>深度工作</button>
           <button type="button" data-preset="completedTasks" data-preset-space="work" hidden>完成任务</button>
+          <button type="button" data-preset="habit" data-preset-space="custom" hidden>每日投入</button>
         </div>
 
         <div class="dialog-fields">
@@ -334,23 +367,23 @@
       <form class="dialog-card dialog-card--wide" id="weekForm" method="dialog">
         <div class="dialog-head">
           <div>
-            <span class="eyebrow">WEEKLY PLAN</span>
-            <h2 id="weekDialogTitle">新建周计划</h2>
+            <span class="eyebrow">MONTHLY TRACK</span>
+            <h2 id="weekDialogTitle">新建年月</h2>
           </div>
           <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
         </div>
 
-        <p class="week-dialog-copy">只需要确定这一周从哪天开始，Day1 到 Day7 会自动按顺序生成。</p>
+        <p class="week-dialog-copy">选择年月后，这个月所有以周一为起点的周条会自动生成，不需要再一周一周新建。</p>
         <div class="dialog-fields">
           <label class="field field--wide">
-            <span>这一周从哪天开始</span>
-            <input name="startDate" type="date" required />
+            <span>要建立哪个年月？</span>
+            <input name="yearMonth" type="month" required />
           </label>
         </div>
 
         <div class="dialog-actions">
           <button class="text-button" type="button" data-close-dialog>取消</button>
-          <button class="primary-button" type="submit">保存这一周</button>
+          <button class="primary-button" type="submit">建立这个年月</button>
         </div>
       </form>
     </dialog>
@@ -400,31 +433,69 @@
       <form class="dialog-card dialog-card--wide" id="weekImportForm" method="dialog">
         <div class="dialog-head">
           <div>
-            <span class="eyebrow">IMPORT NEXT WEEK</span>
-            <h2 id="weekImportDialogTitle">导入下一周计划</h2>
+            <span class="eyebrow">PLAN WITH AI</span>
+            <h2 id="weekImportDialogTitle">和 AI 一起规划这个月</h2>
           </div>
           <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
         </div>
-        <div class="week-import-guide">
-          <strong>1. 先点“填入 JSON 模板”，把下方出现的全部文本复制给 AI。</strong>
-          <strong>2. 再告诉 AI：你当前空间的目标、已有进度、每天可投入的时间，以及需要避开的限制。</strong>
-          <strong>3. 请 AI 严格按模板生成“下一周计划 JSON”；拿到后可选择保存好的 JSON 文件，或把完整 JSON 内容直接粘贴到下方，再点导入。</strong>
+        <div class="ai-plan-steps">
+          <section class="ai-plan-step">
+            <span class="ai-plan-step-number">1</span>
+            <div>
+              <h3>告诉 AI 你的真实情况</h3>
+              <p>这些内容只保存在当前空间，用来生成提示词。</p>
+              <div class="ai-context-fields">
+                <label class="field"><span>这个月最想达成什么？</span><textarea name="goal" rows="2" maxlength="600" placeholder="例如：完成专业课第一轮复习"></textarea></label>
+                <label class="field"><span>目前的进度或基础</span><textarea name="current" rows="2" maxlength="1000" placeholder="例如：英语阅读每天一篇，专业课刚开始"></textarea></label>
+                <label class="field"><span>每天或每周能投入多少时间</span><textarea name="availability" rows="2" maxlength="600" placeholder="例如：工作日 2 小时，周末 5 小时"></textarea></label>
+                <label class="field"><span>限制、偏好或必须避开的事</span><textarea name="constraints" rows="2" maxlength="600" placeholder="例如：周三晚上没空；任务不要排得太满"></textarea></label>
+              </div>
+            </div>
+          </section>
+          <section class="ai-plan-step">
+            <span class="ai-plan-step-number">2</span>
+            <div>
+              <h3>复制专属提示词，交给你习惯的 AI</h3>
+              <p>提示词会要求 AI 返回网页能识别、同时也方便人阅读的计划文本。</p>
+              <textarea id="aiPromptOutput" rows="9" readonly aria-label="生成的 AI 提示词"></textarea>
+              <div class="week-import-toolbar">
+                <button class="primary-button" id="copyAiPromptButton" type="button">生成并复制提示词</button>
+                <a class="secondary-button" href="https://www.doubao.com/chat/" target="_blank" rel="noopener noreferrer">打开豆包 ↗</a>
+              </div>
+            </div>
+          </section>
+          <section class="ai-plan-step">
+            <span class="ai-plan-step-number">3</span>
+            <div>
+              <h3>把 AI 返回的完整计划粘贴回来</h3>
+              <p>导入只会更新计划与重点，不会覆盖你已经填写的完成状态、实际记录和表情。</p>
+              <label class="field field--wide week-import-paste">
+                <span>AI 返回的计划文本</span>
+                <textarea name="payload" rows="12" placeholder="从【月份】开始，把 AI 返回的完整内容粘贴到这里……"></textarea>
+              </label>
+            </div>
+          </section>
         </div>
-        <div class="week-import-toolbar">
-          <button class="secondary-button" id="chooseWeekFileButton" type="button">选择 JSON 文件</button>
-          <button class="text-button week-import-template" id="fillWeekTemplateButton" type="button">填入 JSON 模板</button>
-          <span id="weekImportFileName">还没有选择文件</span>
-          <input id="weekPlanInput" type="file" accept="application/json,.json,text/plain" hidden />
-        </div>
-        <label class="field field--wide week-import-paste">
-          <span>或粘贴计划内容</span>
-          <textarea name="payload" rows="12" placeholder="把 AI 回复中的 JSON 粘贴到这里……"></textarea>
-        </label>
         <div class="dialog-actions">
           <button class="text-button" type="button" data-close-dialog>取消</button>
-          <button class="primary-button" type="submit">导入到每周日程安排</button>
+          <button class="primary-button" type="submit">导入到当前年月</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="dialog" id="weekPlanTextDialog" aria-labelledby="weekPlanTextTitle">
+      <section class="dialog-card dialog-card--wide">
+        <div class="dialog-head">
+          <div><span class="eyebrow">READABLE WEEK PLAN</span><h2 id="weekPlanTextTitle">本周计划文本</h2></div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
+        </div>
+        <p class="avatar-dialog-copy">这是普通文本，可以直接复制到聊天、备忘录或文档，不会下载 JSON 文件。</p>
+        <textarea class="week-plan-text-output" id="weekPlanTextOutput" rows="18" readonly></textarea>
+        <div class="dialog-actions">
+          <button class="text-button" type="button" data-close-dialog>关闭</button>
+          <button class="primary-button" id="copyWeekPlanTextButton" type="button">复制周计划文本</button>
+        </div>
+      </section>
     </dialog>
 
     <dialog class="dialog" id="weeklyReportDialog" aria-labelledby="weeklyReportDialogTitle">

@@ -1,13 +1,13 @@
 (() => {
   "use strict";
 
-  const CURRENT_STATE_VERSION = 5;
+  const CURRENT_STATE_VERSION = 6;
   const MIN_SUPPORTED_STATE_VERSION = 1;
   const UNSUPPORTED_VERSION_CODE = "ASOUL_UNSUPPORTED_STATE_VERSION";
   const DEFAULT_SPACES = Object.freeze([
-    Object.freeze({ id: "health", type: "health", name: "健康", icon: "♡" }),
-    Object.freeze({ id: "study", type: "study", name: "考研", icon: "✎" }),
-    Object.freeze({ id: "work", type: "work", name: "工作", icon: "▣" }),
+    Object.freeze({ id: "health", type: "health", templateId: "health", name: "健康", icon: "♡" }),
+    Object.freeze({ id: "study", type: "study", templateId: "study", name: "考研", icon: "✎" }),
+    Object.freeze({ id: "work", type: "work", templateId: "work", name: "工作", icon: "▣" }),
   ]);
 
   const clone = (value) => {
@@ -47,6 +47,31 @@
         : [],
       version: 5,
     })],
+    [5, (state) => {
+      const spaces = Array.isArray(state.spaces) && state.spaces.length
+        ? state.spaces.map((space) => ({
+            ...space,
+            templateId: space.templateId || space.type || space.id || "custom",
+          }))
+        : DEFAULT_SPACES.map((space) => ({ ...space }));
+      const seenPeriods = new Set();
+      const periods = [];
+      (Array.isArray(state.weeks) ? state.weeks : []).forEach((week) => {
+        const spaceId = week?.spaceId || "health";
+        const yearMonth = String(week?.startDate || "").slice(0, 7);
+        if (!/^\d{4}-\d{2}$/.test(yearMonth)) return;
+        const key = `${spaceId}:${yearMonth}`;
+        if (seenPeriods.has(key)) return;
+        seenPeriods.add(key);
+        periods.push({ id: `period-${spaceId}-${yearMonth}`, spaceId, yearMonth, createdAt: Number(week?.createdAt) || Date.now() });
+      });
+      return {
+        ...state,
+        spaces,
+        periods,
+        version: 6,
+      };
+    }],
   ]);
 
   function readVersion(candidate) {
