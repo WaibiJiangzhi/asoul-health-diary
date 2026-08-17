@@ -2,8 +2,13 @@
   "use strict";
 
   const DATA_MODEL = globalThis.ASOUL_DATA_MODEL || {
-    CURRENT_STATE_VERSION: 4,
+    CURRENT_STATE_VERSION: 5,
     UNSUPPORTED_VERSION_CODE: "ASOUL_UNSUPPORTED_STATE_VERSION",
+    DEFAULT_SPACES: [
+      { id: "health", type: "health", name: "健康", icon: "♡" },
+      { id: "study", type: "study", name: "考研", icon: "✎" },
+      { id: "work", type: "work", name: "工作", icon: "▣" },
+    ],
     migrateState: (candidate) => candidate,
   };
   const STORAGE_KEY = "asoul-health-diary-v1";
@@ -23,8 +28,76 @@
   ];
   const CHART_ZOOM_LEVELS = [1, 2, 4, 8, 12];
   const WEEK_ITEMS_NOT_TRACKED = new Set(["跑前热身", "跑后拉伸"]);
+  const DEFAULT_SPACES = DATA_MODEL.DEFAULT_SPACES.map((space) => ({ ...space }));
+  const SPACE_TEMPLATES = {
+    health: {
+      id: "health",
+      name: "健康",
+      icon: "♡",
+      eyebrow: "一个魂的健康日程",
+      heading: "这一周，照顾好身体和心情",
+      description: "训练写在左边，完成情况记在右边。到周末打开周报看一眼，下周安排就更有依据。",
+      activeDayLabel: "训练日",
+      firstFieldLabel: "饮食安排",
+      firstFieldPlaceholder: "今天准备怎么吃？",
+      secondFieldLabel: "饮食记录",
+      secondFieldPlaceholder: "实际吃得怎么样？",
+      itemPlaceholder: "项目，例如：俯卧撑",
+      targetPlaceholder: "目标，例如：4 组",
+      actualPlaceholder: "补一句记录，例如：平均每组 9 个",
+      showWeight: true,
+      chartEyebrow: "一个魂的健康轨迹",
+      chartHeading: "身体状态，有怎样的变化？",
+      emptyChartExample: "例如：横轴写“日期”，指标写“体重 / 斤”，明天再来添加一个新节点。",
+      defaultSeries: { name: "体重 / 斤", color: "#E799B0" },
+    },
+    study: {
+      id: "study",
+      name: "考研",
+      icon: "✎",
+      eyebrow: "一个魂的考研打卡",
+      heading: "这一周，把目标拆成能完成的小步",
+      description: "学习重点写在上方，科目任务和完成情况逐项打卡；周末复盘节奏，不只统计坐了多久。",
+      activeDayLabel: "学习日",
+      firstFieldLabel: "学习重点",
+      firstFieldPlaceholder: "今天最重要的学习目标是什么？",
+      secondFieldLabel: "复盘总结",
+      secondFieldPlaceholder: "完成了什么，哪里需要调整？",
+      itemPlaceholder: "科目，例如：英语阅读",
+      targetPlaceholder: "目标，例如：精读 2 篇",
+      actualPlaceholder: "完成记录，例如：完成 2 篇，错 3 题",
+      showWeight: false,
+      chartEyebrow: "一个魂的备考趋势",
+      chartHeading: "努力正在怎样积累？",
+      emptyChartExample: "例如：横轴写“日期”，指标写“有效学习 / 小时”或“正确率 / %”。",
+      defaultSeries: { name: "有效学习 / 小时", color: "#8f7aea" },
+    },
+    work: {
+      id: "work",
+      name: "工作",
+      icon: "▣",
+      eyebrow: "一个魂的工作日程",
+      heading: "这一周，让重要的事清楚落地",
+      description: "先写工作重点，再逐项记录交付结果；周报会把已完成、未完成和当天笔记汇总在一起。",
+      activeDayLabel: "工作日",
+      firstFieldLabel: "工作重点",
+      firstFieldPlaceholder: "今天最需要推进的事情是什么？",
+      secondFieldLabel: "完成总结",
+      secondFieldPlaceholder: "交付了什么，还有哪些待跟进？",
+      itemPlaceholder: "事项，例如：项目方案",
+      targetPlaceholder: "目标，例如：完成初稿",
+      actualPlaceholder: "完成记录，例如：已提交评审",
+      showWeight: false,
+      chartEyebrow: "一个魂的工作趋势",
+      chartHeading: "这一阶段，产出与节奏如何？",
+      emptyChartExample: "例如：横轴写“日期”，指标写“深度工作 / 小时”或“完成任务 / 项”。",
+      defaultSeries: { name: "深度工作 / 小时", color: "#4f8edb" },
+    },
+  };
   const DEFAULT_STATE = {
     version: DATA_MODEL.CURRENT_STATE_VERSION,
+    spaces: DEFAULT_SPACES,
+    activeSpaceId: "health",
     profile: {
       name: "",
       gender: "",
@@ -82,6 +155,34 @@
       xLabel: "日期",
       series: [{ name: "心情 / 10分", color: "#ee9d42" }],
     },
+    studyHours: {
+      title: "每日有效学习时长",
+      xLabel: "日期",
+      series: [{ name: "有效学习 / 小时", color: "#8f7aea" }],
+    },
+    questions: {
+      title: "每日刷题记录",
+      xLabel: "日期",
+      series: [
+        { name: "完成题目 / 道", color: "#36a58b" },
+        { name: "正确率 / %", color: "#ee9d42" },
+      ],
+    },
+    score: {
+      title: "模考成绩变化",
+      xLabel: "日期",
+      series: [{ name: "总分 / 分", color: "#DB7D74" }],
+    },
+    workHours: {
+      title: "深度工作时长",
+      xLabel: "日期",
+      series: [{ name: "深度工作 / 小时", color: "#4f8edb" }],
+    },
+    completedTasks: {
+      title: "任务交付记录",
+      xLabel: "日期",
+      series: [{ name: "完成任务 / 项", color: "#35a8bb" }],
+    },
   };
 
   const DEFAULT_COLD_JOKES = Array.isArray(globalThis.ASOUL_COLD_JOKES)
@@ -98,13 +199,15 @@
   let stateSaveBlocked = false;
   let stateLoadIssue = "";
   let state = loadState();
+  let activeSpaceId = safeSpaceId(state.activeSpaceId);
   let editingChartId = null;
   let editingNodeId = null;
   let activeNodeChartId = null;
   let editingWeekId = null;
-  let selectedWeekId = state.weeks.at(-1)?.id || null;
-  let weekYearFilter = state.weeks.at(-1)?.startDate.slice(0, 4) || String(new Date().getFullYear());
-  let weekMonthFilter = state.weeks.at(-1)?.startDate.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
+  const initialSpaceWeeks = state.weeks.filter((week) => week.spaceId === activeSpaceId);
+  let selectedWeekId = initialSpaceWeeks.at(-1)?.id || null;
+  let weekYearFilter = initialSpaceWeeks.at(-1)?.startDate.slice(0, 4) || String(new Date().getFullYear());
+  let weekMonthFilter = initialSpaceWeeks.at(-1)?.startDate.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
   let openWeekStickerWeekId = null;
   let openWeekStickerDayId = null;
   let activeStickerPack = "贝拉";
@@ -127,6 +230,7 @@
   let toastTimer = null;
 
   const profileForm = $("#profileForm");
+  const spaceSwitcher = $("#spaceSwitcher");
   const avatarPreview = $("#avatarPreview");
   const avatarPlaceholder = $("#avatarPlaceholder");
   const autosaveStatus = $("#autosaveStatus");
@@ -170,6 +274,7 @@
     hydrateProfileForm();
     renderProfileAvatar();
     showRandomJoke();
+    renderSpaceSwitcher();
     renderWeeks();
     renderCharts();
     renderBackupStatus();
@@ -398,7 +503,7 @@
       .filter((item) => item.name || item.value);
   }
 
-  function normalizeWeekDay(candidate, index, startDate) {
+  function normalizeWeekDay(candidate, index, startDate, spaceId = "health") {
     const day = candidate && typeof candidate === "object" ? candidate : {};
     const planItems = day.planItems ?? day.schedule ?? day.plans;
     const records = day.records ?? day.actual ?? day.results;
@@ -408,7 +513,7 @@
       id: safeId(day.id),
       dayNumber: index + 1,
       date: safeDate(day.date) || addDaysIso(startDate, index),
-      title: normalizeDayType(day.title),
+      title: normalizeDayType(day.title, spaceId),
       duration: safeString(day.duration, 40),
       planItems: normalizePairList(planItems).filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name)),
       records: normalizePairList(records)
@@ -423,24 +528,27 @@
     };
   }
 
-  function normalizeDayType(value) {
+  function normalizeDayType(value, spaceId = "health") {
     const text = safeString(value, 36);
     if (/休息|恢复|慢走/.test(text)) return "休息日";
-    return text ? "训练日" : "休息日";
+    const activeDayLabel = getSpaceTemplate(spaceId).activeDayLabel;
+    return text ? activeDayLabel : "休息日";
   }
 
   function normalizeWeek(candidate) {
     const week = candidate && typeof candidate === "object" ? candidate : {};
+    const spaceId = safeSpaceId(week.spaceId);
     const startDate = safeDate(week.startDate) || todayIso();
     const sourceDays = Array.isArray(week.days) ? week.days : [];
     return {
       id: safeId(week.id),
+      spaceId,
       startDate,
       title: safeString(week.title, 36) || `${formatMonthDay(startDate)} 开始的一周`,
       goal: safeString(week.goal, 240),
       note: safeString(week.note, 360),
       createdAt: Number(week.createdAt) || Date.now(),
-      days: Array.from({ length: 7 }, (_, index) => normalizeWeekDay(sourceDays[index], index, startDate)),
+      days: Array.from({ length: 7 }, (_, index) => normalizeWeekDay(sourceDays[index], index, startDate, spaceId)),
     };
   }
 
@@ -467,6 +575,9 @@
     if (!candidate || typeof candidate !== "object") return clean;
     candidate = DATA_MODEL.migrateState(candidate);
 
+    clean.spaces = DEFAULT_SPACES.map((space) => ({ ...space }));
+    clean.activeSpaceId = safeSpaceId(candidate.activeSpaceId);
+
     if (candidate.profile && typeof candidate.profile === "object") {
       clean.profile.name = safeString(candidate.profile.name, 20);
       clean.profile.gender = safeString(candidate.profile.gender, 20);
@@ -481,12 +592,12 @@
         ? candidate.weeklyPlans
         : [];
     clean.weeks = sourceWeeks
-      .slice(0, 104)
+      .slice(0, 312)
       .map(normalizeWeek)
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
     if (Array.isArray(candidate.charts)) {
-      clean.charts = candidate.charts.slice(0, 30).map((chart) => {
+      clean.charts = candidate.charts.slice(0, 90).map((chart) => {
         const sourceSeries = Array.isArray(chart.series) && chart.series.length
           ? chart.series
           : [{ id: makeId(), name: chart.yLabel || "纵轴", color: chart.color }];
@@ -498,6 +609,7 @@
 
         return {
           id: safeId(chart.id),
+          spaceId: safeSpaceId(chart.spaceId),
           title: safeString(chart.title, 30) || "未命名图表",
           xLabel: safeString(chart.xLabel, 20) || "横轴",
           series,
@@ -584,6 +696,7 @@
     if (!window.confirm("确定清空这台浏览器里的个人资料、每周计划、图表和全部节点吗？\n\n冷笑话不会被删除；如果记录还需要保留，请先点击“备份”。")) return;
 
     state = cloneDefault();
+    activeSpaceId = "health";
     stateSaveBlocked = false;
     stateLoadIssue = "";
     selectedNodeByChart.clear();
@@ -600,6 +713,7 @@
     }
     hydrateProfileForm();
     renderProfileAvatar();
+    renderSpaceSwitcher();
     renderWeeks();
     renderCharts();
     autosaveStatus.textContent = "更改会自动保存";
@@ -629,6 +743,69 @@
     avatarPlaceholder.textContent = (state.profile.name.trim()[0] || "A").toUpperCase();
   }
 
+  function safeSpaceId(value) {
+    return Object.hasOwn(SPACE_TEMPLATES, value) ? value : "health";
+  }
+
+  function getSpaceTemplate(spaceId = activeSpaceId) {
+    return SPACE_TEMPLATES[safeSpaceId(spaceId)];
+  }
+
+  function getActiveSpaceWeeks() {
+    return state.weeks.filter((week) => week.spaceId === activeSpaceId);
+  }
+
+  function getActiveSpaceCharts() {
+    return state.charts.filter((chart) => chart.spaceId === activeSpaceId);
+  }
+
+  function renderSpaceSwitcher() {
+    if (!spaceSwitcher) return;
+    spaceSwitcher.innerHTML = DEFAULT_SPACES.map((space) => {
+      const template = getSpaceTemplate(space.id);
+      const weekCount = state.weeks.filter((week) => week.spaceId === space.id).length;
+      const isActive = space.id === activeSpaceId;
+      return `
+        <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}">
+          <span class="space-switcher-icon" aria-hidden="true">${template.icon}</span>
+          <span><strong>${template.name}</strong><small>${weekCount ? `${weekCount} 周记录` : "从这里开始"}</small></span>
+        </button>`;
+    }).join("");
+    $$('[data-space-id]', spaceSwitcher).forEach((button) => {
+      button.addEventListener("click", () => selectSpace(button.dataset.spaceId));
+    });
+    syncSpaceCopy();
+  }
+
+  function selectSpace(spaceId) {
+    const nextSpaceId = safeSpaceId(spaceId);
+    if (nextSpaceId === activeSpaceId) return;
+    activeSpaceId = nextSpaceId;
+    state.activeSpaceId = activeSpaceId;
+    const weeks = getActiveSpaceWeeks();
+    selectedWeekId = weeks.at(-1)?.id || null;
+    weekYearFilter = weeks.at(-1)?.startDate.slice(0, 4) || String(new Date().getFullYear());
+    weekMonthFilter = weeks.at(-1)?.startDate.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
+    saveState(false);
+    renderSpaceSwitcher();
+    renderWeeks();
+    renderCharts();
+  }
+
+  function syncSpaceCopy() {
+    const template = getSpaceTemplate();
+    $("#weeklyEyebrow").textContent = template.eyebrow;
+    $("#weeklyTitle").textContent = template.heading;
+    $("#weeklyDescription").textContent = template.description;
+    $("#chartsEyebrow").textContent = template.chartEyebrow;
+    $("#chartsTitle").textContent = template.chartHeading;
+    $("#emptyChartExample").textContent = template.emptyChartExample;
+    $("#weekEmptyDescription").textContent = `选择开始日期后，会自动准备 Day1 到 Day7。每天都能填写${template.firstFieldLabel}、计划任务、完成情况和小笔记。`;
+    $$('[data-preset-space]').forEach((button) => {
+      button.hidden = button.dataset.presetSpace !== activeSpaceId;
+    });
+  }
+
   function findWeek(id) {
     return state.weeks.find((week) => week.id === id);
   }
@@ -655,7 +832,7 @@
     const data = new FormData(weekForm);
     const startDate = safeDate(data.get("startDate"));
     const next = { startDate };
-    const conflictingWeek = state.weeks.find((week) => week.startDate === startDate && week.id !== editingWeekId);
+    const conflictingWeek = state.weeks.find((week) => week.spaceId === activeSpaceId && week.startDate === startDate && week.id !== editingWeekId);
     if (conflictingWeek) {
       showToast("这个开始日期已经有一周计划了");
       weekForm.elements.startDate.focus();
@@ -675,6 +852,7 @@
     } else {
       const week = normalizeWeek({
         id: makeId(),
+        spaceId: activeSpaceId,
         ...next,
         title: `${formatMonthDay(startDate)} 开始的一周`,
         goal: "",
@@ -692,6 +870,7 @@
     weekMonthFilter = startDate.slice(5, 7);
     saveState(false);
     weekDialog.close();
+    renderSpaceSwitcher();
     renderWeeks();
   }
 
@@ -700,10 +879,11 @@
     if (!week) return;
     if (!window.confirm(`确定删除 ${formatDateRange(week.startDate)} 这一周以及 7 天的安排和记录吗？`)) return;
     state.weeks = state.weeks.filter((item) => item.id !== week.id);
-    selectedWeekId = state.weeks.at(-1)?.id || null;
+    selectedWeekId = getActiveSpaceWeeks().at(-1)?.id || null;
     selectedDayByWeek.delete(week.id);
     editingWeekId = null;
     saveState(false);
+    renderSpaceSwitcher();
     renderWeeks();
     showToast("这一周已删除");
   }
@@ -717,7 +897,7 @@
       weeks: [week],
     };
     downloadTextFile(
-      `Asoul健康日记-周计划-${week.startDate}.json`,
+      `Asoul生活日记-${getSpaceTemplate(week.spaceId).name}-周计划-${week.startDate}.json`,
       JSON.stringify(payload, null, 2),
       "application/json;charset=utf-8",
     );
@@ -725,18 +905,19 @@
   }
 
   function renderWeeks() {
+    const spaceWeeks = getActiveSpaceWeeks();
     renderWeekFilters();
-    const filteredWeeks = state.weeks.filter((week) => {
+    const filteredWeeks = spaceWeeks.filter((week) => {
       const [year, month] = week.startDate.split("-");
       return year === weekYearFilter && month === weekMonthFilter;
     });
     ["#exportSelectedWeekButton", "#showSelectedWeekReportButton", "#deleteSelectedWeekButton"].forEach((selector) => {
       $(selector).disabled = filteredWeeks.length === 0;
     });
-    weekEmpty.hidden = state.weeks.length > 0;
-    weekDetail.hidden = state.weeks.length === 0 || filteredWeeks.length === 0;
+    weekEmpty.hidden = spaceWeeks.length > 0;
+    weekDetail.hidden = spaceWeeks.length === 0 || filteredWeeks.length === 0;
 
-    if (!state.weeks.length) {
+    if (!spaceWeeks.length) {
       weekTimeline.innerHTML = "";
       weekDetail.innerHTML = "";
       selectedWeekId = null;
@@ -751,7 +932,7 @@
 
     if (!filteredWeeks.some((week) => week.id === selectedWeekId)) selectedWeekId = filteredWeeks.at(-1).id;
     weekTimeline.innerHTML = filteredWeeks.map((week) => {
-      const absoluteIndex = state.weeks.findIndex((item) => item.id === week.id);
+      const absoluteIndex = spaceWeeks.findIndex((item) => item.id === week.id);
       const recorded = week.days.filter(hasWeekDayRecord).length;
       const isSelected = week.id === selectedWeekId;
       return `
@@ -773,13 +954,14 @@
   }
 
   function renderWeekFilters() {
-    const years = [...new Set(state.weeks.map((week) => week.startDate.slice(0, 4)))].sort();
+    const spaceWeeks = getActiveSpaceWeeks();
+    const years = [...new Set(spaceWeeks.map((week) => week.startDate.slice(0, 4)))].sort();
     if (!years.includes(weekYearFilter)) weekYearFilter = years.at(-1) || "";
     const yearSelect = $("#weekYearSelect");
     yearSelect.innerHTML = years.map((year) => `<option value="${year}">${year} 年</option>`).join("");
     yearSelect.value = weekYearFilter;
 
-    const months = [...new Set(state.weeks
+    const months = [...new Set(spaceWeeks
       .filter((week) => week.startDate.startsWith(`${weekYearFilter}-`))
       .map((week) => week.startDate.slice(5, 7)))].sort();
     if (!months.includes(weekMonthFilter)) weekMonthFilter = months.at(-1) || "";
@@ -849,6 +1031,7 @@
   }
 
   function renderWeekDayEditor(week, day) {
+    const template = getSpaceTemplate(week.spaceId);
     const statusClass = ({ "这期拉了": "missed", "还不错": "okay", "好好好": "great" })[day.status] || "pending";
     const rowCount = Math.max(day.planItems.length, day.records.length, 1);
     const rows = Array.from({ length: rowCount }, (_, index) => {
@@ -858,15 +1041,15 @@
         <div class="week-pair-row" data-week-pair-index="${index}">
           <span class="week-pair-number">${String(index + 1).padStart(2, "0")}</span>
           <div class="week-pair-plan">
-            <input data-pair-field="name" maxlength="36" aria-label="第 ${index + 1} 项计划名称" placeholder="项目，例如：俯卧撑" value="${escapeAttr(plan.name || record.name || "")}" />
-            <input data-pair-field="plan" maxlength="80" aria-label="第 ${index + 1} 项计划目标" placeholder="目标，例如：4 组" value="${escapeAttr(plan.value || "")}" />
+            <input data-pair-field="name" maxlength="36" aria-label="第 ${index + 1} 项计划名称" placeholder="${escapeAttr(template.itemPlaceholder)}" value="${escapeAttr(plan.name || record.name || "")}" />
+            <input data-pair-field="plan" maxlength="80" aria-label="第 ${index + 1} 项计划目标" placeholder="${escapeAttr(template.targetPlaceholder)}" value="${escapeAttr(plan.value || "")}" />
           </div>
           <div class="week-pair-record">
             <span class="week-pair-checks" aria-label="第 ${index + 1} 项是否完成">
               <button type="button" data-set-pair-done="true" aria-pressed="${record.done === true}" title="已完成">√</button>
               <button type="button" data-set-pair-done="false" aria-pressed="${record.done === false}" title="未完成">×</button>
             </span>
-            <input data-pair-field="actual" maxlength="80" aria-label="第 ${index + 1} 项完成记录" placeholder="补一句记录，例如：平均每组 9 个" value="${escapeAttr(record.value || "")}" />
+            <input data-pair-field="actual" maxlength="80" aria-label="第 ${index + 1} 项完成记录" placeholder="${escapeAttr(template.actualPlaceholder)}" value="${escapeAttr(record.value || "")}" />
           </div>
           <button type="button" data-remove-week-pair="${index}" aria-label="删除第 ${index + 1} 项">×</button>
         </div>`;
@@ -875,8 +1058,8 @@
     return `
       <section class="week-inline-day week-inline-day--${statusClass}" data-inline-week="${week.id}" data-inline-day="${day.id}">
         <div class="week-paired-text">
-          <label><span>饮食安排</span><input data-day-text-field="dietPlan" maxlength="500" placeholder="今天准备怎么吃？" value="${escapeAttr(day.dietPlan)}" /></label>
-          <label><span>饮食记录</span><input data-day-text-field="dietRecord" maxlength="500" placeholder="实际怎么样" value="${escapeAttr(day.dietRecord)}" /></label>
+          <label><span>${escapeHtml(template.firstFieldLabel)}</span><input data-day-text-field="dietPlan" maxlength="500" placeholder="${escapeAttr(template.firstFieldPlaceholder)}" value="${escapeAttr(day.dietPlan)}" /></label>
+          <label><span>${escapeHtml(template.secondFieldLabel)}</span><input data-day-text-field="dietRecord" maxlength="500" placeholder="${escapeAttr(template.secondFieldPlaceholder)}" value="${escapeAttr(day.dietRecord)}" /></label>
         </div>
 
         <div class="week-pair-table">
@@ -885,9 +1068,9 @@
           <button class="week-add-pair" type="button" data-add-week-pair>＋ 添加一项安排</button>
         </div>
 
-        <div class="week-paired-text week-weight-text">
+        ${template.showWeight ? `<div class="week-paired-text week-weight-text">
           <label><span>今日体重</span><span class="week-weight-input"><input data-day-weight type="number" min="20" max="500" step="0.1" inputmode="decimal" aria-label="今日体重，单位斤" placeholder="例如：105" value="${day.weight === null ? "" : escapeAttr(day.weight)}" /><b>斤</b></span></label>
-        </div>
+        </div>` : ""}
 
         <label class="week-inline-note">
           <span>当天小记</span>
@@ -984,9 +1167,12 @@
     openWeekStickerWeekId = weekId;
     openWeekStickerDayId = dayId;
     selectedWeekSticker = day.sticker || "";
+    const activeDayLabel = getSpaceTemplate(week.spaceId).activeDayLabel;
     $("#weekStickerEyebrow").textContent = `DAY ${day.dayNumber} · ${formatCompactDate(day.date)}`;
     $("#weekStickerDialogTitle").textContent = `设置 Day${day.dayNumber}`;
-    weekStickerForm.elements.dayType.value = day.title === "训练日" ? "训练日" : "休息日";
+    weekStickerForm.elements.dayType.innerHTML = `<option value="${escapeAttr(activeDayLabel)}">${escapeHtml(activeDayLabel)}</option><option value="休息日">休息日</option>`;
+    weekStickerForm.elements.dayType.setAttribute("aria-label", `选择${activeDayLabel}或休息日`);
+    weekStickerForm.elements.dayType.value = day.title === activeDayLabel ? activeDayLabel : "休息日";
     $$('[name="dayStatus"]', weekStickerForm).forEach((input) => { input.checked = input.value === day.status; });
     renderWeekStickerTabs();
     renderWeekStickerGrid();
@@ -999,7 +1185,8 @@
     const day = week?.days.find((item) => item.id === openWeekStickerDayId);
     if (!week || !day) return;
     const formData = new FormData(weekStickerForm);
-    day.title = formData.get("dayType") === "训练日" ? "训练日" : "休息日";
+    const activeDayLabel = getSpaceTemplate(week.spaceId).activeDayLabel;
+    day.title = formData.get("dayType") === activeDayLabel ? activeDayLabel : "休息日";
     day.status = ["这期拉了", "还不错", "好好好"].includes(formData.get("dayStatus")) ? formData.get("dayStatus") : "";
     day.sticker = safeSticker(selectedWeekSticker);
     saveState(false);
@@ -1064,13 +1251,16 @@
 
   function getWeekImportTemplate() {
     const startDate = todayIso();
+    const template = getSpaceTemplate();
     return {
+      space: { id: activeSpaceId, name: template.name },
       weeks: [{
+        spaceId: activeSpaceId,
         startDate,
         title: `${formatMonthDay(startDate)} 开始的一周`,
         days: Array.from({ length: 7 }, (_, index) => ({
           date: addDaysIso(startDate, index),
-          title: index === 0 ? "训练日" : "休息日",
+          title: index === 0 ? template.activeDayLabel : "休息日",
           dietPlan: "",
           dietRecord: "",
           weight: null,
@@ -1128,18 +1318,18 @@
               : payload.startDate
                 ? [payload]
                 : [];
-      imported = rawWeeks.slice(0, 12).map(normalizeWeek);
+      imported = rawWeeks.slice(0, 12).map((week) => normalizeWeek({ ...week, spaceId: activeSpaceId }));
       if (!imported.length) throw new Error("missing weeks");
     } catch (error) {
       showToast("没有找到可导入的周计划 JSON");
       return;
     }
 
-    const duplicates = imported.filter((week) => state.weeks.some((item) => item.startDate === week.startDate));
+    const duplicates = imported.filter((week) => state.weeks.some((item) => item.spaceId === activeSpaceId && item.startDate === week.startDate));
     if (duplicates.length && !window.confirm(`有 ${duplicates.length} 个开始日期相同的计划。继续会用导入内容更新它们，确定吗？`)) return;
 
     imported.forEach((week) => {
-      const existingIndex = state.weeks.findIndex((item) => item.startDate === week.startDate);
+      const existingIndex = state.weeks.findIndex((item) => item.spaceId === activeSpaceId && item.startDate === week.startDate);
       if (existingIndex >= 0) {
         week.id = state.weeks[existingIndex].id;
         state.weeks[existingIndex] = week;
@@ -1155,13 +1345,15 @@
     weekMonthFilter = selectedImportedWeek?.startDate.slice(5, 7) || "";
     saveState(false);
     weekImportDialog.close();
+    renderSpaceSwitcher();
     renderWeeks();
     showToast(`${imported.length} 周计划已经导入`);
   }
 
   function buildWeekReportText(week) {
+    const template = getSpaceTemplate(week.spaceId);
     const lines = [
-      "# Asoul 一个魂健康周报",
+      `# Asoul 一个魂${template.name}周报`,
       "",
       `- 周期：${formatDateRange(week.startDate)}`,
     ];
@@ -1171,9 +1363,9 @@
       const actualItems = day.records.filter((item) => item.done !== null || item.value);
       lines.push("", "", `## Day${day.dayNumber} · ${formatCompactDate(day.date)} · ${day.title}`);
       lines.push(`- 完成状态：${day.status || "未选择"}`);
-      lines.push(`- 体重：${formatWeight(day.weight)}`);
-      lines.push(`- 饮食安排：${day.dietPlan || "未填写"}`);
-      lines.push(`- 饮食记录：${day.dietRecord || "未填写"}`);
+      if (template.showWeight) lines.push(`- 体重：${formatWeight(day.weight)}`);
+      lines.push(`- ${template.firstFieldLabel}：${day.dietPlan || "未填写"}`);
+      lines.push(`- ${template.secondFieldLabel}：${day.dietRecord || "未填写"}`);
       lines.push("");
       lines.push("- 计划安排：");
       lines.push(...(plannedItems.length ? plannedItems.map((item) => `  - ${item.name}${item.value ? `：${item.value}` : ""}`) : ["  - 无"]));
@@ -1189,6 +1381,7 @@
   function openWeeklyReport(weekId) {
     const week = findWeek(weekId);
     if (!week) return;
+    const template = getSpaceTemplate(week.spaceId);
     const statusSummary = week.days.reduce((summary, day) => {
       const key = day.status || "未设置";
       summary[key] = (summary[key] || 0) + 1;
@@ -1200,7 +1393,7 @@
     weeklyReportContent.innerHTML = `
       <header class="weekly-report-capture-head">
         <div>
-          <span>ASOUL HEALTH WEEKLY</span>
+          <span>ASOUL ${escapeHtml(template.id.toUpperCase())} WEEKLY</span>
           <h3>${escapeHtml(week.title)}</h3>
           <p>${escapeHtml(formatDateRange(week.startDate))}</p>
         </div>
@@ -1213,12 +1406,13 @@
         ${["好好好", "还不错", "这期拉了", "未设置"].map((status) => `<span class="weekly-report-status weekly-report-status--${status === "好好好" ? "great" : status === "还不错" ? "okay" : status === "这期拉了" ? "missed" : "pending"}">${escapeHtml(status)} ${statusSummary[status] || 0}</span>`).join("")}
       </div>
       <div class="weekly-report-days">
-        ${week.days.map((day) => renderWeeklyReportDay(day)).join("")}
+        ${week.days.map((day) => renderWeeklyReportDay(day, week.spaceId)).join("")}
       </div>`;
     weeklyReportDialog.showModal();
   }
 
-  function renderWeeklyReportDay(day) {
+  function renderWeeklyReportDay(day, spaceId = "health") {
+    const template = getSpaceTemplate(spaceId);
     const rowCount = Math.max(day.planItems.length, day.records.length);
     const entries = Array.from({ length: rowCount }, (_, index) => {
       const plan = day.planItems[index] || {};
@@ -1247,8 +1441,8 @@
             return `<li><b class="is-${markClass}">${mark}</b><span>${escapeHtml(item.name || "记录")}</span>${item.value ? `<small>${escapeHtml(item.value)}</small>` : ""}</li>`;
           }).join("") : "<li class=\"is-empty\">还没有安排</li>"}
         </ul>
-        ${day.dietRecord ? `<p class="weekly-report-diet"><b>饮食</b>${escapeHtml(day.dietRecord)}</p>` : ""}
-        ${day.weight !== null ? `<p class="weekly-report-weight"><b>体重</b><strong>${escapeHtml(formatWeight(day.weight))}</strong></p>` : ""}
+        ${day.dietRecord ? `<p class="weekly-report-diet"><b>${escapeHtml(template.secondFieldLabel)}</b>${escapeHtml(day.dietRecord)}</p>` : ""}
+        ${template.showWeight && day.weight !== null ? `<p class="weekly-report-weight"><b>体重</b><strong>${escapeHtml(formatWeight(day.weight))}</strong></p>` : ""}
         ${day.note ? `<p class="weekly-report-note">${escapeHtml(day.note)}</p>` : ""}
       </article>`;
   }
@@ -1278,6 +1472,8 @@
     chartForm.reset();
     seriesEditor.innerHTML = "";
     $("#chartDialogTitle").textContent = chartId ? "修改折线图" : "添加一张折线图";
+    const template = getSpaceTemplate(chartId ? findChart(chartId)?.spaceId : activeSpaceId);
+    chartForm.elements.title.placeholder = `${template.name}记录图表，例如：${template.defaultSeries.name.replace(/\s*\/.*$/, "")}变化`;
 
     if (chartId) {
       const chart = findChart(chartId);
@@ -1286,7 +1482,7 @@
       chartForm.elements.xLabel.value = chart.xLabel;
       chart.series.forEach((item) => addSeriesEditorRow(item));
     } else {
-      addSeriesEditorRow({ name: "体重 / 斤", color: ALLOWED_COLORS[0] });
+      addSeriesEditorRow(getSpaceTemplate().defaultSeries);
     }
 
     chartDialog.showModal();
@@ -1408,6 +1604,7 @@
     } else {
       state.charts.unshift({
         id: makeId(),
+        spaceId: activeSpaceId,
         ...next,
         nodes: [],
         createdAt: Date.now(),
@@ -1422,8 +1619,9 @@
 
   function renderCharts() {
     captureChartScrollPositions();
-    emptyState.hidden = state.charts.length > 0;
-    chartsGrid.innerHTML = state.charts.map(renderChartCard).join("");
+    const spaceCharts = getActiveSpaceCharts();
+    emptyState.hidden = spaceCharts.length > 0;
+    chartsGrid.innerHTML = spaceCharts.map((chart, index) => renderChartCard(chart, index, spaceCharts.length)).join("");
 
     $$("[data-add-node]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => openNodeDialog(button.dataset.addNode));
@@ -1456,7 +1654,7 @@
     restoreChartScrollPositions();
   }
 
-  function renderChartCard(chart, chartIndex) {
+  function renderChartCard(chart, chartIndex, chartCount) {
     const selectedId = selectedNodeByChart.get(chart.id);
     const selectedNode = chart.nodes.find((node) => node.id === selectedId) || chart.nodes.at(-1) || null;
     if (selectedNode) selectedNodeByChart.set(chart.id, selectedNode.id);
@@ -1503,7 +1701,7 @@
             <button class="chart-action chart-action--add" type="button" data-add-node="${chart.id}">＋ 新节点</button>
             <span class="chart-order" aria-label="调整图表排序">
               <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="-1" aria-label="曲线图上移"${chartIndex === 0 ? " disabled" : ""}>↑ 曲线图上移</button>
-              <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === state.charts.length - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
+              <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === chartCount - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
             </span>
             <span class="chart-manage" aria-label="图表管理">
               <button class="chart-action chart-action--settings" type="button" data-edit-chart="${chart.id}"><span aria-hidden="true">⚙</span> 图表设置</button>
@@ -1824,10 +2022,13 @@
   }
 
   function moveChart(chartId, direction) {
-    const index = state.charts.findIndex((chart) => chart.id === chartId);
+    const spaceCharts = getActiveSpaceCharts();
+    const index = spaceCharts.findIndex((chart) => chart.id === chartId);
     const target = index + direction;
-    if (index < 0 || target < 0 || target >= state.charts.length) return;
-    [state.charts[index], state.charts[target]] = [state.charts[target], state.charts[index]];
+    if (index < 0 || target < 0 || target >= spaceCharts.length) return;
+    const sourceIndex = state.charts.findIndex((chart) => chart.id === spaceCharts[index].id);
+    const targetIndex = state.charts.findIndex((chart) => chart.id === spaceCharts[target].id);
+    [state.charts[sourceIndex], state.charts[targetIndex]] = [state.charts[targetIndex], state.charts[sourceIndex]];
     saveState(false);
     renderCharts();
     showToast(direction < 0 ? "图表已上移" : "图表已下移");
@@ -2053,7 +2254,7 @@
   }
 
   function exportJokesFile() {
-    const header = `/* 从 Asoul 一个魂健康日记导出，可继续在网页中管理。 */\n`;
+    const header = `/* 从 Asoul 一个魂生活日记导出，可继续在网页中管理。 */\n`;
     const source = `${header}window.ASOUL_COLD_JOKES = ${JSON.stringify(collectJokeEditorRows(false), null, 2)};\n`;
     downloadTextFile("冷笑话.js", source, "text/javascript;charset=utf-8");
     showToast("新的冷笑话.js 已下载");
@@ -2086,7 +2287,7 @@
 
   function exportBackup() {
     const backup = {
-      backupType: "asoul-health-diary",
+      backupType: "asoul-life-diary",
       exportedAt: new Date().toISOString(),
       ...state,
       jokes: coldJokes,
@@ -2096,7 +2297,7 @@
     const anchor = document.createElement("a");
     const date = todayIso();
     anchor.href = url;
-    anchor.download = `Asoul健康日记-备份-${date}.json`;
+    anchor.download = `Asoul生活日记-备份-${date}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -2142,16 +2343,19 @@
       chartScrollById.clear();
       hydrateProfileForm();
       renderProfileAvatar();
-      selectedWeekId = state.weeks.at(-1)?.id || null;
-      if (state.weeks.length) weekYearFilter = state.weeks.at(-1).startDate.slice(0, 4);
-      weekMonthFilter = state.weeks.at(-1)?.startDate.slice(5, 7) || "";
+      activeSpaceId = safeSpaceId(state.activeSpaceId);
+      const activeWeeks = getActiveSpaceWeeks();
+      selectedWeekId = activeWeeks.at(-1)?.id || null;
+      if (activeWeeks.length) weekYearFilter = activeWeeks.at(-1).startDate.slice(0, 4);
+      weekMonthFilter = activeWeeks.at(-1)?.startDate.slice(5, 7) || "";
+      renderSpaceSwitcher();
       renderWeeks();
       renderCharts();
-      showToast("健康日记已恢复");
+      showToast("生活日记已恢复");
     } catch (error) {
       showToast(error?.code === DATA_MODEL.UNSUPPORTED_VERSION_CODE
         ? "这个备份来自更新版本，请使用新版日记恢复"
-        : "这个文件不是有效的健康日记备份");
+        : "这个文件不是有效的生活日记备份");
     } finally {
       event.target.value = "";
     }
@@ -2159,7 +2363,7 @@
 
   function isDiaryBackupPayload(candidate) {
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return false;
-    if (candidate.backupType && candidate.backupType !== "asoul-health-diary") return false;
+    if (candidate.backupType && !["asoul-health-diary", "asoul-life-diary"].includes(candidate.backupType)) return false;
     const hasProfile = candidate.profile && typeof candidate.profile === "object" && !Array.isArray(candidate.profile);
     const hasCharts = Array.isArray(candidate.charts);
     const hasWeeks = candidate.weeks === undefined || Array.isArray(candidate.weeks) || Array.isArray(candidate.weeklyPlans);

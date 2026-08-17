@@ -1,11 +1,13 @@
 param(
-  [string]$Version = "v1.1.0"
+  [string]$Version = "v2.0.0"
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$releaseRoot = Join-Path $projectRoot "发布"
-$packageName = "Asoul一个魂健康日记-$Version"
+$releaseFolderName = -join ([char[]]@(0x53D1, 0x5E03))
+$lifeDiaryName = "Asoul" + (-join ([char[]]@(0x4E00, 0x4E2A, 0x9B42, 0x751F, 0x6D3B, 0x65E5, 0x8BB0)))
+$releaseRoot = Join-Path $projectRoot $releaseFolderName
+$packageName = "$lifeDiaryName-$Version"
 $packageDir = Join-Path $releaseRoot $packageName
 $zipPath = "$packageDir.zip"
 
@@ -13,32 +15,51 @@ if ((Test-Path -LiteralPath $packageDir) -or (Test-Path -LiteralPath $zipPath)) 
   throw "Release already exists: $packageName"
 }
 
-$coreFiles = @(
-  "Asoul一个魂健康日记.html",
-  "Asoul一个魂健康日记.cmd",
-  "app.js",
-  "data-model.js",
-  "styles.css",
-  "weekly-planner.css",
-  "weekly-polish.css",
-  "stickers.js",
-  "冷笑话.js",
-  "使用说明.md"
+$corePaths = @(
+  (Join-Path $projectRoot "app.js"),
+  (Join-Path $projectRoot "data-model.js"),
+  (Join-Path $projectRoot "styles.css"),
+  (Join-Path $projectRoot "weekly-planner.css"),
+  (Join-Path $projectRoot "weekly-polish.css"),
+  (Join-Path $projectRoot "stickers.js")
 )
 
-New-Item -ItemType Directory -Path $packageDir | Out-Null
-foreach ($file in $coreFiles) {
-  $source = Join-Path $projectRoot $file
-  if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Missing release file: $source" }
-  Copy-Item -LiteralPath $source -Destination $packageDir
+$entryHtml = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.html" | Select-Object -First 1
+$launcher = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.cmd" | Select-Object -First 1
+$guide = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.md" | Select-Object -First 1
+$jokes = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.js" |
+  Where-Object { $_.Name -notin @("app.js", "data-model.js", "stickers.js") } |
+  Select-Object -First 1
+
+foreach ($required in @($entryHtml, $launcher, $guide, $jokes)) {
+  if ($null -eq $required) { throw "Missing release entry file" }
+  $corePaths += $required.FullName
 }
 
-$targetImageRoot = Join-Path $packageDir "图片"
+foreach ($path in $corePaths) {
+  if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing release file: $path" }
+}
+
+$logo = Get-ChildItem -LiteralPath $projectRoot -File -Filter "Asoul.png" -Recurse |
+  Where-Object { $_.FullName -notlike "$releaseRoot*" } |
+  Select-Object -First 1
+if ($null -eq $logo) { throw "Could not locate the image asset root" }
+$imageRoot = $logo.Directory.Parent.FullName
+$imageFolders = @(Get-ChildItem -LiteralPath $imageRoot -Directory)
+if ($imageFolders.Count -ne 4) {
+  throw "Expected exactly four lightweight image folders, found $($imageFolders.Count)"
+}
+
+New-Item -ItemType Directory -Path $packageDir | Out-Null
+foreach ($path in $corePaths) {
+  Copy-Item -LiteralPath $path -Destination $packageDir
+}
+
+$targetImageRoot = Join-Path $packageDir (Split-Path -Leaf $imageRoot)
 New-Item -ItemType Directory -Path $targetImageRoot | Out-Null
-foreach ($folder in @("贝拉", "嘉然", "乃琳", "其他图片")) {
-  Copy-Item -LiteralPath (Join-Path $projectRoot "图片\$folder") -Destination $targetImageRoot -Recurse
+foreach ($folder in $imageFolders) {
+  Copy-Item -LiteralPath $folder.FullName -Destination $targetImageRoot -Recurse
 }
 
 Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -CompressionLevel Optimal
 Write-Output "Created $zipPath"
-

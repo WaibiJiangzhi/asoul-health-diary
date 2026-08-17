@@ -7,9 +7,9 @@
     <link rel="icon" href="图片/其他图片/Asoul.png" />
     <meta
       name="description"
-      content="Asoul 一个魂健康日记——在本地记录身体与生活的每一条变化。"
+      content="Asoul 一个魂生活日记——在本地记录健康、考研与工作的每一步。"
     />
-    <title>Asoul 一个魂健康日记</title>
+    <title>Asoul 一个魂生活日记</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="weekly-planner.css" />
     <link rel="stylesheet" href="weekly-polish.css" />
@@ -23,8 +23,8 @@
         <img src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
-          <strong>一个魂健康日记</strong>
-          <small>把每一点变化，都好好记下来</small>
+          <strong>一个魂生活日记</strong>
+          <small>健康、考研与工作，都好好记下来</small>
         </span>
       </a>
       <div class="header-tools">
@@ -44,10 +44,10 @@
           <span class="hero-spark hero-spark--two" aria-hidden="true">♡</span>
 
           <div class="hero-copy">
-            <span class="hero-kicker">枝江健康记录处 · FOR 一个魂</span>
+            <span class="hero-kicker">枝江生活记录处 · FOR 一个魂</span>
             <img class="hero-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
             <h1 id="profileTitle">今天过得<br /><em>怎么样呀~</em></h1>
-            <p>给身体和心情留个坐标。一个魂的每一点小变化，都值得<br />被认真看见。</p>
+            <p>给生活里的目标留个坐标。身体、学习和工作上的每一点变化，都值得<br />被认真看见。</p>
             <a class="hero-jump" href="#weeklyTrackStart">开始记录 <span aria-hidden="true">↓</span></a>
           </div>
 
@@ -81,7 +81,7 @@
             </div>
             <div>
               <span class="profile-tag">一个魂个人档案</span>
-              <strong>我的<br />健康档案</strong>
+              <strong>我的<br />生活档案</strong>
               <small>点击头像，从表情包里挑一个</small>
             </div>
           </div>
@@ -114,12 +114,21 @@
         </div>
       </section>
 
+      <section class="space-section" aria-labelledby="spaceSectionTitle">
+        <div class="space-section-copy">
+          <span class="eyebrow">MY LIFE SPACES</span>
+          <h2 id="spaceSectionTitle">今天，想推进哪一条生活线？</h2>
+          <p>三个空间各自保存周计划、打卡记录、周报与折线图，互不混在一起。</p>
+        </div>
+        <div class="space-switcher" id="spaceSwitcher" role="group" aria-label="选择记录空间"></div>
+      </section>
+
       <section class="weekly-section" id="weeklySection" aria-labelledby="weeklyTitle">
         <div class="weekly-heading" id="weeklyTrackStart">
           <div>
-            <span class="eyebrow">一个魂的每周日程安排</span>
+            <span class="eyebrow" id="weeklyEyebrow">一个魂的每周日程安排</span>
             <h2 id="weeklyTitle">这一周，按自己的节奏来</h2>
-            <p>计划写在左边，完成情况记在右边。到周末打开周报看一眼，下周安排就有依据啦。</p>
+            <p id="weeklyDescription">计划写在左边，完成情况记在右边。到周末打开周报看一眼，下周安排就有依据啦。</p>
           </div>
           <div class="weekly-heading-actions">
             <a class="secondary-button weekly-chart-jump" href="#chartsTrackStart">曲线图日记 <span aria-hidden="true">↓</span></a>
@@ -154,7 +163,7 @@
             <span class="week-empty-icon" aria-hidden="true">✦</span>
             <div>
               <h3>先定下这一周的起点吧</h3>
-              <p>选择开始日期后，会自动准备 Day1 到 Day7。每天都能分别填写训练计划、实际完成、饮食和小笔记。</p>
+              <p id="weekEmptyDescription">选择开始日期后，会自动准备 Day1 到 Day7。每天都能分别填写计划、完成情况和小笔记。</p>
             </div>
             <button class="secondary-button" id="emptyAddWeekButton" type="button">＋ 新建我的第一周</button>
           </div>
@@ -166,7 +175,7 @@
       <section class="charts-section" id="chartsSection" aria-labelledby="chartsTitle">
         <div class="section-heading" id="chartsTrackStart">
           <div>
-            <span class="eyebrow">一个魂的状态轨迹</span>
+            <span class="eyebrow" id="chartsEyebrow">一个魂的状态轨迹</span>
             <h2 id="chartsTitle">今天，想记录什么？</h2>
             <div class="joke-card" aria-live="polite">
               <div class="joke-card-head">
@@ -198,7 +207,7 @@
             <span class="empty-dot empty-dot--three"></span>
           </div>
           <h3>从第一条轨迹开始吧</h3>
-          <p>例如：横轴写“日期”，纵轴写“体重 / 斤”，明天再来添加一个新节点。</p>
+          <p id="emptyChartExample">例如：横轴写“日期”，纵轴写“体重 / 斤”，明天再来添加一个新节点。</p>
           <button class="secondary-button" id="emptyAddButton" type="button">
             <span aria-hidden="true">＋</span> 新建我的第一张图
           </button>
@@ -221,7 +230,7 @@
     </main>
 
     <footer>
-      <span>Asoul 一个魂健康日记</span>
+      <span>Asoul 一个魂生活日记</span>
       <span>你的数据不会离开这台设备。</span>
       <span>作者：就一枝匠纸 · AI 生成</span>
     </footer>
@@ -238,10 +247,15 @@
 
         <div class="preset-row" aria-label="快速填写示例">
           <span>快速开始</span>
-          <button type="button" data-preset="weight">体重记录</button>
-          <button type="button" data-preset="run">跑步记录</button>
-          <button type="button" data-preset="pushups">俯卧撑数量</button>
-          <button type="button" data-preset="mood">心情指数</button>
+          <button type="button" data-preset="weight" data-preset-space="health">体重记录</button>
+          <button type="button" data-preset="run" data-preset-space="health">跑步记录</button>
+          <button type="button" data-preset="pushups" data-preset-space="health">俯卧撑数量</button>
+          <button type="button" data-preset="mood" data-preset-space="health">心情指数</button>
+          <button type="button" data-preset="studyHours" data-preset-space="study" hidden>学习时长</button>
+          <button type="button" data-preset="questions" data-preset-space="study" hidden>刷题记录</button>
+          <button type="button" data-preset="score" data-preset-space="study" hidden>模考成绩</button>
+          <button type="button" data-preset="workHours" data-preset-space="work" hidden>深度工作</button>
+          <button type="button" data-preset="completedTasks" data-preset-space="work" hidden>完成任务</button>
         </div>
 
         <div class="dialog-fields">
@@ -350,11 +364,11 @@
           </div>
           <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
         </div>
-        <p class="avatar-dialog-copy">训练或休息、完成状态和表情，都在这里一起设置。</p>
+        <p class="avatar-dialog-copy">今天是否安排任务、完成状态和表情，都在这里一起设置。</p>
         <div class="week-day-dialog-settings">
           <label class="week-day-dialog-type">
             <span>今天是</span>
-            <select name="dayType" aria-label="选择训练日或休息日">
+            <select name="dayType" aria-label="选择活动日或休息日">
               <option value="训练日">训练日</option>
               <option value="休息日">休息日</option>
             </select>
@@ -393,7 +407,7 @@
         </div>
         <div class="week-import-guide">
           <strong>1. 先点“填入 JSON 模板”，把下方出现的全部文本复制给 AI。</strong>
-          <strong>2. 再告诉 AI：你的身体信息与目标（如体重、身高、年龄、减脂/增肌目标）、近期身体与训练记录（如跑步配速、力量水平）、每周可训练天数，以及任何不适或限制。</strong>
+          <strong>2. 再告诉 AI：你当前空间的目标、已有进度、每天可投入的时间，以及需要避开的限制。</strong>
           <strong>3. 请 AI 严格按模板生成“下一周计划 JSON”；拿到后可选择保存好的 JSON 文件，或把完整 JSON 内容直接粘贴到下方，再点导入。</strong>
         </div>
         <div class="week-import-toolbar">

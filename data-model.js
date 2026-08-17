@@ -1,9 +1,14 @@
 (() => {
   "use strict";
 
-  const CURRENT_STATE_VERSION = 4;
+  const CURRENT_STATE_VERSION = 5;
   const MIN_SUPPORTED_STATE_VERSION = 1;
   const UNSUPPORTED_VERSION_CODE = "ASOUL_UNSUPPORTED_STATE_VERSION";
+  const DEFAULT_SPACES = Object.freeze([
+    Object.freeze({ id: "health", type: "health", name: "健康", icon: "♡" }),
+    Object.freeze({ id: "study", type: "study", name: "考研", icon: "✎" }),
+    Object.freeze({ id: "work", type: "work", name: "工作", icon: "▣" }),
+  ]);
 
   const clone = (value) => {
     if (typeof structuredClone === "function") return structuredClone(value);
@@ -29,6 +34,18 @@
     [3, (state) => ({
       ...state,
       version: 4,
+    })],
+    [4, (state) => ({
+      ...state,
+      spaces: DEFAULT_SPACES.map((space) => ({ ...space })),
+      activeSpaceId: "health",
+      weeks: Array.isArray(state.weeks)
+        ? state.weeks.map((week) => ({ ...week, spaceId: "health" }))
+        : [],
+      charts: Array.isArray(state.charts)
+        ? state.charts.map((chart) => ({ ...chart, spaceId: "health" }))
+        : [],
+      version: 5,
     })],
   ]);
 
@@ -66,7 +83,7 @@
     CURRENT_STATE_VERSION,
     MIN_SUPPORTED_STATE_VERSION,
     UNSUPPORTED_VERSION_CODE,
+    DEFAULT_SPACES,
     migrateState,
   });
 })();
-
