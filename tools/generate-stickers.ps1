@@ -15,13 +15,23 @@ foreach ($packName in $packNames) {
     throw "Missing sticker pack directory: $packRoot"
   }
 
-  $packs[$packName] = @(
-    Get-ChildItem -LiteralPath $packRoot -Recurse -File |
-      Where-Object { $_.Extension.ToLowerInvariant() -in $allowedExtensions } |
-      Sort-Object FullName |
-      ForEach-Object {
-        $_.FullName.Substring($projectRoot.Length + 1).Replace("\", "/")
+  $stickerRows = Get-ChildItem -LiteralPath $packRoot -Recurse -File |
+    Where-Object { $_.Extension.ToLowerInvariant() -in $allowedExtensions } |
+    ForEach-Object {
+      $withinPack = $_.FullName.Substring($packRoot.Length + 1).Replace("\", "/")
+      $topFolder = $withinPack.Split("/")[0]
+      $folderOrder = if ($topFolder -match '^(\d+)-') { [int]$Matches[1] } else { 0 }
+      [pscustomobject]@{
+        FolderOrder = $folderOrder
+        WithinPack = $withinPack
+        ProjectPath = $_.FullName.Substring($projectRoot.Length + 1).Replace("\", "/")
       }
+    }
+
+  $packs[$packName] = @(
+    $stickerRows |
+      Sort-Object @{ Expression = "FolderOrder"; Descending = $true }, @{ Expression = "WithinPack"; Descending = $false } |
+      ForEach-Object { $_.ProjectPath }
   )
 }
 
@@ -32,4 +42,3 @@ $target = if ([System.IO.Path]::IsPathRooted($OutputFile)) { $OutputFile } else 
 
 $total = ($packs.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
 Write-Output "Generated $target with $total sticker paths."
-

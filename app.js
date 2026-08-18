@@ -2,7 +2,7 @@
   "use strict";
 
   const DATA_MODEL = globalThis.ASOUL_DATA_MODEL || {
-    CURRENT_STATE_VERSION: 6,
+    CURRENT_STATE_VERSION: 9,
     UNSUPPORTED_VERSION_CODE: "ASOUL_UNSUPPORTED_STATE_VERSION",
     DEFAULT_SPACES: [
       { id: "health", type: "health", templateId: "health", name: "健康", icon: "♡" },
@@ -28,10 +28,13 @@
   ];
   const CHART_ZOOM_LEVELS = [1, 2, 4, 8, 12];
   const MAX_SPACES = 8;
+  const MAX_GOALS = 4;
+  const MAX_PROGRESS_GOALS = 6;
   const WEEK_ITEMS_NOT_TRACKED = new Set(["跑前热身", "跑后拉伸"]);
   const DEFAULT_SPACES = DATA_MODEL.DEFAULT_SPACES.map((space) => ({
     ...space,
-    aiContext: { goal: "", current: "", availability: "", constraints: "" },
+    iconSticker: "",
+    aiContext: { profile: "", goal: "", current: "", availability: "", constraints: "" },
   }));
   const SPACE_TEMPLATES = {
     health: {
@@ -53,6 +56,7 @@
       chartEyebrow: "一个魂的健康轨迹",
       chartHeading: "身体状态，有怎样的变化？",
       emptyChartExample: "例如：横轴写“日期”，指标写“体重 / 斤”，明天再来添加一个新节点。",
+      aiContextExample: "例如：我身高 175cm、体重 70kg，之前每周跑步 2 次；这周想减脂并恢复力量训练。工作日晚上有 45 分钟，周末时间更多。不吃香菜，膝盖偶尔不舒服，希望饮食按拳头估算、任务不要排太满。",
       defaultSeries: { name: "体重 / 斤", color: "#E799B0" },
     },
     study: {
@@ -74,6 +78,7 @@
       chartEyebrow: "一个魂的备考趋势",
       chartHeading: "努力正在怎样积累？",
       emptyChartExample: "例如：横轴写“日期”，指标写“有效学习 / 小时”或“正确率 / %”。",
+      aiContextExample: "例如：我准备考研，英语阅读基础一般，专业课刚开始第一轮；这周想完成 3 章并保持每天背词。工作日可学 2 小时，周末 5 小时，周三晚上没空，喜欢上午做难题。",
       defaultSeries: { name: "有效学习 / 小时", color: "#8f7aea" },
     },
     work: {
@@ -95,6 +100,7 @@
       chartEyebrow: "一个魂的工作趋势",
       chartHeading: "这一阶段，产出与节奏如何？",
       emptyChartExample: "例如：横轴写“日期”，指标写“深度工作 / 小时”或“完成任务 / 项”。",
+      aiContextExample: "例如：我是产品经理，本周要完成需求文档并在周五前评审；上午适合深度工作，周二下午开会，周四要出差。希望每天最多安排 3 件重点，不把临时沟通排进固定计划。",
       defaultSeries: { name: "深度工作 / 小时", color: "#4f8edb" },
     },
     custom: {
@@ -116,6 +122,7 @@
       chartEyebrow: "一个魂的变化轨迹",
       chartHeading: "坚持正在怎样积累？",
       emptyChartExample: "例如：横轴写“日期”，指标写“投入时间 / 分钟”或“完成数量 / 项”。",
+      aiContextExample: "例如：我目前的基础和进度是……，这周想达成……；每天大约能投入……，我喜欢……，需要避开……，希望每天任务量……。",
       defaultSeries: { name: "投入时间 / 分钟", color: "#a77957" },
     },
   };
@@ -126,10 +133,12 @@
     profile: {
       name: "",
       gender: "",
-      height: "",
       age: "",
+      signature: "",
       avatar: "",
     },
+    goals: [],
+    progressGoals: [],
     weeks: [],
     periods: [],
     charts: [],
@@ -137,19 +146,19 @@
 
   const FALLBACK_STICKER_PACKS = {
     贝拉: [
-      "图片/贝拉/2025贝拉的冒险/[2025贝拉的冒险_贝拉驾到].jpg",
-      "图片/贝拉/2025贝拉的冒险/[2025贝拉的冒险_冰山美人].jpg",
-      "图片/贝拉/2025贝拉的冒险/[2025贝拉的冒险_挥拳].jpg",
+      "图片/贝拉/5-2026贝拉的冒险/[2026贝拉的冒险_败北].jpg",
+      "图片/贝拉/5-2026贝拉的冒险/[2026贝拉的冒险_比心].jpg",
+      "图片/贝拉/5-2026贝拉的冒险/[2026贝拉的冒险_不解].jpg",
     ],
     嘉然: [
-      "图片/嘉然/2025嘉然的画册/[2025嘉然的画册_抱头蹲防].jpg",
-      "图片/嘉然/2025嘉然的画册/[2025嘉然的画册_告白].jpg",
-      "图片/嘉然/2025嘉然的画册/[2025嘉然的画册_哈哈].jpg",
+      "图片/嘉然/5-2026嘉然的画册动态表情包/[2026嘉然的画册动态表情包_黯然离场].gif",
+      "图片/嘉然/5-2026嘉然的画册动态表情包/[2026嘉然的画册动态表情包_邦邦两拳].gif",
+      "图片/嘉然/5-2026嘉然的画册动态表情包/[2026嘉然的画册动态表情包_扶我下].gif",
     ],
     乃琳: [
-      "图片/乃琳/2025乃琳的酒馆/[2025乃琳的酒馆_干杯].jpg",
-      "图片/乃琳/2025乃琳的酒馆/[2025乃琳的酒馆_可爱].jpg",
-      "图片/乃琳/2025乃琳的酒馆/[2025乃琳的酒馆_耶].jpg",
+      "图片/乃琳/4-2025乃琳的酒馆/[2025乃琳的酒馆_啊？].jpg",
+      "图片/乃琳/4-2025乃琳的酒馆/[2025乃琳的酒馆_干杯].jpg",
+      "图片/乃琳/4-2025乃琳的酒馆/[2025乃琳的酒馆_可爱].jpg",
     ],
   };
   const STICKER_PACKS = globalThis.ASOUL_STICKER_PACKS || FALLBACK_STICKER_PACKS;
@@ -233,10 +242,15 @@
   let activeSpaceId = safeSpaceId(state.activeSpaceId);
   let editingChartId = null;
   let editingNodeId = null;
+  let editingSpaceId = null;
+  let editingGoalId = null;
+  let selectedGoalId = state.goals[0]?.id || null;
+  let editingProgressGoalId = null;
+  let selectedProgressGoalId = state.progressGoals[0]?.id || null;
   let activeNodeChartId = null;
   const initialSpaceWeeks = state.weeks.filter((week) => week.spaceId === activeSpaceId);
   const initialSpacePeriods = state.periods.filter((period) => period.spaceId === activeSpaceId);
-  let selectedWeekId = initialSpaceWeeks.at(-1)?.id || null;
+  let selectedWeekId = pickRelevantWeek(initialSpaceWeeks)?.id || null;
   let weekYearFilter = initialSpacePeriods.at(-1)?.yearMonth.slice(0, 4) || String(new Date().getFullYear());
   let weekMonthFilter = initialSpacePeriods.at(-1)?.yearMonth.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
   let openWeekStickerWeekId = null;
@@ -248,6 +262,12 @@
   let selectedWeekSticker = "";
   let activeAvatarPack = "嘉然";
   let pendingAvatarSticker = "";
+  let activeSpaceIconPack = "嘉然";
+  let pendingSpaceIconSticker = "";
+  let activeGoalStickerPack = "嘉然";
+  let pendingGoalSticker = "";
+  let activeProgressGoalStickerPack = "嘉然";
+  let pendingProgressGoalSticker = "";
   let coldJokes = loadJokes();
   let currentJokeIndex = -1;
   let weekSoundEnabled = loadWeekSoundPreference();
@@ -259,11 +279,26 @@
   const chartScrollById = new Map();
   let saveTimer = null;
   let toastTimer = null;
+  let deferredInstallPrompt = null;
+  let waitingServiceWorker = null;
+  const canvasImageCache = new Map();
 
   const profileForm = $("#profileForm");
+  const goalList = $("#goalList");
+  const goalDialog = $("#goalDialog");
+  const goalForm = $("#goalForm");
+  const progressGoalList = $("#progressGoalList");
+  const progressGoalDialog = $("#progressGoalDialog");
+  const progressGoalForm = $("#progressGoalForm");
+  const progressGoalStickerTabs = $("#progressGoalStickerTabs");
+  const progressGoalStickerGrid = $("#progressGoalStickerGrid");
+  const goalStickerTabs = $("#goalStickerTabs");
+  const goalStickerGrid = $("#goalStickerGrid");
   const spaceSwitcher = $("#spaceSwitcher");
   const spaceDialog = $("#spaceDialog");
   const spaceForm = $("#spaceForm");
+  const spaceIconStickerTabs = $("#spaceIconStickerTabs");
+  const spaceIconStickerGrid = $("#spaceIconStickerGrid");
   const avatarPreview = $("#avatarPreview");
   const avatarPlaceholder = $("#avatarPlaceholder");
   const autosaveStatus = $("#autosaveStatus");
@@ -307,6 +342,8 @@
   function init() {
     hydrateProfileForm();
     renderProfileAvatar();
+    renderGoals();
+    renderProgressGoals();
     showRandomJoke();
     renderSpaceSwitcher();
     renderWeeks();
@@ -314,6 +351,9 @@
     renderBackupStatus();
     bindEvents();
     renderWeekSoundToggle();
+    initSectionNavigation();
+    initPwa();
+    preloadCanvasAssets();
 
     if (stateLoadIssue) {
       autosaveStatus.textContent = stateLoadIssue;
@@ -327,11 +367,25 @@
   function bindEvents() {
     $("#addChartButton").addEventListener("click", () => openChartDialog());
     $("#emptyAddButton").addEventListener("click", () => openChartDialog());
-    $("#addSpaceButton").addEventListener("click", openSpaceDialog);
+    $("#addGoalButton").addEventListener("click", () => openGoalDialog());
+    $("#editGoalButton").addEventListener("click", () => selectedGoalId && openGoalDialog(selectedGoalId));
+    $("#deleteGoalButton").addEventListener("click", deleteSelectedGoal);
+    $("#moveGoalEarlierButton").addEventListener("click", () => moveSelectedGoal(-1));
+    $("#moveGoalLaterButton").addEventListener("click", () => moveSelectedGoal(1));
+    $("#addProgressGoalButton").addEventListener("click", () => openProgressGoalDialog());
+    $("#editProgressGoalButton").addEventListener("click", () => selectedProgressGoalId && openProgressGoalDialog(selectedProgressGoalId));
+    $("#deleteProgressGoalButton").addEventListener("click", deleteSelectedProgressGoal);
+    $("#moveProgressGoalEarlierButton").addEventListener("click", () => moveSelectedProgressGoal(-1));
+    $("#moveProgressGoalLaterButton").addEventListener("click", () => moveSelectedProgressGoal(1));
+    $("#addSpaceButton").addEventListener("click", () => openSpaceDialog());
+    $("#editSpaceButton").addEventListener("click", () => openSpaceDialog(activeSpaceId));
+    $("#deleteSpaceButton").addEventListener("click", () => deleteSpace(activeSpaceId));
     $("#addWeekButton").addEventListener("click", openPeriodDialog);
     $("#emptyAddWeekButton").addEventListener("click", openPeriodDialog);
     $("#importWeekButton").addEventListener("click", openWeekImportDialog);
     $("#exportSelectedWeekButton").addEventListener("click", () => selectedWeekId && exportWeekPlan(selectedWeekId));
+    $("#shiftWeekButton").addEventListener("click", () => selectedWeekId && shiftWeekScheduleByOneDay(selectedWeekId));
+    $("#copyPreviousWeekButton").addEventListener("click", copyPreviousWeekContext);
     $("#copyAiPromptButton").addEventListener("click", copyAiPlanningPrompt);
     $("#copyWeekPlanTextButton").addEventListener("click", copyWeekPlanText);
     $("#weekYearSelect").addEventListener("change", (event) => {
@@ -346,6 +400,8 @@
     $("#weekSoundToggle").addEventListener("click", toggleWeekSound);
     $("#showSelectedWeekReportButton").addEventListener("click", () => selectedWeekId && openWeeklyReport(selectedWeekId));
     $("#copySelectedWeekReportButton").addEventListener("click", () => selectedWeekId && copyWeekReportText(selectedWeekId));
+    $("#downloadWeeklyReportImageButton").addEventListener("click", () => selectedWeekId && downloadWeeklyReportImage(selectedWeekId));
+    $("#downloadWeeklySummaryImageButton").addEventListener("click", () => selectedWeekId && downloadWeeklySummaryImage(selectedWeekId));
     $("#deleteSelectedPeriodButton").addEventListener("click", deleteSelectedPeriod);
     $("#avatarButton").addEventListener("click", openAvatarDialog);
     $("#exportButton").addEventListener("click", exportBackup);
@@ -373,6 +429,8 @@
 
     chartForm.addEventListener("submit", saveChartFromDialog);
     nodeForm.addEventListener("submit", saveNodeFromDialog);
+    goalForm.addEventListener("submit", saveGoalFromDialog);
+    progressGoalForm.addEventListener("submit", saveProgressGoalFromDialog);
     spaceForm.addEventListener("submit", saveSpaceFromDialog);
     weekForm.addEventListener("submit", savePeriodFromDialog);
     weekStickerForm.addEventListener("submit", saveWeekSticker);
@@ -380,8 +438,24 @@
     avatarForm.addEventListener("submit", saveAvatarFromDialog);
     jokeEditorForm.addEventListener("submit", saveJokesFromEditor);
     $$('[name="templateId"]', spaceForm).forEach((input) => input.addEventListener("change", syncSpaceFormTemplate));
-    $$('[name="goal"], [name="current"], [name="availability"], [name="constraints"]', weekImportForm).forEach((input) => {
-      input.addEventListener("input", refreshAiPromptPreview);
+    spaceForm.elements.icon.addEventListener("input", () => {
+      pendingSpaceIconSticker = "";
+      renderSpaceIconPicker();
+    });
+    $("#spaceIconClearButton").addEventListener("click", () => {
+      pendingSpaceIconSticker = "";
+      renderSpaceIconPicker();
+    });
+    $("#spaceIconPicker").addEventListener("toggle", renderSpaceIconPicker);
+    $("#goalStickerPicker").addEventListener("toggle", renderGoalStickerPicker);
+    $("#clearGoalStickerButton").addEventListener("click", () => {
+      pendingGoalSticker = "";
+      renderGoalStickerPicker();
+    });
+    $("#progressGoalStickerPicker").addEventListener("toggle", renderProgressGoalStickerPicker);
+    $("#clearProgressGoalStickerButton").addEventListener("click", () => {
+      pendingProgressGoalSticker = "";
+      renderProgressGoalStickerPicker();
     });
     $("#clearAvatarButton").addEventListener("click", clearAvatar);
     deleteNodeButton.addEventListener("click", deleteActiveNode);
@@ -395,7 +469,7 @@
       button.addEventListener("click", () => applyPreset(button.dataset.preset));
     });
 
-    [spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weekPlanTextDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
+    [goalDialog, progressGoalDialog, spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weekPlanTextDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
       });
@@ -548,6 +622,18 @@
     const records = day.records ?? day.actual ?? day.results;
     const allowedStatuses = ["", "这期拉了", "还不错", "好好好"];
     const status = safeString(day.status, 12);
+    const normalizedRecords = normalizePairList(records)
+      .filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name))
+      .map((item) => ({ ...item, done: item.done ?? (item.value ? true : null) }));
+    const recorded = typeof day.recorded === "boolean"
+      ? day.recorded
+      : Boolean(
+          status
+          || normalizedRecords.some((item) => item.done !== null || item.value)
+          || day.dietRecord
+          || day.note
+          || (day.weight !== null && day.weight !== undefined && day.weight !== "" && Number.isFinite(Number(day.weight))),
+        );
     return {
       id: safeId(day.id),
       dayNumber: index + 1,
@@ -555,14 +641,13 @@
       title: normalizeDayType(day.title, templateId),
       duration: safeString(day.duration, 40),
       planItems: normalizePairList(planItems).filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name)),
-      records: normalizePairList(records)
-        .filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name))
-        .map((item) => ({ ...item, done: item.done ?? (item.value ? true : null) })),
+      records: normalizedRecords,
       dietPlan: safeString(day.dietPlan, 500),
       dietRecord: safeString(day.dietRecord, 500),
       weight: safeWeight(day.weight),
       note: safeString(day.note, 600),
       status: allowedStatuses.includes(status) ? status : "",
+      recorded,
       sticker: safeSticker(day.sticker),
     };
   }
@@ -597,13 +682,14 @@
   }
 
   function safeSpaceIdForList(value, spaces) {
-    const candidates = Array.isArray(spaces) && spaces.length ? spaces : DEFAULT_SPACES;
-    return candidates.some((space) => space.id === value) ? value : candidates[0].id;
+    const candidates = Array.isArray(spaces) ? spaces : DEFAULT_SPACES;
+    return candidates.some((space) => space.id === value) ? value : (candidates[0]?.id || "");
   }
 
   function normalizeAiContext(candidate) {
     const context = candidate && typeof candidate === "object" ? candidate : {};
     return {
+      profile: safeString(context.profile, 2000),
       goal: safeString(context.goal, 600),
       current: safeString(context.current, 1000),
       availability: safeString(context.availability, 600),
@@ -612,7 +698,7 @@
   }
 
   function normalizeSpaces(candidate) {
-    const source = Array.isArray(candidate) && candidate.length ? candidate : DEFAULT_SPACES;
+    const source = Array.isArray(candidate) ? candidate : DEFAULT_SPACES;
     const seen = new Set();
     const spaces = [];
     source.slice(0, MAX_SPACES).forEach((item, index) => {
@@ -628,11 +714,12 @@
         templateId,
         name: safeString(item?.name, 16) || template.name,
         icon: safeString(item?.icon, 2) || template.icon,
+        iconSticker: safeSticker(item?.iconSticker),
         aiContext: normalizeAiContext(item?.aiContext),
         createdAt: Number(item?.createdAt) || Date.now(),
       });
     });
-    return spaces.length ? spaces : [{ ...DEFAULT_SPACES[0], aiContext: normalizeAiContext() }];
+    return spaces;
   }
 
   function normalizePeriod(candidate, spaces) {
@@ -645,6 +732,66 @@
       spaceId,
       yearMonth,
       createdAt: Number(period.createdAt) || Date.now(),
+    };
+  }
+
+  function normalizeGoal(candidate, spaces) {
+    const goal = candidate && typeof candidate === "object" ? candidate : {};
+    const title = safeString(goal.title, 30);
+    const targetDate = safeDate(goal.targetDate);
+    if (!title || !targetDate) return null;
+    const availableSpaces = Array.isArray(spaces) ? spaces : DEFAULT_SPACES;
+    const validSpaceIds = new Set(availableSpaces.map((space) => space.id));
+    const requestedSpaceIds = Array.isArray(goal.spaceIds)
+      ? goal.spaceIds
+      : [];
+    const spaceIds = [...new Set(requestedSpaceIds
+      .map((spaceId) => safeString(spaceId, 60))
+      .filter((spaceId) => validSpaceIds.has(spaceId)))];
+    return {
+      id: safeId(goal.id),
+      title,
+      targetDate,
+      note: safeString(goal.note, 80),
+      sticker: safeSticker(goal.sticker),
+      spaceIds,
+      createdAt: Number(goal.createdAt) || Date.now(),
+    };
+  }
+
+  function normalizeProgressGoal(candidate, spaces) {
+    const goal = candidate && typeof candidate === "object" ? candidate : {};
+    const title = safeString(goal.title, 30);
+    const target = Number(goal.target);
+    const current = Number(goal.current);
+    if (!title || !Number.isFinite(target) || target <= 0 || target > 1_000_000_000) return null;
+    const updates = (Array.isArray(goal.updates) ? goal.updates : [])
+      .slice(-100)
+      .map((update) => ({
+        id: safeId(update?.id),
+        amount: Number(update?.amount),
+        createdAt: Number(update?.createdAt) || Date.now(),
+      }))
+      .filter((update) => Number.isFinite(update.amount) && update.amount !== 0);
+    const availableSpaces = Array.isArray(spaces) ? spaces : DEFAULT_SPACES;
+    const validSpaceIds = new Set(availableSpaces.map((space) => space.id));
+    const spaceIds = [...new Set((Array.isArray(goal.spaceIds) ? goal.spaceIds : [])
+      .map((spaceId) => safeString(spaceId, 60))
+      .filter((spaceId) => validSpaceIds.has(spaceId)))];
+    return {
+      id: safeId(goal.id),
+      title,
+      target,
+      current: Number.isFinite(current) && current >= 0 ? Math.min(current, 1_000_000_000) : 0,
+      unit: safeString(goal.unit, 10) || "项",
+      defaultIncrement: Number.isFinite(Number(goal.defaultIncrement)) && Number(goal.defaultIncrement) !== 0
+        ? Math.max(-1_000_000_000, Math.min(Number(goal.defaultIncrement), 1_000_000_000))
+        : 1,
+      note: safeString(goal.note, 80),
+      sticker: safeSticker(goal.sticker),
+      spaceIds,
+      updates,
+      createdAt: Number(goal.createdAt) || Date.now(),
     };
   }
 
@@ -705,10 +852,20 @@
     if (candidate.profile && typeof candidate.profile === "object") {
       clean.profile.name = safeString(candidate.profile.name, 20);
       clean.profile.gender = safeString(candidate.profile.gender, 20);
-      clean.profile.height = safeString(candidate.profile.height, 8);
       clean.profile.age = safeString(candidate.profile.age, 4);
+      clean.profile.signature = safeString(candidate.profile.signature, 60);
       clean.profile.avatar = safeSticker(candidate.profile.avatar);
     }
+
+    clean.goals = (Array.isArray(candidate.goals) ? candidate.goals : [])
+      .slice(0, MAX_GOALS)
+      .map((goal) => normalizeGoal(goal, clean.spaces))
+      .filter(Boolean);
+
+    clean.progressGoals = (Array.isArray(candidate.progressGoals) ? candidate.progressGoals : [])
+      .slice(0, MAX_PROGRESS_GOALS)
+      .map((goal) => normalizeProgressGoal(goal, clean.spaces))
+      .filter(Boolean);
 
     const sourceWeeks = Array.isArray(candidate.weeks)
       ? candidate.weeks
@@ -750,6 +907,8 @@
           id: safeId(item.id),
           name: safeString(item.name, 24) || `指标 ${index + 1}`,
           color: ALLOWED_COLORS.includes(item.color) ? item.color : ALLOWED_COLORS[index % ALLOWED_COLORS.length],
+          axisMin: item.axisMin !== null && item.axisMin !== undefined && item.axisMin !== "" && Number.isFinite(Number(item.axisMin)) ? Number(item.axisMin) : null,
+          axisMax: item.axisMax !== null && item.axisMax !== undefined && item.axisMax !== "" && Number.isFinite(Number(item.axisMax)) ? Number(item.axisMax) : null,
         }));
 
         return {
@@ -834,11 +993,11 @@
 
   function resetDiaryData() {
     const hasProfile = Object.values(state.profile).some((value) => String(value).trim());
-    if (!stateSaveBlocked && !hasProfile && state.charts.length === 0 && state.weeks.length === 0) {
+    if (!stateSaveBlocked && !hasProfile && state.goals.length === 0 && state.progressGoals.length === 0 && state.charts.length === 0 && state.weeks.length === 0) {
       showToast("现在已经是空白日记啦");
       return;
     }
-    if (!window.confirm("确定清空这台浏览器里的个人资料、每周计划、图表和全部节点吗？\n\n冷笑话不会被删除；如果记录还需要保留，请先点击“备份”。")) return;
+    if (!window.confirm("确定清空这台浏览器里的个人资料、倒计时、进度目标、每周计划、曲线图和全部节点吗？\n\n冷笑话不会被删除；如果记录还需要保留，请先点击“备份”。")) return;
 
     state = cloneDefault();
     activeSpaceId = "health";
@@ -848,6 +1007,8 @@
     selectedDayByWeek.clear();
     chartZoomById.clear();
     chartScrollById.clear();
+    selectedGoalId = null;
+    selectedProgressGoalId = null;
     selectedWeekId = null;
     weekYearFilter = String(new Date().getFullYear());
     weekMonthFilter = String(new Date().getMonth() + 1).padStart(2, "0");
@@ -860,6 +1021,8 @@
     }
     hydrateProfileForm();
     renderProfileAvatar();
+    renderGoals();
+    renderProgressGoals();
     renderSpaceSwitcher();
     renderWeeks();
     renderCharts();
@@ -890,18 +1053,392 @@
     avatarPlaceholder.textContent = (state.profile.name.trim()[0] || "A").toUpperCase();
   }
 
+  function renderGoals() {
+    const goals = state.goals;
+    if (!goals.some((goal) => goal.id === selectedGoalId)) selectedGoalId = goals[0]?.id || null;
+    $("#goalLimitText").textContent = `${goals.length} / ${MAX_GOALS} 个倒计时`;
+    $("#addGoalButton").disabled = goals.length >= MAX_GOALS;
+    $("#editGoalButton").disabled = !selectedGoalId;
+    $("#deleteGoalButton").disabled = !selectedGoalId;
+    const selectedIndex = goals.findIndex((goal) => goal.id === selectedGoalId);
+    $("#moveGoalEarlierButton").disabled = selectedIndex <= 0;
+    $("#moveGoalLaterButton").disabled = selectedIndex < 0 || selectedIndex >= goals.length - 1;
+    $("#goalEmpty").hidden = true;
+    goalList.classList.toggle("goal-list--single", goals.length === 1);
+    goalList.dataset.count = String(goals.length);
+    goalList.innerHTML = goals.map((goal, index) => {
+      const countdown = getGoalCountdown(goal.targetDate);
+      const reportSpaceNames = goal.spaceIds
+        .map((spaceId) => state.spaces.find((space) => space.id === spaceId)?.name)
+        .filter(Boolean);
+      return `
+        <button class="goal-card goal-card--tone-${index % 4} goal-card--${countdown.state}${goal.id === selectedGoalId ? " is-selected" : ""}" type="button" data-select-goal="${escapeAttr(goal.id)}" aria-pressed="${goal.id === selectedGoalId}">
+          <span class="goal-card-sticker${goal.sticker ? " has-sticker" : ""}" aria-hidden="true">
+            ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" loading="lazy" />` : "◎"}
+          </span>
+          <time class="goal-card-date" datetime="${escapeAttr(goal.targetDate)}">${escapeHtml(formatGoalDate(goal.targetDate))}</time>
+          <span class="goal-card-copy">
+            <strong>${escapeHtml(goal.title)}</strong>
+            <small>${goal.note ? escapeHtml(goal.note) : "一步一步，慢慢靠近。"}</small>
+            <em>${reportSpaceNames.length ? `周报 · ${escapeHtml(reportSpaceNames.join(" / "))}` : "仅在首页显示"}</em>
+          </span>
+          <span class="goal-card-countdown" aria-label="${escapeAttr(countdown.phrase)}">
+            <b>${escapeHtml(countdown.value)}</b>
+            <span>${escapeHtml(countdown.unit)}</span>
+          </span>
+        </button>`;
+    }).join("");
+    $$('[data-select-goal]', goalList).forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedGoalId = button.dataset.selectGoal;
+        renderGoals();
+      });
+    });
+  }
+
+  function renderGoalSpaceOptions(selectedSpaceIds) {
+    const selected = new Set(Array.isArray(selectedSpaceIds) ? selectedSpaceIds : []);
+    $("#goalSpaceOptions").innerHTML = state.spaces.length ? state.spaces.map((space) => `
+      <label class="goal-space-option">
+        <input type="checkbox" name="spaceIds" value="${escapeAttr(space.id)}"${selected.has(space.id) ? " checked" : ""} />
+        <span class="goal-space-option-icon${space.iconSticker ? " has-sticker" : ""}" aria-hidden="true">
+          ${space.iconSticker ? `<img src="${escapeAttr(assetUrl(space.iconSticker))}" alt="" />` : escapeHtml(space.icon)}
+        </span>
+        <strong>${escapeHtml(space.name)}</strong>
+        <small>显示在周报</small>
+      </label>
+    `).join("") : `<p class="goal-space-options-empty">目前没有空间；保存后，这个倒计时只会显示在首页。</p>`;
+  }
+
+  function renderProgressGoals() {
+    const goals = state.progressGoals;
+    if (!goals.some((goal) => goal.id === selectedProgressGoalId)) selectedProgressGoalId = goals[0]?.id || null;
+    $("#progressGoalLimitText").textContent = `${goals.length} / ${MAX_PROGRESS_GOALS} 个进度目标`;
+    $("#addProgressGoalButton").disabled = goals.length >= MAX_PROGRESS_GOALS;
+    $("#editProgressGoalButton").disabled = !selectedProgressGoalId;
+    $("#deleteProgressGoalButton").disabled = !selectedProgressGoalId;
+    const selectedIndex = goals.findIndex((goal) => goal.id === selectedProgressGoalId);
+    $("#moveProgressGoalEarlierButton").disabled = selectedIndex <= 0;
+    $("#moveProgressGoalLaterButton").disabled = selectedIndex < 0 || selectedIndex >= goals.length - 1;
+    $("#progressGoalEmpty").hidden = true;
+    progressGoalList.classList.toggle("progress-goal-list--single", goals.length === 1);
+    progressGoalList.dataset.count = String(goals.length);
+    progressGoalList.innerHTML = goals.map((goal, index) => {
+      const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
+      const isComplete = goal.current >= goal.target;
+      const lastUpdate = goal.updates.at(-1);
+      const reportSpaceNames = goal.spaceIds
+        .map((spaceId) => state.spaces.find((space) => space.id === spaceId)?.name)
+        .filter(Boolean);
+      return `
+        <article class="progress-goal-card progress-goal-card--tone-${index % 4}${goal.id === selectedProgressGoalId ? " is-selected" : ""}${isComplete ? " is-complete" : ""}" style="--progress:${percent}%">
+          <button class="progress-goal-main" type="button" data-select-progress-goal="${escapeAttr(goal.id)}" aria-pressed="${goal.id === selectedProgressGoalId}">
+            <span class="progress-goal-sticker${goal.sticker ? " has-sticker" : ""}" aria-hidden="true">
+              ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" loading="lazy" />` : "↗"}
+            </span>
+            <span class="progress-goal-copy">
+              <small>${isComplete ? "目标达成" : `完成 ${formatProgressNumber(percent)}%`}</small>
+              <strong>${escapeHtml(goal.title)}</strong>
+              <em>${escapeHtml(goal.note || "每一次增加，都会留在这里。")}</em>
+              <span>${reportSpaceNames.length ? `周报 · ${escapeHtml(reportSpaceNames.join(" / "))}` : "仅在首页显示"}</span>
+            </span>
+            <span class="progress-goal-value"><b>${escapeHtml(formatProgressNumber(goal.current))}</b><i>/ ${escapeHtml(formatProgressNumber(goal.target))} ${escapeHtml(goal.unit)}</i></span>
+            <span class="progress-goal-bar" aria-label="完成 ${escapeAttr(formatProgressNumber(percent))}%"><i></i><b>${escapeHtml(formatProgressNumber(percent))}%</b></span>
+          </button>
+          <form class="progress-goal-add" data-add-progress="${escapeAttr(goal.id)}">
+            <label><span>本次调整</span><input name="amount" type="number" min="-1000000000" max="1000000000" step="any" value="${escapeAttr(formatProgressInput(goal.defaultIncrement))}" aria-label="调整${escapeAttr(goal.title)}的进度；负数表示减少" /></label>
+            <button type="submit">确认调整</button>
+            <small>${lastUpdate ? `最近调整 ${lastUpdate.amount > 0 ? "+" : ""}${escapeHtml(formatProgressNumber(lastUpdate.amount))} ${escapeHtml(goal.unit)} · ${escapeHtml(formatProgressUpdateTime(lastUpdate.createdAt))}` : "还没有调整过进度；输入负数可以减少"}</small>
+          </form>
+        </article>`;
+    }).join("");
+
+    $$('[data-select-progress-goal]', progressGoalList).forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedProgressGoalId = button.dataset.selectProgressGoal;
+        renderProgressGoals();
+      });
+    });
+    $$('[data-add-progress]', progressGoalList).forEach((form) => {
+      form.addEventListener("submit", addProgressFromCard);
+    });
+  }
+
+  function renderProgressGoalSpaceOptions(selectedSpaceIds) {
+    const selected = new Set(Array.isArray(selectedSpaceIds) ? selectedSpaceIds : []);
+    $("#progressGoalSpaceOptions").innerHTML = state.spaces.length ? state.spaces.map((space) => `
+      <label class="goal-space-option">
+        <input type="checkbox" name="spaceIds" value="${escapeAttr(space.id)}"${selected.has(space.id) ? " checked" : ""} />
+        <span class="goal-space-option-icon${space.iconSticker ? " has-sticker" : ""}" aria-hidden="true">
+          ${space.iconSticker ? `<img src="${escapeAttr(assetUrl(space.iconSticker))}" alt="" />` : escapeHtml(space.icon)}
+        </span>
+        <strong>${escapeHtml(space.name)}</strong>
+        <small>显示在周报</small>
+      </label>
+    `).join("") : `<p class="goal-space-options-empty">目前没有空间；保存后，这个进度目标只会显示在首页。</p>`;
+  }
+
+  function openProgressGoalDialog(goalId = null) {
+    const goal = goalId ? state.progressGoals.find((item) => item.id === goalId) : null;
+    if (!goal && state.progressGoals.length >= MAX_PROGRESS_GOALS) {
+      showToast(`最多保留 ${MAX_PROGRESS_GOALS} 个进度目标`);
+      return;
+    }
+    editingProgressGoalId = goal?.id || null;
+    pendingProgressGoalSticker = safeSticker(goal?.sticker);
+    const matchedPack = Object.entries(STICKER_PACKS).find(([, paths]) => paths.includes(pendingProgressGoalSticker));
+    if (matchedPack) activeProgressGoalStickerPack = matchedPack[0];
+    progressGoalForm.reset();
+    progressGoalForm.elements.title.value = goal?.title || "";
+    progressGoalForm.elements.target.value = goal ? formatProgressInput(goal.target) : "";
+    progressGoalForm.elements.unit.value = goal?.unit || "";
+    progressGoalForm.elements.current.value = goal ? formatProgressInput(goal.current) : "0";
+    progressGoalForm.elements.defaultIncrement.value = goal ? formatProgressInput(goal.defaultIncrement) : "";
+    progressGoalForm.elements.note.value = goal?.note || "";
+    renderProgressGoalSpaceOptions(goal ? goal.spaceIds : []);
+    $("#progressGoalDialogEyebrow").textContent = goal ? "EDIT PROGRESS" : "NEW PROGRESS";
+    $("#progressGoalDialogTitle").textContent = goal ? `编辑“${goal.title}”` : "新建进度目标";
+    $("#saveProgressGoalButton").textContent = goal ? "保存修改" : "保存进度目标";
+    $("#progressGoalStickerPicker").open = false;
+    renderProgressGoalStickerPicker();
+    progressGoalDialog.showModal();
+    focusDialogFieldWithoutScrolling(progressGoalForm, progressGoalForm.elements.title);
+  }
+
+  function saveProgressGoalFromDialog(event) {
+    event.preventDefault();
+    if (!progressGoalForm.reportValidity()) return;
+    const formData = new FormData(progressGoalForm);
+    const existing = editingProgressGoalId ? state.progressGoals.find((item) => item.id === editingProgressGoalId) : null;
+    if (!existing && state.progressGoals.length >= MAX_PROGRESS_GOALS) return;
+    const selectedSpaceIds = formData.getAll("spaceIds").map((spaceId) => String(spaceId));
+    const goal = normalizeProgressGoal({
+      id: existing?.id,
+      title: formData.get("title"),
+      target: formData.get("target"),
+      current: formData.get("current"),
+      unit: formData.get("unit"),
+      defaultIncrement: formData.get("defaultIncrement"),
+      note: formData.get("note"),
+      sticker: pendingProgressGoalSticker,
+      spaceIds: selectedSpaceIds,
+      updates: existing?.updates || [],
+      createdAt: existing?.createdAt,
+    }, state.spaces);
+    if (!goal) {
+      showToast("请填写有效的目标名称和数值");
+      return;
+    }
+    preloadCanvasAsset(goal.sticker);
+    if (existing) state.progressGoals[state.progressGoals.indexOf(existing)] = goal;
+    else state.progressGoals.push(goal);
+    selectedProgressGoalId = goal.id;
+    progressGoalDialog.close();
+    editingProgressGoalId = null;
+    saveState();
+    renderProgressGoals();
+    showToast(existing ? "进度目标已经更新" : "新的进度目标已经建立");
+  }
+
+  function renderProgressGoalStickerPicker() {
+    if (!progressGoalStickerTabs || !progressGoalStickerGrid) return;
+    const preview = $("#progressGoalStickerPreview");
+    preview.innerHTML = pendingProgressGoalSticker
+      ? `<img src="${escapeAttr(assetUrl(pendingProgressGoalSticker))}" alt="选中的进度目标表情" />`
+      : "<span>↗</span>";
+    if (!$("#progressGoalStickerPicker").open) {
+      progressGoalStickerTabs.innerHTML = "";
+      progressGoalStickerGrid.innerHTML = "";
+      return;
+    }
+    progressGoalStickerTabs.innerHTML = Object.keys(STICKER_PACKS).map((name) => `
+      <button class="sticker-tab${name === activeProgressGoalStickerPack ? " is-active" : ""}" type="button" role="tab" aria-selected="${name === activeProgressGoalStickerPack}" data-progress-goal-sticker-pack="${name}">${name}</button>
+    `).join("");
+    $$('[data-progress-goal-sticker-pack]', progressGoalStickerTabs).forEach((button) => {
+      button.addEventListener("click", () => {
+        activeProgressGoalStickerPack = button.dataset.progressGoalStickerPack;
+        renderProgressGoalStickerPicker();
+      });
+    });
+    const stickers = STICKER_PACKS[activeProgressGoalStickerPack] || [];
+    progressGoalStickerGrid.innerHTML = stickers.map((path, index) => `
+      <button class="sticker-item${pendingProgressGoalSticker === path ? " is-selected" : ""}" type="button" data-progress-goal-sticker="${escapeAttr(path)}" aria-label="选择${activeProgressGoalStickerPack}进度目标表情 ${index + 1}">
+        <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
+      </button>
+    `).join("");
+    $$('[data-progress-goal-sticker]', progressGoalStickerGrid).forEach((button) => {
+      button.addEventListener("click", () => {
+        pendingProgressGoalSticker = safeSticker(button.dataset.progressGoalSticker);
+        renderProgressGoalStickerPicker();
+      });
+    });
+  }
+
+  function addProgressFromCard(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const goal = state.progressGoals.find((item) => item.id === form.dataset.addProgress);
+    const amount = Number(new FormData(form).get("amount"));
+    if (!goal || !Number.isFinite(amount) || amount === 0) {
+      showToast("本次调整不能为 0；减少进度请填写负数");
+      return;
+    }
+    goal.current = Math.max(0, Math.min(1_000_000_000, goal.current + amount));
+    goal.defaultIncrement = amount;
+    goal.updates.push({ id: makeId(), amount, createdAt: Date.now() });
+    goal.updates = goal.updates.slice(-100);
+    selectedProgressGoalId = goal.id;
+    saveState(false);
+    renderProgressGoals();
+    showToast(goal.current >= goal.target
+      ? `${goal.title}已经达到目标`
+      : `已${amount > 0 ? "增加" : "减少"} ${formatProgressNumber(Math.abs(amount))} ${goal.unit}`);
+  }
+
+  function deleteSelectedProgressGoal() {
+    const goal = state.progressGoals.find((item) => item.id === selectedProgressGoalId);
+    if (!goal) return;
+    if (!window.confirm(`确定删除进度目标“${goal.title}”吗？\n\n已添加的进度记录也会一起删除。`)) return;
+    state.progressGoals = state.progressGoals.filter((item) => item.id !== goal.id);
+    selectedProgressGoalId = state.progressGoals[0]?.id || null;
+    saveState();
+    renderProgressGoals();
+    showToast("进度目标已删除");
+  }
+
+  function moveSelectedProgressGoal(direction) {
+    moveSelectedMilestone("progressGoals", selectedProgressGoalId, direction, "进度目标");
+  }
+
+  function openGoalDialog(goalId = null) {
+    const goal = goalId ? state.goals.find((item) => item.id === goalId) : null;
+    if (!goal && state.goals.length >= MAX_GOALS) {
+      showToast(`最多保留 ${MAX_GOALS} 个倒计时`);
+      return;
+    }
+    editingGoalId = goal?.id || null;
+    pendingGoalSticker = safeSticker(goal?.sticker);
+    const matchedPack = Object.entries(STICKER_PACKS).find(([, paths]) => paths.includes(pendingGoalSticker));
+    if (matchedPack) activeGoalStickerPack = matchedPack[0];
+    goalForm.reset();
+    goalForm.elements.title.value = goal?.title || "";
+    goalForm.elements.targetDate.value = goal?.targetDate || addDaysIso(todayIso(), 30);
+    goalForm.elements.note.value = goal?.note || "";
+    renderGoalSpaceOptions(goal ? goal.spaceIds : []);
+    $("#goalDialogEyebrow").textContent = goal ? "EDIT COUNTDOWN" : "NEW COUNTDOWN";
+    $("#goalDialogTitle").textContent = goal ? `编辑“${goal.title}”` : "新建倒计时";
+    $("#saveGoalButton").textContent = goal ? "保存修改" : "保存倒计时";
+    $("#goalStickerPicker").open = false;
+    renderGoalStickerPicker();
+    goalDialog.showModal();
+    focusDialogFieldWithoutScrolling(goalForm, goalForm.elements.title);
+  }
+
+  function saveGoalFromDialog(event) {
+    event.preventDefault();
+    if (!goalForm.reportValidity()) return;
+    const formData = new FormData(goalForm);
+    const existing = editingGoalId ? state.goals.find((item) => item.id === editingGoalId) : null;
+    if (!existing && state.goals.length >= MAX_GOALS) return;
+    const selectedSpaceIds = formData.getAll("spaceIds").map((spaceId) => String(spaceId));
+    const goal = normalizeGoal({
+      id: existing?.id,
+      title: formData.get("title"),
+      targetDate: formData.get("targetDate"),
+      note: formData.get("note"),
+      sticker: pendingGoalSticker,
+      spaceIds: selectedSpaceIds,
+      createdAt: existing?.createdAt,
+    }, state.spaces);
+    if (!goal) {
+      showToast("请填写倒计时名称和有效日期");
+      return;
+    }
+    preloadCanvasAsset(goal.sticker);
+    if (existing) state.goals[state.goals.indexOf(existing)] = goal;
+    else state.goals.push(goal);
+    selectedGoalId = goal.id;
+    goalDialog.close();
+    editingGoalId = null;
+    saveState();
+    renderGoals();
+    showToast(existing ? "倒计时已经更新" : "新的倒计时已经建立");
+  }
+
+  function deleteSelectedGoal() {
+    const goal = state.goals.find((item) => item.id === selectedGoalId);
+    if (!goal) return;
+    if (!window.confirm(`确定删除倒计时“${goal.title}”吗？\n\n空间、日程和周报记录不会受到影响。`)) return;
+    state.goals = state.goals.filter((item) => item.id !== goal.id);
+    selectedGoalId = state.goals[0]?.id || null;
+    saveState();
+    renderGoals();
+    showToast("倒计时已删除，其他记录保持不变");
+  }
+
+  function moveSelectedGoal(direction) {
+    moveSelectedMilestone("goals", selectedGoalId, direction, "倒计时");
+  }
+
+  function moveSelectedMilestone(collectionName, selectedId, direction, label) {
+    const collection = state[collectionName];
+    const index = collection.findIndex((item) => item.id === selectedId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= collection.length) return;
+    [collection[index], collection[target]] = [collection[target], collection[index]];
+    saveState(false);
+    renderGoals();
+    renderProgressGoals();
+    showToast(`${label}已${direction < 0 ? "向前" : "向后"}移动`);
+  }
+
+  function renderGoalStickerPicker() {
+    if (!goalStickerTabs || !goalStickerGrid) return;
+    const preview = $("#goalStickerPreview");
+    preview.innerHTML = pendingGoalSticker
+      ? `<img src="${escapeAttr(assetUrl(pendingGoalSticker))}" alt="选中的倒计时表情" />`
+      : "<span>◎</span>";
+    if (!$("#goalStickerPicker").open) {
+      goalStickerTabs.innerHTML = "";
+      goalStickerGrid.innerHTML = "";
+      return;
+    }
+    goalStickerTabs.innerHTML = Object.keys(STICKER_PACKS).map((name) => `
+      <button class="sticker-tab${name === activeGoalStickerPack ? " is-active" : ""}" type="button" role="tab" aria-selected="${name === activeGoalStickerPack}" data-goal-sticker-pack="${name}">${name}</button>
+    `).join("");
+    $$('[data-goal-sticker-pack]', goalStickerTabs).forEach((button) => {
+      button.addEventListener("click", () => {
+        activeGoalStickerPack = button.dataset.goalStickerPack;
+        renderGoalStickerPicker();
+      });
+    });
+    const stickers = STICKER_PACKS[activeGoalStickerPack] || [];
+    goalStickerGrid.innerHTML = stickers.map((path, index) => `
+      <button class="sticker-item${pendingGoalSticker === path ? " is-selected" : ""}" type="button" data-goal-sticker="${escapeAttr(path)}" aria-label="选择${activeGoalStickerPack}倒计时表情 ${index + 1}">
+        <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
+      </button>
+    `).join("");
+    $$('[data-goal-sticker]', goalStickerGrid).forEach((button) => {
+      button.addEventListener("click", () => {
+        pendingGoalSticker = safeSticker(button.dataset.goalSticker);
+        renderGoalStickerPicker();
+      });
+    });
+  }
+
   function safeSpaceId(value) {
     return safeSpaceIdForList(value, state.spaces);
   }
 
   function getSpace(spaceId = activeSpaceId) {
-    return state.spaces.find((space) => space.id === safeSpaceId(spaceId)) || state.spaces[0];
+    return state.spaces.find((space) => space.id === safeSpaceId(spaceId));
   }
 
   function getSpaceTemplate(spaceId = activeSpaceId) {
     const space = getSpace(spaceId);
+    if (!space) return { ...SPACE_TEMPLATES.custom, name: "生活", icon: "○", iconSticker: "", spaceId: "" };
     const template = SPACE_TEMPLATES[safeTemplateId(space.templateId)];
-    return { ...template, name: space.name, icon: space.icon, spaceId: space.id };
+    return { ...template, name: space.name, icon: space.icon, iconSticker: safeSticker(space.iconSticker), spaceId: space.id };
   }
 
   function getActiveSpaceWeeks() {
@@ -918,38 +1455,44 @@
 
   function renderSpaceSwitcher() {
     if (!spaceSwitcher) return;
-    spaceSwitcher.innerHTML = state.spaces.map((space) => {
+    spaceSwitcher.innerHTML = state.spaces.length ? state.spaces.map((space) => {
       const template = getSpaceTemplate(space.id);
       const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
       const isActive = space.id === activeSpaceId;
+      const icon = template.iconSticker
+        ? `<img src="${escapeAttr(assetUrl(template.iconSticker))}" alt="" />`
+        : escapeHtml(template.icon);
       return `
         <div class="space-switcher-item">
           <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}">
-            <span class="space-switcher-icon" aria-hidden="true">${escapeHtml(template.icon)}</span>
+            <span class="space-switcher-icon${template.iconSticker ? " has-sticker" : ""}" aria-hidden="true">${icon}</span>
             <span><strong>${escapeHtml(template.name)}</strong><small>${periodCount ? `${periodCount} 个月份` : "从这里开始"}</small></span>
           </button>
-          <button class="space-delete-button" type="button" data-delete-space="${space.id}" aria-label="删除空间 ${escapeAttr(space.name)}" title="删除空间">×</button>
         </div>`;
-    }).join("");
+    }).join("") : `
+      <div class="space-switcher-empty">
+        <span aria-hidden="true">＋</span>
+        <div><strong>现在没有空间</strong><small>首页倒计时和进度目标仍可单独使用；需要日程和周报时再新建空间。</small></div>
+      </div>`;
     $$('[data-space-id]', spaceSwitcher).forEach((button) => {
       button.addEventListener("click", () => selectSpace(button.dataset.spaceId));
     });
-    $$('[data-delete-space]', spaceSwitcher).forEach((button) => {
-      button.addEventListener("click", () => deleteSpace(button.dataset.deleteSpace));
-    });
     $("#spaceLimitText").textContent = `${state.spaces.length} / ${MAX_SPACES} 个空间`;
     $("#addSpaceButton").disabled = state.spaces.length >= MAX_SPACES;
+    $("#editSpaceButton").disabled = !getSpace();
+    $("#deleteSpaceButton").disabled = !getSpace();
     syncSpaceCopy();
   }
 
   function selectSpace(spaceId) {
     const nextSpaceId = safeSpaceId(spaceId);
+    if (!nextSpaceId) return;
     if (nextSpaceId === activeSpaceId) return;
     activeSpaceId = nextSpaceId;
     state.activeSpaceId = activeSpaceId;
     const weeks = getActiveSpaceWeeks();
     const periods = getActiveSpacePeriods();
-    selectedWeekId = weeks.at(-1)?.id || null;
+    selectedWeekId = pickRelevantWeek(weeks)?.id || null;
     weekYearFilter = periods.at(-1)?.yearMonth.slice(0, 4) || String(new Date().getFullYear());
     weekMonthFilter = periods.at(-1)?.yearMonth.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
     saveState(false);
@@ -959,54 +1502,123 @@
   }
 
   function syncSpaceCopy() {
+    const hasSpace = Boolean(getSpace());
     const template = getSpaceTemplate();
-    $("#weeklyEyebrow").textContent = template.eyebrow;
-    $("#weeklyTitle").textContent = template.heading;
-    $("#weeklyDescription").textContent = template.description;
-    $("#chartsEyebrow").textContent = template.chartEyebrow;
-    $("#chartsTitle").textContent = template.chartHeading;
-    $("#emptyChartExample").textContent = template.emptyChartExample;
-    $("#weekEmptyDescription").textContent = `新建一个年月后，会自动展开这个月所有从周一开始的周条。每天都能填写${template.firstFieldLabel}、计划任务、完成情况和小笔记。`;
-    const activeTemplateId = getSpace().templateId;
+    $("#weeklyEyebrow").textContent = hasSpace ? template.eyebrow : "一个魂的每周日程安排";
+    $("#weeklyTitle").textContent = hasSpace ? template.heading : "建立空间后，再开始安排日程";
+    $("#weeklyDescription").textContent = hasSpace ? template.description : "空间可以暂时留空；需要日程和周报时，建立一个属于自己的空间就好。";
+    $("#chartsEyebrow").textContent = hasSpace ? template.chartEyebrow : "一个魂的状态轨迹";
+    $("#chartsTitle").textContent = hasSpace ? template.chartHeading : "建立空间后，再记录一条轨迹";
+    $(".week-empty h3").textContent = hasSpace ? "先建立一个年月吧" : "先建立一个空间吧";
+    $(".empty-state h3").textContent = hasSpace ? "从第一条轨迹开始吧" : "先建立一个空间吧";
+    $("#emptyChartExample").textContent = hasSpace ? template.emptyChartExample : "曲线图会跟随空间独立保存；建立空间后即可开始记录。";
+    $("#weekEmptyDescription").textContent = hasSpace
+      ? `新建一个年月后，会自动展开这个月所有从周一开始的周条。每天都能填写${template.firstFieldLabel}、计划任务、完成情况和小笔记。`
+      : "日程和周报会跟随空间独立保存；建立空间后即可新建年月。";
+    const activeTemplateId = getSpace()?.templateId || "";
     $$('[data-preset-space]').forEach((button) => {
       button.hidden = button.dataset.presetSpace !== activeTemplateId;
     });
   }
 
-  function openSpaceDialog() {
-    if (state.spaces.length >= MAX_SPACES) {
+  function openSpaceDialog(spaceId = null) {
+    const editingSpace = spaceId ? state.spaces.find((space) => space.id === spaceId) : null;
+    if (!editingSpace && state.spaces.length >= MAX_SPACES) {
       showToast(`最多保留 ${MAX_SPACES} 个空间`);
       return;
     }
+    editingSpaceId = editingSpace?.id || null;
     spaceForm.reset();
-    spaceForm.elements.templateId.value = "custom";
-    syncSpaceFormTemplate();
+    if (editingSpace) {
+      spaceForm.elements.templateId.value = safeTemplateId(editingSpace.templateId);
+      spaceForm.elements.name.value = editingSpace.name;
+      spaceForm.elements.icon.value = editingSpace.icon;
+      pendingSpaceIconSticker = safeSticker(editingSpace.iconSticker);
+      const matchingPack = Object.entries(STICKER_PACKS).find(([, paths]) => paths.includes(pendingSpaceIconSticker));
+      if (matchingPack) activeSpaceIconPack = matchingPack[0];
+      $("#spaceDialogEyebrow").textContent = "EDIT LIFE SPACE";
+      $("#spaceDialogTitle").textContent = `编辑“${editingSpace.name}”`;
+      $("#spaceDialogCopy").textContent = "名称、模板和图标都可以修改；已有日程、周报和图表会原样保留。";
+      $("#saveSpaceButton").textContent = "保存修改";
+    } else {
+      spaceForm.elements.templateId.value = "custom";
+      pendingSpaceIconSticker = "";
+      $("#spaceDialogEyebrow").textContent = "NEW LIFE SPACE";
+      $("#spaceDialogTitle").textContent = "新建一个空间";
+      $("#spaceDialogCopy").textContent = `选择一个接近的模板，再改成属于你的名字。最多可以保留 ${MAX_SPACES} 个空间。`;
+      $("#saveSpaceButton").textContent = "建立空间";
+      syncSpaceFormTemplate();
+    }
+    $("#spaceIconPicker").open = false;
+    renderSpaceIconPicker();
     spaceDialog.showModal();
-    window.setTimeout(() => spaceForm.elements.name.focus(), 40);
+    focusDialogFieldWithoutScrolling(spaceForm, spaceForm.elements.name);
   }
 
   function syncSpaceFormTemplate() {
     const template = SPACE_TEMPLATES[safeTemplateId(spaceForm.elements.templateId.value)];
     spaceForm.elements.name.placeholder = `例如：${template.name === "自定义" ? "阅读计划、副业、早睡挑战" : template.name}`;
     spaceForm.elements.icon.value = template.icon;
+    pendingSpaceIconSticker = "";
+    renderSpaceIconPicker();
+  }
+
+  function renderSpaceIconPicker() {
+    if (!spaceIconStickerTabs || !spaceIconStickerGrid) return;
+    const preview = $("#spaceIconPreview");
+    if (preview) {
+      const symbol = safeString(spaceForm.elements.icon.value, 2) || SPACE_TEMPLATES[safeTemplateId(spaceForm.elements.templateId.value)].icon;
+      preview.innerHTML = pendingSpaceIconSticker
+        ? `<img src="${escapeAttr(assetUrl(pendingSpaceIconSticker))}" alt="选中的空间图标" />`
+        : `<span>${escapeHtml(symbol)}</span>`;
+    }
+    if (!$("#spaceIconPicker").open) {
+      spaceIconStickerTabs.innerHTML = "";
+      spaceIconStickerGrid.innerHTML = "";
+      return;
+    }
+    spaceIconStickerTabs.innerHTML = Object.keys(STICKER_PACKS).map((name) => `
+      <button class="sticker-tab${name === activeSpaceIconPack ? " is-active" : ""}" type="button" role="tab" aria-selected="${name === activeSpaceIconPack}" data-space-icon-pack="${name}">${name}</button>
+    `).join("");
+    $$('[data-space-icon-pack]', spaceIconStickerTabs).forEach((button) => {
+      button.addEventListener("click", () => {
+        activeSpaceIconPack = button.dataset.spaceIconPack;
+        renderSpaceIconPicker();
+      });
+    });
+    const stickers = STICKER_PACKS[activeSpaceIconPack] || [];
+    spaceIconStickerGrid.innerHTML = stickers.map((path, index) => `
+      <button class="sticker-item${pendingSpaceIconSticker === path ? " is-selected" : ""}" type="button" data-space-icon-sticker="${escapeAttr(path)}" aria-label="选择${activeSpaceIconPack}表情 ${index + 1}">
+        <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
+      </button>
+    `).join("");
+    $$('[data-space-icon-sticker]', spaceIconStickerGrid).forEach((button) => {
+      button.addEventListener("click", () => {
+        pendingSpaceIconSticker = safeSticker(button.dataset.spaceIconSticker);
+        renderSpaceIconPicker();
+      });
+    });
   }
 
   function saveSpaceFromDialog(event) {
     event.preventDefault();
-    if (!spaceForm.reportValidity() || state.spaces.length >= MAX_SPACES) return;
+    if (!spaceForm.reportValidity() || (!editingSpaceId && state.spaces.length >= MAX_SPACES)) return;
     const formData = new FormData(spaceForm);
     const templateId = safeTemplateId(formData.get("templateId"));
     const template = SPACE_TEMPLATES[templateId];
+    const existing = editingSpaceId ? state.spaces.find((item) => item.id === editingSpaceId) : null;
     const space = {
-      id: `space-${makeId()}`,
+      id: existing?.id || `space-${makeId()}`,
       type: templateId,
       templateId,
       name: safeString(formData.get("name"), 16) || template.name,
       icon: safeString(formData.get("icon"), 2) || template.icon,
-      aiContext: normalizeAiContext(),
-      createdAt: Date.now(),
+      iconSticker: safeSticker(pendingSpaceIconSticker),
+      aiContext: existing?.aiContext || normalizeAiContext(),
+      createdAt: existing?.createdAt || Date.now(),
     };
-    state.spaces.push(space);
+    if (existing) state.spaces[state.spaces.indexOf(existing)] = space;
+    else state.spaces.push(space);
     activeSpaceId = space.id;
     state.activeSpaceId = space.id;
     selectedWeekId = null;
@@ -1014,35 +1626,46 @@
     weekMonthFilter = String(new Date().getMonth() + 1).padStart(2, "0");
     saveState(false);
     spaceDialog.close();
+    renderGoals();
+    renderProgressGoals();
     renderSpaceSwitcher();
     renderWeeks();
     renderCharts();
-    showToast(`“${space.name}”空间已经建立`);
+    showToast(existing ? `“${space.name}”空间已更新` : `“${space.name}”空间已经建立`);
   }
 
   function deleteSpace(spaceId) {
     const space = state.spaces.find((item) => item.id === spaceId);
     if (!space) return;
-    if (state.spaces.length === 1) {
-      showToast("至少要保留一个空间");
-      return;
-    }
     const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
     const chartCount = state.charts.filter((chart) => chart.spaceId === space.id).length;
-    if (!window.confirm(`确定删除“${space.name}”空间吗？\n\n其中 ${periodCount} 个月份、全部每日记录和 ${chartCount} 张图表都会一起删除。`)) return;
+    const lastSpaceNote = state.spaces.length === 1
+      ? "\n\n这是最后一个空间；删除后首页倒计时和进度目标仍可使用，需要时可以重新新建空间。"
+      : "";
+    if (!window.confirm(`确定删除“${space.name}”空间吗？\n\n其中 ${periodCount} 个月份、全部每日记录和 ${chartCount} 张图表都会一起删除。${lastSpaceNote}`)) return;
     state.spaces = state.spaces.filter((item) => item.id !== space.id);
     state.periods = state.periods.filter((period) => period.spaceId !== space.id);
     state.weeks = state.weeks.filter((week) => week.spaceId !== space.id);
     state.charts = state.charts.filter((chart) => chart.spaceId !== space.id);
+    state.goals = state.goals.map((goal) => {
+      const spaceIds = goal.spaceIds.filter((goalSpaceId) => goalSpaceId !== space.id);
+      return { ...goal, spaceIds };
+    });
+    state.progressGoals = state.progressGoals.map((goal) => {
+      const spaceIds = goal.spaceIds.filter((goalSpaceId) => goalSpaceId !== space.id);
+      return { ...goal, spaceIds };
+    });
     if (activeSpaceId === space.id) {
-      activeSpaceId = state.spaces[0].id;
+      activeSpaceId = state.spaces[0]?.id || "";
       state.activeSpaceId = activeSpaceId;
     }
     const periods = getActiveSpacePeriods();
     weekYearFilter = periods.at(-1)?.yearMonth.slice(0, 4) || "";
     weekMonthFilter = periods.at(-1)?.yearMonth.slice(5, 7) || "";
-    selectedWeekId = getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(periods.at(-1)?.yearMonth || "-")).at(-1)?.id || null;
+    selectedWeekId = pickRelevantWeek(getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(periods.at(-1)?.yearMonth || "-")))?.id || null;
     saveState(false);
+    renderGoals();
+    renderProgressGoals();
     renderSpaceSwitcher();
     renderWeeks();
     renderCharts();
@@ -1054,11 +1677,15 @@
   }
 
   function openPeriodDialog() {
+    if (!getSpace()) {
+      showToast("请先新建一个空间");
+      return;
+    }
     weekForm.reset();
     $("#weekDialogTitle").textContent = `新建${getSpace().name}年月`;
     weekForm.elements.yearMonth.value = todayIso().slice(0, 7);
     weekDialog.showModal();
-    window.setTimeout(() => weekForm.elements.yearMonth.focus(), 40);
+    focusDialogFieldWithoutScrolling(weekForm, weekForm.elements.yearMonth);
   }
 
   function savePeriodFromDialog(event) {
@@ -1093,7 +1720,7 @@
     state.periods.sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
     weekYearFilter = yearMonth.slice(0, 4);
     weekMonthFilter = yearMonth.slice(5, 7);
-    selectedWeekId = getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(yearMonth)).at(-1)?.id || null;
+    selectedWeekId = pickRelevantWeek(getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(yearMonth)))?.id || null;
     saveState(false);
     weekDialog.close();
     renderSpaceSwitcher();
@@ -1117,7 +1744,7 @@
     const nextPeriod = periods.at(-1);
     weekYearFilter = nextPeriod?.yearMonth.slice(0, 4) || "";
     weekMonthFilter = nextPeriod?.yearMonth.slice(5, 7) || "";
-    selectedWeekId = getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(nextPeriod?.yearMonth || "-")).at(-1)?.id || null;
+    selectedWeekId = pickRelevantWeek(getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(nextPeriod?.yearMonth || "-")))?.id || null;
     saveState(false);
     renderSpaceSwitcher();
     renderWeeks();
@@ -1127,35 +1754,89 @@
   function exportWeekPlan(weekId) {
     const week = findWeek(weekId);
     if (!week) return;
-    $("#weekPlanTextTitle").textContent = `${getSpace(week.spaceId).name} · ${formatDateRange(week.startDate)}`;
+    $("#weekPlanTextTitle").textContent = `本周便签 · ${getSpace(week.spaceId).name} · ${formatDateRange(week.startDate)}`;
     $("#weekPlanTextOutput").value = buildWeekPlanText(week);
     weekPlanTextDialog.showModal();
   }
 
   function buildWeekPlanText(week) {
     const template = getSpaceTemplate(week.spaceId);
-    const lines = [`# ${getSpace(week.spaceId).name}周计划`, `周期：${formatDateRange(week.startDate)}`];
-    week.days.forEach((day) => {
-      lines.push("", `## Day${day.dayNumber} · ${formatCompactDate(day.date)} · ${day.title}`);
-      lines.push(`${template.firstFieldLabel}：${day.dietPlan || "未填写"}`);
+    const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    const lines = [`${getSpace(week.spaceId).name}本周便签`, `时间：${formatFriendlyDate(week.startDate)}到${formatFriendlyDate(addDaysIso(week.startDate, 6))}`];
+    week.days.forEach((day, dayIndex) => {
+      lines.push("", `${weekdays[dayIndex]}  ${formatFriendlyDate(day.date)}  ${day.title}`);
+      lines.push(`${template.firstFieldLabel}：${day.dietPlan || "暂无"}`);
       const plans = day.planItems.filter((item) => item.name || item.value);
-      lines.push("计划安排：");
-      lines.push(...(plans.length ? plans.map((item) => `- ${item.name || "事项"}${item.value ? `：${item.value}` : ""}`) : ["- 暂无"]));
-      if (day.note) lines.push(`备注：${day.note}`);
+      if (!plans.length) lines.push("计划安排：暂无");
+      else {
+        lines.push("计划安排：");
+        plans.forEach((item, index) => lines.push(`${index + 1}．${item.name || "事项"}${item.value ? `：${item.value}` : ""}`));
+      }
+      if (day.note) lines.push(`当天小记：${day.note}`);
     });
     return lines.join("\n");
   }
 
+  function shiftWeekScheduleByOneDay(weekId) {
+    const week = findWeek(weekId);
+    if (!week) return;
+    const selectedDayId = selectedDayByWeek.get(week.id);
+    const startIndex = Math.max(0, week.days.findIndex((day) => day.id === selectedDayId));
+    const startDayNumber = startIndex + 1;
+    const lastDay = week.days[6];
+    const hasLastDayData = lastDay && (
+      lastDay.planItems.length || lastDay.records.length || lastDay.dietPlan || lastDay.dietRecord ||
+      lastDay.note || lastDay.status || lastDay.sticker || Number.isFinite(lastDay.weight)
+    );
+    const warning = hasLastDayData
+      ? "原 Day7 已有内容，顺延后会被丢弃。"
+      : "原 Day7 目前没有内容。";
+    const movingRange = startIndex < 6
+      ? `Day${startDayNumber} 到 Day6 的内容会移动到下一天；Day${startDayNumber} 会清空。`
+      : "Day7 会移出本周并清空。";
+    const preservedRange = startIndex === 0
+      ? "Day1 之前没有需要保留的日程。"
+      : startIndex === 1
+        ? "Day1 保持不变。"
+        : `Day1 到 Day${startIndex} 保持不变。`;
+    if (!window.confirm(`确定从 Day${startDayNumber} 开始把日程往后排一天吗？\n\n${preservedRange}${movingRange}${warning}`)) return;
+    const sourceDays = JSON.parse(JSON.stringify(week.days));
+    const templateId = getSpace(week.spaceId).templateId;
+    for (let index = 6; index > startIndex; index -= 1) {
+      const identity = week.days[index];
+      const moved = normalizeWeekDay(sourceDays[index - 1], index, week.startDate, templateId);
+      moved.id = identity.id;
+      moved.date = identity.date;
+      week.days[index] = moved;
+    }
+    const startIdentity = week.days[startIndex];
+    const emptyStartDay = normalizeWeekDay({}, startIndex, week.startDate, templateId);
+    emptyStartDay.id = startIdentity.id;
+    emptyStartDay.date = startIdentity.date;
+    week.days[startIndex] = emptyStartDay;
+    saveState(false);
+    renderWeeks();
+    showToast(`已从 Day${startDayNumber} 开始顺延一天，前面的日期保持不变`);
+  }
+
   function renderWeeks() {
+    const hasActiveSpace = Boolean(getSpace());
     const spaceWeeks = getActiveSpaceWeeks();
     renderWeekFilters();
     const filteredWeeks = spaceWeeks.filter((week) => {
       const [year, month] = week.startDate.split("-");
       return year === weekYearFilter && month === weekMonthFilter;
     });
-    ["#exportSelectedWeekButton", "#showSelectedWeekReportButton"].forEach((selector) => {
+    weekTimeline.dataset.count = String(filteredWeeks.length);
+    $("#addWeekButton").disabled = !hasActiveSpace;
+    $("#emptyAddWeekButton").disabled = !hasActiveSpace;
+    ["#exportSelectedWeekButton", "#shiftWeekButton", "#showSelectedWeekReportButton"].forEach((selector) => {
       $(selector).disabled = filteredWeeks.length === 0;
     });
+    if (!filteredWeeks.length) {
+      $("#shiftWeekButton").textContent = "日程顺延一天";
+      $("#shiftWeekButton").removeAttribute("title");
+    }
     $("#deleteSelectedPeriodButton").disabled = !getActiveSpacePeriods().some((period) => period.yearMonth === `${weekYearFilter}-${weekMonthFilter}`);
     $("#importWeekButton").disabled = filteredWeeks.length === 0;
     weekEmpty.hidden = getActiveSpacePeriods().length > 0;
@@ -1174,16 +1855,22 @@
       return;
     }
 
-    if (!filteredWeeks.some((week) => week.id === selectedWeekId)) selectedWeekId = filteredWeeks.at(-1).id;
+    if (!filteredWeeks.some((week) => week.id === selectedWeekId)) selectedWeekId = pickRelevantWeek(filteredWeeks).id;
     weekTimeline.innerHTML = filteredWeeks.map((week) => {
       const monthIndex = filteredWeeks.findIndex((item) => item.id === week.id);
       const recorded = week.days.filter(hasWeekDayRecord).length;
       const isSelected = week.id === selectedWeekId;
+      const endDate = addDaysIso(week.startDate, 6);
+      const isCurrentWeek = todayIso() >= week.startDate && todayIso() <= endDate;
+      const progress = Math.round(recorded / 7 * 100);
+      const stateClass = recorded === 7 ? " is-complete" : recorded ? " has-records" : "";
+      const badge = isSelected ? "正在查看" : isCurrentWeek ? "本周" : recorded === 7 ? "已记满" : "";
       return `
-        <button class="week-node${isSelected ? " is-selected" : ""}" type="button" role="listitem" data-select-week="${week.id}" aria-pressed="${isSelected}">
-          <span class="week-node-dot"><i></i></span>
-          <strong>${escapeHtml(formatCompactDate(week.startDate))}</strong>
-          <small>本月第 ${monthIndex + 1} 周 · 已记 ${recorded}/7 天</small>
+        <button class="week-node${isSelected ? " is-selected" : ""}${isCurrentWeek ? " is-current" : ""}${stateClass}" type="button" role="listitem" data-select-week="${week.id}" aria-pressed="${isSelected}">
+          <span class="week-node-head"><span>WEEK ${String(monthIndex + 1).padStart(2, "0")}</span>${badge ? `<em>${badge}</em>` : ""}</span>
+          <strong><time datetime="${escapeAttr(week.startDate)}">${escapeHtml(formatCompactDate(week.startDate))}</time><i>—</i><time datetime="${escapeAttr(endDate)}">${escapeHtml(formatCompactDate(endDate))}</time></strong>
+          <span class="week-node-progress" aria-hidden="true"><i style="--week-progress:${progress}%"></i></span>
+          <small>已记录 ${recorded} / 7 天</small>
         </button>`;
     }).join("");
 
@@ -1197,11 +1884,20 @@
     renderWeekDetail(findWeek(selectedWeekId));
   }
 
+  function pickRelevantWeek(weeks) {
+    if (!Array.isArray(weeks) || !weeks.length) return null;
+    const today = todayIso();
+    return weeks.find((week) => today >= week.startDate && today <= addDaysIso(week.startDate, 6))
+      || [...weeks].reverse().find((week) => week.startDate <= today)
+      || weeks[0];
+  }
+
   function renderWeekFilters() {
     const periods = getActiveSpacePeriods();
     const years = [...new Set(periods.map((period) => period.yearMonth.slice(0, 4)))].sort();
     if (!years.includes(weekYearFilter)) weekYearFilter = years.at(-1) || "";
     const yearSelect = $("#weekYearSelect");
+    yearSelect.disabled = !getSpace();
     yearSelect.innerHTML = years.map((year) => `<option value="${year}">${year} 年</option>`).join("");
     yearSelect.value = weekYearFilter;
 
@@ -1210,12 +1906,13 @@
       .map((period) => period.yearMonth.slice(5, 7)))].sort();
     if (!months.includes(weekMonthFilter)) weekMonthFilter = months.at(-1) || "";
     const monthSelect = $("#weekMonthSelect");
+    monthSelect.disabled = !getSpace();
     monthSelect.innerHTML = months.map((month) => `<option value="${month}">${Number(month)} 月</option>`).join("");
     monthSelect.value = weekMonthFilter;
   }
 
   function hasWeekDayRecord(day) {
-    return Boolean(day.status || day.records.some((item) => item.done !== null || item.value) || day.dietRecord || day.note || Number.isFinite(day.weight));
+    return day.recorded === true;
   }
 
   function renderWeekDetail(week) {
@@ -1227,6 +1924,10 @@
       selectedDayByWeek.set(week.id, selectedDayId);
     }
     const selectedDay = week.days.find((day) => day.id === selectedDayId);
+    $("#shiftWeekButton").textContent = `从 Day${selectedDay.dayNumber} 起顺延一天`;
+    $("#shiftWeekButton").title = selectedDay.dayNumber === 1
+      ? "从本周第一天开始顺延"
+      : `Day1 到 Day${selectedDay.dayNumber - 1} 保持不变`;
     weekDetail.innerHTML = `
       <article class="week-board">
         <div class="week-day-tabs" role="tablist" aria-label="选择这一周的某一天">
@@ -1266,7 +1967,7 @@
           </span>
           <span class="week-day-tab-side">
             ${sticker ? `<img class="week-day-tab-sticker" src="${escapeAttr(assetUrl(sticker))}" alt="Day${day.dayNumber} 表情" />` : `<span class="week-day-tab-add" aria-hidden="true">＋</span>`}
-            ${day.status ? `<em>${escapeHtml(day.status)}</em>` : ""}
+            ${day.status || day.recorded ? `<em>${escapeHtml(day.status || "已记录")}</em>` : ""}
           </span>
         </button>
         <button class="week-day-tab-settings" type="button" data-configure-week-day="${day.id}" aria-label="设置 Day${day.dayNumber}">设置</button>
@@ -1417,6 +2118,7 @@
     weekStickerForm.elements.dayType.innerHTML = `<option value="${escapeAttr(activeDayLabel)}">${escapeHtml(activeDayLabel)}</option><option value="休息日">休息日</option>`;
     weekStickerForm.elements.dayType.setAttribute("aria-label", `选择${activeDayLabel}或休息日`);
     weekStickerForm.elements.dayType.value = day.title === activeDayLabel ? activeDayLabel : "休息日";
+    weekStickerForm.elements.dayRecorded.checked = day.recorded === true;
     $$('[name="dayStatus"]', weekStickerForm).forEach((input) => { input.checked = input.value === day.status; });
     renderWeekStickerTabs();
     renderWeekStickerGrid();
@@ -1432,10 +2134,12 @@
     const activeDayLabel = getSpaceTemplate(week.spaceId).activeDayLabel;
     day.title = formData.get("dayType") === activeDayLabel ? activeDayLabel : "休息日";
     day.status = ["这期拉了", "还不错", "好好好"].includes(formData.get("dayStatus")) ? formData.get("dayStatus") : "";
+    day.recorded = formData.get("dayRecorded") === "on";
     day.sticker = safeSticker(selectedWeekSticker);
+    preloadCanvasAsset(day.sticker);
     saveState(false);
     weekStickerDialog.close();
-    renderWeekDetail(week);
+    renderWeeks();
     showToast(`Day${day.dayNumber} 已经设置好啦`);
   }
 
@@ -1476,73 +2180,127 @@
   }
 
   function openWeekImportDialog() {
-    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
-    if (!state.periods.some((period) => period.spaceId === activeSpaceId && period.yearMonth === yearMonth)) {
-      showToast("请先新建要规划的年月");
+    const week = findWeek(selectedWeekId);
+    if (!week || week.spaceId !== activeSpaceId) {
+      showToast("请先选择要规划的周条");
       return;
     }
     weekImportForm.reset();
     const context = getSpace().aiContext || normalizeAiContext();
-    Object.entries(context).forEach(([key, value]) => {
-      if (weekImportForm.elements[key]) weekImportForm.elements[key].value = value;
-    });
-    $("#weekImportDialogTitle").textContent = `和 AI 一起规划 ${Number(weekMonthFilter)} 月`;
-    refreshAiPromptPreview();
+    weekImportForm.elements.profile.value = getAiContextProfile(context);
+    const template = getSpaceTemplate();
+    weekImportForm.elements.profile.placeholder = template.aiContextExample;
+    $("#aiContextHint").textContent = `把与“${getSpace().name}”有关的基础、目标、可用时间、喜好和限制写在一个文本框里；这些内容只保存在当前空间。`;
+    $("#weekImportDialogTitle").textContent = `AI 规划本周 · ${formatDateRange(week.startDate)}`;
+    const previousWeek = findPreviousWeek(week);
+    $("#aiPreviousWeekSummary").textContent = previousWeek
+      ? `${formatDateRange(previousWeek.startDate)} · 已读取 ${previousWeek.days.filter(hasWeekDayRecord).length}/7 天真实记录`
+      : "当前空间还没有更早一周；会明确告诉 AI 不要虚构历史记录。";
     weekImportDialog.showModal();
+  }
+
+  function getAiContextProfile(context) {
+    const normalized = normalizeAiContext(context);
+    if (normalized.profile) return normalized.profile;
+    return [
+      normalized.goal && `目标：${normalized.goal}`,
+      normalized.current && `目前情况：${normalized.current}`,
+      normalized.availability && `可投入时间：${normalized.availability}`,
+      normalized.constraints && `限制与偏好：${normalized.constraints}`,
+    ].filter(Boolean).join("\n");
   }
 
   function collectAiContext() {
     const formData = new FormData(weekImportForm);
     return normalizeAiContext({
-      goal: formData.get("goal"),
-      current: formData.get("current"),
-      availability: formData.get("availability"),
-      constraints: formData.get("constraints"),
+      ...getSpace().aiContext,
+      profile: formData.get("profile"),
     });
   }
 
-  function refreshAiPromptPreview() {
-    const output = $("#aiPromptOutput");
-    if (output) output.value = buildAiPlanningPrompt(collectAiContext());
+  function findPreviousWeek(week) {
+    if (!week) return null;
+    return state.weeks
+      .filter((item) => item.spaceId === week.spaceId && item.startDate < week.startDate)
+      .sort((left, right) => left.startDate.localeCompare(right.startDate))
+      .at(-1) || null;
   }
 
-  function buildAiPlanningPrompt(context) {
-    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
-    const template = getSpaceTemplate();
-    const skeleton = getMonthMondays(yearMonth).map((startDate) => {
-      const days = Array.from({ length: 7 }, (_, index) => [
-        `【Day${index + 1}】${template.activeDayLabel}`,
-        "【重点】",
-        "【任务】事项名称｜具体目标",
-        "【备注】",
-      ].join("\n")).join("\n");
-      return `【周开始】${startDate}\n${days}`;
-    }).join("\n");
+  function buildPreviousWeekSummary(week) {
+    const previousWeek = findPreviousWeek(week);
+    if (!previousWeek) return "这是当前空间最早的一周，提示词不会虚构历史完成情况。";
+    const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    const recordedDays = previousWeek.days.filter(hasWeekDayRecord).length;
+    const doneItems = previousWeek.days.reduce((sum, day) => sum + day.records.filter((item) => item.done === true).length, 0);
+    const missedItems = previousWeek.days.reduce((sum, day) => sum + day.records.filter((item) => item.done === false).length, 0);
+    const details = previousWeek.days.map((day, index) => {
+      if (!hasWeekDayRecord(day)) return "";
+      const done = day.records.filter((item) => item.done === true).length;
+      const missed = day.records.filter((item) => item.done === false).length;
+      const parts = [day.status || "已记录", `任务完成 ${done} 项${missed ? `、未完成 ${missed} 项` : ""}`];
+      const taskDetails = day.records.map((record, recordIndex) => {
+        if (record.done === null && !record.value) return "";
+        const name = record.name || day.planItems[recordIndex]?.name || `任务 ${recordIndex + 1}`;
+        const result = record.done === true ? "完成" : record.done === false ? "未完成" : "已记录";
+        return `${name}${record.value ? `（${record.value}）` : ""}：${result}`;
+      }).filter(Boolean);
+      if (taskDetails.length) parts.push(`明细：${taskDetails.join("；")}`);
+      if (day.dietRecord) parts.push(`实际：${day.dietRecord}`);
+      if (Number.isFinite(day.weight)) parts.push(`体重：${day.weight} 斤`);
+      return `${weekdays[index]}：${parts.join("；")}`;
+    }).filter(Boolean);
     return [
-      `请为我制定“${getSpace().name}”空间 ${yearMonth} 的可执行月计划。每周统一从周一开始。`,
-      "请先结合我的真实情况控制任务量，宁可留出余量，也不要机械地把每天塞满。",
+      `上一周 ${formatDateRange(previousWeek.startDate)}，记录 ${recordedDays}/7 天，完成 ${doneItems} 项，未完成 ${missedItems} 项。`,
+      ...(details.length ? details : ["这一周还没有填写具体完成记录。"]),
+    ].join("\n");
+  }
+
+  function buildAiPlanningPrompt(week) {
+    if (!week) return "请先选择一条周计划。";
+    const template = getSpaceTemplate(week.spaceId);
+    const days = Array.from({ length: 7 }, (_, index) => [
+      `【Day${index + 1}】${template.activeDayLabel}`,
+      "【重点】",
+      "【任务】事项名称｜具体目标",
+    ].join("\n")).join("\n");
+    return [
+      `请为我制定“${getSpace(week.spaceId).name}”空间 ${formatDateRange(week.startDate)} 的可执行周计划。本周从周一开始，共 7 天。`,
+      "请结合我刚才发给你的真实情况与上周记录控制任务量，宁可留出余量，也不要机械地把每天塞满。",
       "",
-      `本月目标：${context.goal || "暂未填写，请根据其他信息给出稳妥计划"}`,
-      `当前进度：${context.current || "暂未填写"}`,
-      `可投入时间：${context.availability || "暂未填写"}`,
-      `限制与偏好：${context.constraints || "暂未填写"}`,
-      "",
-      `“重点”用于填写${template.firstFieldLabel}；“任务”每行一项，可以重复多行。没有任务的日子请写“【DayX】休息日”。`,
+      `“重点”用于填写${template.firstFieldLabel}；“任务”每行一项，可以重复多行。没有任务的日子请写“【DayX】休息日”。当天小记由我本人记录，请不要生成、总结或修改。`,
       "请严格保留下方所有【】标记、日期和 Day 编号，只替换标记后面的内容。任务名称和目标之间使用全角竖线“｜”。不要添加解释、表格、代码块或 JSON。",
       "",
-      `【月份】${yearMonth}`,
-      skeleton,
+      `【周开始】${week.startDate}`,
+      days,
     ].join("\n");
+  }
+
+  async function copyPreviousWeekContext() {
+    const week = findWeek(selectedWeekId);
+    if (!week) return;
+    const space = getSpace();
+    space.aiContext = collectAiContext();
+    saveState(false);
+    const contextText = [
+      `这是我在“${space.name}”空间的真实情况，请先读完，稍后我会继续发送网页要求的计划模板。`,
+      "",
+      "我的情况与偏好：",
+      getAiContextProfile(space.aiContext) || "这次没有额外补充，请按保守、容易调整的节奏规划。",
+      "",
+      "上一周真实记录（没有记录的部分不要自行假设）：",
+      buildPreviousWeekSummary(week),
+    ].join("\n");
+    await copyText(contextText);
+    showToast("上周情况已复制，请先粘贴给 AI");
   }
 
   async function copyAiPlanningPrompt() {
     const space = getSpace();
     space.aiContext = collectAiContext();
-    const prompt = buildAiPlanningPrompt(space.aiContext);
-    $("#aiPromptOutput").value = prompt;
+    const prompt = buildAiPlanningPrompt(findWeek(selectedWeekId));
     saveState(false);
     await copyText(prompt);
-    showToast("专属提示词已复制，可以粘贴给 AI 了");
+    showToast("计划模板已复制，请继续粘贴到同一个 AI 对话");
   }
 
   function parseAiPlanText(rawText) {
@@ -1583,20 +2341,18 @@
         }
         return;
       }
-      const noteMatch = line.match(/^【备注】\s*(.*)$/);
-      if (noteMatch) currentDay.note = safeString(noteMatch[1], 600);
     });
     return weeks.map((week) => normalizeWeek({ ...week, spaceId: activeSpaceId }, state.spaces));
   }
 
   function importWeekPlan(event) {
     event.preventDefault();
-    const yearMonth = `${weekYearFilter}-${weekMonthFilter}`;
-    const expectedDates = new Set(getMonthMondays(yearMonth));
+    const selectedWeek = findWeek(selectedWeekId);
+    if (!selectedWeek) return;
     const imported = parseAiPlanText(new FormData(weekImportForm).get("payload"))
-      .filter((week) => expectedDates.has(week.startDate));
+      .filter((week) => week.startDate === selectedWeek.startDate);
     if (!imported.length) {
-      showToast("没有识别到计划，请确认从【月份】开始完整复制");
+      showToast("没有识别到当前周计划，请确认从【周开始】开始完整复制");
       return;
     }
     getSpace().aiContext = collectAiContext();
@@ -1608,19 +2364,18 @@
         day.title = plannedDay.title;
         day.dietPlan = plannedDay.dietPlan;
         day.planItems = plannedDay.planItems;
-        day.note = plannedDay.note;
       });
       selectedWeekId = existing.id;
     });
     saveState(false);
     weekImportDialog.close();
     renderWeeks();
-    showToast(`${imported.length} 个周计划已更新，原有完成记录已保留`);
+    showToast("本周计划已导入，原有完成记录已保留");
   }
 
   async function copyWeekPlanText() {
     await copyText($("#weekPlanTextOutput").value);
-    showToast("周计划文本已复制");
+    showToast("本周便签文本已复制");
   }
 
   async function copyText(value) {
@@ -1646,6 +2401,22 @@
       "",
       `- 周期：${formatDateRange(week.startDate)}`,
     ];
+    const reportGoals = state.goals.filter((goal) => goal.spaceIds.includes(week.spaceId));
+    if (reportGoals.length) {
+      const reportDate = addDaysIso(week.startDate, 6);
+      lines.push(`- 目标倒计时（截至${formatFriendlyDate(reportDate)}）：`);
+      reportGoals.forEach((goal) => {
+        lines.push(`  - ${goal.title}：${getGoalCountdown(goal.targetDate, reportDate).phrase}（${formatGoalDate(goal.targetDate)}）`);
+      });
+    }
+    const reportProgressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(week.spaceId));
+    if (reportProgressGoals.length) {
+      lines.push("- 进度目标（当前累计）：");
+      reportProgressGoals.forEach((goal) => {
+        const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
+        lines.push(`  - ${goal.title}：${formatProgressNumber(goal.current)} / ${formatProgressNumber(goal.target)} ${goal.unit}（${formatProgressNumber(percent)}%）`);
+      });
+    }
 
     week.days.forEach((day) => {
       const plannedItems = day.planItems.filter((item) => item.name || item.value);
@@ -1691,6 +2462,7 @@
           <span><b>${missedCount}</b> 未完成</span>
         </div>
       </header>
+      ${renderWeeklyReportGoals(addDaysIso(week.startDate, 6), week.spaceId)}
       <div class="weekly-report-statuses" aria-label="每日状态汇总">
         ${["好好好", "还不错", "这期拉了", "未设置"].map((status) => `<span class="weekly-report-status weekly-report-status--${status === "好好好" ? "great" : status === "还不错" ? "okay" : status === "这期拉了" ? "missed" : "pending"}">${escapeHtml(status)} ${statusSummary[status] || 0}</span>`).join("")}
       </div>
@@ -1698,6 +2470,54 @@
         ${week.days.map((day) => renderWeeklyReportDay(day, week.spaceId)).join("")}
       </div>`;
     weeklyReportDialog.showModal();
+  }
+
+  function renderWeeklyReportGoals(reportDate, spaceId) {
+    const goals = state.goals.filter((goal) => goal.spaceIds.includes(spaceId));
+    const progressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(spaceId));
+    if (!goals.length && !progressGoals.length) return "";
+    return `
+      <section class="weekly-report-goals weekly-report-milestones" aria-label="倒计时与进度目标">
+        <div class="weekly-report-goals-title">
+          <span>WEEKLY MILESTONES</span>
+          <small>本空间的倒计时与进度目标</small>
+        </div>
+        <div class="weekly-report-milestone-groups">
+          ${goals.length ? `
+            <div class="weekly-report-milestone-group">
+              <div class="weekly-report-milestone-label"><b>倒计时</b><small>截至本周日 ${escapeHtml(formatGoalDate(reportDate))}</small></div>
+              <div class="weekly-report-goal-list">
+                ${goals.map((goal, index) => {
+                  const countdown = getGoalCountdown(goal.targetDate, reportDate);
+                  return `
+                    <article class="weekly-report-goal weekly-report-goal--tone-${index % 4}">
+                      ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" />` : ""}
+                      <span>${escapeHtml(goal.title)}</span>
+                      <strong>${escapeHtml(countdown.phrase)}</strong>
+                      <small>${escapeHtml(formatGoalDate(goal.targetDate))}</small>
+                    </article>`;
+                }).join("")}
+              </div>
+            </div>` : ""}
+          ${progressGoals.length ? `
+            <div class="weekly-report-milestone-group">
+              <div class="weekly-report-milestone-label"><b>进度目标</b><small>打开周报时的当前累计</small></div>
+              <div class="weekly-report-goal-list">
+                ${progressGoals.map((goal, index) => {
+                  const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
+                  return `
+                    <article class="weekly-report-goal weekly-report-progress weekly-report-goal--tone-${(index + goals.length) % 4}" style="--report-progress:${percent}%">
+                      ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" />` : ""}
+                      <span>${escapeHtml(goal.title)}</span>
+                      <strong>${escapeHtml(formatProgressNumber(goal.current))} / ${escapeHtml(formatProgressNumber(goal.target))} ${escapeHtml(goal.unit)}</strong>
+                      <i aria-label="完成 ${escapeAttr(formatProgressNumber(percent))}%"><b></b></i>
+                      <small>完成 ${escapeHtml(formatProgressNumber(percent))}%</small>
+                    </article>`;
+                }).join("")}
+              </div>
+            </div>` : ""}
+        </div>
+      </section>`;
   }
 
   function renderWeeklyReportDay(day, spaceId = "health") {
@@ -1756,11 +2576,596 @@
     showToast("纯文本周报已复制");
   }
 
+  function downloadWeeklyReportImage(weekId) {
+    const week = findWeek(weekId);
+    const button = $("#downloadWeeklyReportImageButton");
+    if (!week) return;
+    button.disabled = true;
+    button.textContent = "正在生成竖版…";
+    try {
+      const canvas = createWeeklyReportCanvas(week);
+      downloadCanvasAsPng(canvas, `Asoul-${getSpaceTemplate(week.spaceId).name}完整周报-${week.startDate}.png`);
+      showToast("竖版完整周报已经下载");
+    } catch {
+      showToast("图片生成失败，请稍后再试");
+    } finally {
+      button.disabled = false;
+      button.textContent = "下载高清竖版";
+    }
+  }
+
+  function downloadWeeklySummaryImage(weekId) {
+    const week = findWeek(weekId);
+    const button = $("#downloadWeeklySummaryImageButton");
+    if (!week) return;
+    button.disabled = true;
+    button.textContent = "正在生成横版…";
+    try {
+      const canvas = createWeeklySummaryCanvas(week);
+      downloadCanvasAsPng(canvas, `Asoul-${getSpaceTemplate(week.spaceId).name}周报摘要-${week.startDate}.png`);
+      showToast("横版周报摘要已经下载");
+    } catch {
+      showToast("图片生成失败，请稍后再试");
+    } finally {
+      button.disabled = false;
+      button.textContent = "下载 4K 横版";
+    }
+  }
+
+  function downloadCanvasAsPng(canvas, filename) {
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = filename.replace(/[\\/:*?"<>|]/g, "-");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function createWeeklyReportCanvas(week) {
+    const template = getSpaceTemplate(week.spaceId);
+    const goals = state.goals.filter((goal) => goal.spaceIds.includes(week.spaceId));
+    const progressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(week.spaceId));
+    const milestones = [
+      ...goals.map((goal) => ({ type: "countdown", data: goal })),
+      ...progressGoals.map((goal) => ({ type: "progress", data: goal })),
+    ];
+    const scale = 2;
+    const width = 1080;
+    const outer = 54;
+    const gap = 14;
+    const milestoneCardHeight = 104;
+    const milestoneRows = Math.ceil(milestones.length / 2);
+    const milestoneHeight = milestones.length ? 70 + milestoneRows * (milestoneCardHeight + gap) : 0;
+    const dayHeights = week.days.map((day) => getCanvasDayHeight(day));
+    const height = outer + 176 + milestoneHeight + 72 + dayHeights.reduce((sum, value) => sum + value, 0) + gap * 6 + 72;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const context = canvas.getContext("2d");
+    context.scale(scale, scale);
+    const background = context.createLinearGradient(0, 0, width, height);
+    background.addColorStop(0, "#fffdfb");
+    background.addColorStop(0.48, "#faf8ff");
+    background.addColorStop(1, "#fff7f8");
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
+
+    drawCanvasAppIcon(context, width - outer - 58, outer + 5, 58);
+
+    const completedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === true).length, 0);
+    const missedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === false).length, 0);
+    const recordedCount = week.days.filter((day) => day.recorded === true).length;
+    context.fillStyle = "#7865cf";
+    context.font = "800 14px system-ui, sans-serif";
+    context.fillText(`ASOUL ${template.id.toUpperCase()} WEEKLY`, outer, outer + 20);
+    context.fillStyle = "#29263d";
+    context.font = "850 38px system-ui, sans-serif";
+    drawCanvasText(context, week.title, outer, outer + 70, width - outer * 2 - 130, 44, 1);
+    context.fillStyle = "#777287";
+    context.font = "650 17px system-ui, sans-serif";
+    context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 104);
+    drawCanvasPill(context, outer, outer + 124, 132, 38, `${completedCount} 项完成`, "#eaf6f2", "#397f6d");
+    drawCanvasPill(context, outer + 142, outer + 124, 132, 38, `${missedCount} 项未完成`, "#fff0f2", "#a85f6b");
+    drawCanvasPill(context, outer + 284, outer + 124, 132, 38, `${recordedCount} 天已记录`, "#f1edff", "#6d59be");
+
+    let y = outer + 176;
+    if (milestones.length) {
+      context.fillStyle = "#6c5bc5";
+      context.font = "850 14px system-ui, sans-serif";
+      context.fillText("WEEKLY MILESTONES · 本周坐标", outer, y + 20);
+      context.fillStyle = "#8c8798";
+      context.font = "550 13px system-ui, sans-serif";
+      context.fillText("只显示关联到这个空间的倒计时与进度目标", outer, y + 43);
+      const cardWidth = (width - outer * 2 - gap) / 2;
+      milestones.forEach((item, index) => {
+        const cardX = outer + index % 2 * (cardWidth + gap);
+        const cardY = y + 58 + Math.floor(index / 2) * (milestoneCardHeight + gap);
+        drawCanvasMilestone(context, item, cardX, cardY, cardWidth, milestoneCardHeight, week, canvasImageCache, index);
+      });
+      y += milestoneHeight;
+    }
+
+    const statusSummary = week.days.reduce((summary, day) => {
+      const key = day.status || "未设置";
+      summary[key] = (summary[key] || 0) + 1;
+      return summary;
+    }, {});
+    const statuses = [
+      ["好好好", "#fff0ec", "#ad594b"],
+      ["还不错", "#fceef4", "#aa607c"],
+      ["这期拉了", "#eef1f8", "#596a8b"],
+      ["未设置", "#f5f0e7", "#7a6b53"],
+    ];
+    let statusX = outer;
+    statuses.forEach(([label, fill, color]) => {
+      drawCanvasPill(context, statusX, y + 14, 118, 36, `${label} ${statusSummary[label] || 0}`, fill, color);
+      statusX += 128;
+    });
+    y += 72;
+
+    week.days.forEach((day, index) => {
+      drawCanvasDayVertical(context, day, template, outer, y, width - outer * 2, dayHeights[index], canvasImageCache, index);
+      y += dayHeights[index] + (index < week.days.length - 1 ? gap : 0);
+    });
+    context.fillStyle = "#938d9b";
+    context.font = "600 12px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.fillText("ASOUL 一个魂生活日记 · 数据保存在你的设备中", width / 2, height - 30);
+    context.textAlign = "left";
+    return canvas;
+  }
+
+  function drawCanvasMilestone(context, item, x, y, width, height, week, stickerImages, toneIndex = 0) {
+    const tones = ["#8871ec", "#e88da9", "#4ea78e", "#dd756b"];
+    const tone = tones[toneIndex % tones.length];
+    drawCanvasCard(context, x, y, width, height, "#ffffff", "#e9e3f3");
+    context.fillStyle = tone;
+    context.fillRect(x, y, 5, height);
+    const sticker = stickerImages.get(item.data.sticker);
+    const contentX = x + 18;
+    if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, contentX, y + 20, 62);
+    const textX = sticker?.complete && sticker.naturalWidth ? contentX + 76 : contentX;
+    context.fillStyle = "#343044";
+    context.font = "750 17px system-ui, sans-serif";
+    drawCanvasText(context, item.data.title, textX, y + 35, width - (textX - x) - 148, 22, 2);
+    context.fillStyle = tone;
+    context.textAlign = "right";
+    context.font = "850 21px system-ui, sans-serif";
+    if (item.type === "countdown") {
+      const countdown = getGoalCountdown(item.data.targetDate, addDaysIso(week.startDate, 6));
+      context.fillText(countdown.phrase, x + width - 18, y + 39);
+      context.font = "550 12px system-ui, sans-serif";
+      context.fillText(formatGoalDate(item.data.targetDate), x + width - 18, y + 64);
+    } else {
+      const percent = Math.min(100, Math.max(0, item.data.current / item.data.target * 100));
+      context.font = "850 16px system-ui, sans-serif";
+      context.fillText(`${formatProgressNumber(item.data.current)} / ${formatProgressNumber(item.data.target)} ${item.data.unit}`, x + width - 18, y + 38);
+      drawCanvasProgress(context, textX, y + height - 24, x + width - 18 - textX, percent, tone);
+    }
+    context.textAlign = "left";
+  }
+
+  function getCanvasDayEntries(day) {
+    const rowCount = Math.max(day.planItems.length, day.records.length);
+    return Array.from({ length: rowCount }, (_, index) => {
+      const plan = day.planItems[index] || {};
+      const record = day.records[index] || {};
+      return {
+        name: record.name || plan.name || "",
+        value: record.value || plan.value || "",
+        done: typeof record.done === "boolean" ? record.done : null,
+      };
+    }).filter((entry) => entry.name || entry.value || entry.done !== null);
+  }
+
+  function getCanvasDayHeight(day) {
+    const entryCount = Math.min(7, getCanvasDayEntries(day).length);
+    const hasFooter = Boolean(day.dietRecord || day.weight !== null || day.note);
+    return 138 + Math.max(1, entryCount) * 31 + (hasFooter ? 54 : 20);
+  }
+
+  function drawCanvasDayVertical(context, day, template, x, y, width, height, stickerImages, index) {
+    const tones = ["#8871ec", "#e88da9", "#4ea78e", "#dd756b"];
+    const statusColors = { "好好好": "#db7d74", "还不错": "#e799b0", "这期拉了": "#576690" };
+    const tone = statusColors[day.status] || tones[index % tones.length];
+    drawCanvasCard(context, x, y, width, height, "rgba(255,255,255,.95)", colorMixForCanvas(tone, .18));
+    context.fillStyle = tone;
+    drawCanvasRoundedRectPath(context, x, y, 8, height, 4);
+    context.fill();
+    context.fillStyle = colorMixForCanvas(tone, .09);
+    drawCanvasRoundedRectPath(context, x + 22, y + 22, 86, 82, 22);
+    context.fill();
+    context.fillStyle = tone;
+    context.font = "900 12px system-ui, sans-serif";
+    context.fillText("DAY", x + 43, y + 48);
+    context.font = "900 31px system-ui, sans-serif";
+    context.fillText(String(day.dayNumber).padStart(2, "0"), x + 39, y + 82);
+    context.fillStyle = "#3a3548";
+    context.font = "820 20px system-ui, sans-serif";
+    drawCanvasText(context, day.title || `Day${day.dayNumber}`, x + 128, y + 39, width - 300, 25, 1);
+    context.fillStyle = "#898291";
+    context.font = "650 13px system-ui, sans-serif";
+    context.fillText(`${formatFriendlyDate(day.date)} · ${day.recorded ? "已记录" : "未记录"}`, x + 128, y + 64);
+    if (day.status) drawCanvasPill(context, x + 128, y + 76, 88, 28, day.status, colorMixForCanvas(tone, .1), tone);
+    const sticker = stickerImages.get(day.sticker);
+    if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, x + width - 84, y + 22, 58);
+
+    const entries = getCanvasDayEntries(day);
+    const listX = x + 128;
+    const listY = y + 132;
+    (entries.length ? entries : [{ name: "当天没有安排事项", value: "", done: null }]).slice(0, 7).forEach((entry, entryIndex) => {
+      const rowY = listY + entryIndex * 31;
+      const mark = entry.done === true ? "√" : entry.done === false ? "×" : "•";
+      context.fillStyle = entry.done === true ? "#32977c" : entry.done === false ? "#cc626c" : "#b18d45";
+      context.font = "900 17px system-ui, sans-serif";
+      context.fillText(mark, listX, rowY);
+      context.fillStyle = "#484251";
+      context.font = "760 14px system-ui, sans-serif";
+      context.fillText(entry.name || "记录", listX + 28, rowY);
+      if (entry.value) {
+        context.fillStyle = "#807987";
+        context.font = "520 13px system-ui, sans-serif";
+        drawCanvasText(context, entry.value, listX + 154, rowY, width - 310, 18, 1);
+      }
+    });
+    if (entries.length > 7) {
+      context.fillStyle = "#8e8794";
+      context.font = "550 12px system-ui, sans-serif";
+      context.fillText(`另有 ${entries.length - 7} 项，请在网页中查看`, listX + 28, listY + 7 * 31);
+    }
+    const footerParts = [];
+    if (day.dietRecord) footerParts.push(`${template.secondFieldLabel}：${day.dietRecord}`);
+    if (template.showWeight && day.weight !== null) footerParts.push(`体重：${formatWeight(day.weight)}`);
+    if (day.note) footerParts.push(`当天小记：${day.note}`);
+    if (footerParts.length) {
+      context.strokeStyle = "#ede9f0";
+      context.setLineDash([5, 6]);
+      context.beginPath();
+      context.moveTo(listX, y + height - 46);
+      context.lineTo(x + width - 26, y + height - 46);
+      context.stroke();
+      context.setLineDash([]);
+      context.fillStyle = "#736d79";
+      context.font = "520 12px system-ui, sans-serif";
+      drawCanvasText(context, footerParts.join(" · "), listX, y + height - 22, width - 176, 17, 1);
+    }
+  }
+
+  function createWeeklySummaryCanvas(week) {
+    const scale = 2;
+    const width = 1920;
+    const height = 1080;
+    const outer = 78;
+    const contextCanvas = document.createElement("canvas");
+    contextCanvas.width = width * scale;
+    contextCanvas.height = height * scale;
+    const context = contextCanvas.getContext("2d");
+    context.scale(scale, scale);
+    const template = getSpaceTemplate(week.spaceId);
+    const goals = state.goals.filter((goal) => goal.spaceIds.includes(week.spaceId));
+    const progressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(week.spaceId));
+    const milestones = [
+      ...goals.map((goal) => ({ type: "countdown", data: goal })),
+      ...progressGoals.map((goal) => ({ type: "progress", data: goal })),
+    ].slice(0, 4);
+    const completedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === true).length, 0);
+    const missedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === false).length, 0);
+    const recordedCount = week.days.filter((day) => day.recorded === true).length;
+
+    const background = context.createLinearGradient(0, 0, width, height);
+    background.addColorStop(0, "#fffdfb");
+    background.addColorStop(.52, "#faf8ff");
+    background.addColorStop(1, "#fff4f7");
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
+    context.fillStyle = "rgba(143,122,234,.08)";
+    context.beginPath();
+    context.arc(width - 90, 30, 360, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "rgba(85,165,143,.06)";
+    context.beginPath();
+    context.arc(80, height - 50, 300, 0, Math.PI * 2);
+    context.fill();
+    drawCanvasAppIcon(context, width - outer - 76, outer - 3, 76);
+
+    context.fillStyle = "#7865cf";
+    context.font = "850 22px system-ui, sans-serif";
+    context.fillText(`ASOUL ${template.id.toUpperCase()} WEEKLY`, outer, outer + 24);
+    context.fillStyle = "#29263d";
+    context.font = "900 54px system-ui, sans-serif";
+    drawCanvasText(context, week.title, outer, outer + 88, 1040, 62, 1);
+    context.fillStyle = "#777287";
+    context.font = "650 24px system-ui, sans-serif";
+    context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 132);
+    drawCanvasPill(context, width - outer - 430, outer + 102, 132, 50, `${completedCount} 完成`, "#eaf6f2", "#397f6d");
+    drawCanvasPill(context, width - outer - 284, outer + 102, 132, 50, `${missedCount} 未完成`, "#fff0f2", "#a85f6b");
+
+    const milestoneY = 280;
+    context.fillStyle = "#6252ad";
+    context.font = "850 18px system-ui, sans-serif";
+    context.fillText("WEEKLY MILESTONES · 本周坐标", outer, milestoneY - 24);
+    if (milestones.length) {
+      const cardWidth = (width - outer * 2 - 22) / 2;
+      milestones.forEach((item, index) => {
+        const x = outer + index % 2 * (cardWidth + 22);
+        const y = milestoneY + Math.floor(index / 2) * 132;
+        drawCanvasMilestone(context, item, x, y, cardWidth, 112, week, canvasImageCache, index);
+      });
+    } else {
+      context.fillStyle = "#918a98";
+      context.font = "600 19px system-ui, sans-serif";
+      context.fillText("这个空间暂时没有关联的倒计时或进度目标。", outer, milestoneY + 45);
+    }
+
+    const daysY = milestones.length > 2 ? 576 : 450;
+    context.fillStyle = "#6252ad";
+    context.font = "850 18px system-ui, sans-serif";
+    context.fillText("SEVEN DAYS · 一周足迹", outer, daysY - 24);
+    const dayGap = 13;
+    const dayWidth = (width - outer * 2 - dayGap * 6) / 7;
+    week.days.forEach((day, index) => {
+      const x = outer + index * (dayWidth + dayGap);
+      const tone = { "好好好": "#db7d74", "还不错": "#e799b0", "这期拉了": "#576690" }[day.status] || "#b89558";
+      drawCanvasCard(context, x, daysY, dayWidth, 286, "rgba(255,255,255,.94)", colorMixForCanvas(tone, .18));
+      context.fillStyle = tone;
+      drawCanvasRoundedRectPath(context, x, daysY, dayWidth, 7, 4);
+      context.fill();
+      context.fillStyle = "#383346";
+      context.font = "900 28px system-ui, sans-serif";
+      context.fillText(`D${day.dayNumber}`, x + 18, daysY + 46);
+      context.fillStyle = tone;
+      context.font = "850 14px system-ui, sans-serif";
+      context.fillText(formatCompactDate(day.date), x + 18, daysY + 72);
+      const sticker = canvasImageCache.get(day.sticker);
+      if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, x + dayWidth - 64, daysY + 18, 48);
+      if (day.status) drawCanvasPill(context, x + 16, daysY + 88, Math.min(92, dayWidth - 32), 30, day.status, colorMixForCanvas(tone, .1), tone);
+      const entries = getCanvasDayEntries(day);
+      const done = entries.filter((entry) => entry.done === true).length;
+      const missed = entries.filter((entry) => entry.done === false).length;
+      context.fillStyle = "#4a4553";
+      context.font = "780 15px system-ui, sans-serif";
+      drawCanvasText(context, day.title || "生活日", x + 18, daysY + 148, dayWidth - 36, 20, 2);
+      context.fillStyle = "#817b88";
+      context.font = "600 13px system-ui, sans-serif";
+      context.fillText(`${done} 完成 · ${missed} 未完成`, x + 18, daysY + 198);
+      context.fillText(day.recorded ? "今天已记录" : "等待记录", x + 18, daysY + 224);
+      drawCanvasProgress(context, x + 18, daysY + 250, dayWidth - 36, entries.length ? done / entries.length * 100 : 0, tone);
+    });
+
+    context.fillStyle = "#8c8693";
+    context.font = "600 17px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.fillText("把一周摊开看见，也把下一步留给自己。 · ASOUL 一个魂生活日记", width / 2, height - 54);
+    context.textAlign = "left";
+    return contextCanvas;
+  }
+
+  function drawCanvasSoulMark(context, x, y, size) {
+    context.save();
+    context.translate(x, y);
+    context.scale(size / 64, size / 64);
+    const background = context.createLinearGradient(5, 4, 59, 61);
+    background.addColorStop(0, "#7665d7");
+    background.addColorStop(.58, "#9a7ce5");
+    background.addColorStop(1, "#e89bb4");
+    context.fillStyle = background;
+    drawCanvasRoundedRectPath(context, 3, 3, 58, 58, 18);
+    context.fill();
+    context.fillStyle = "#fff4b3";
+    context.beginPath();
+    context.moveTo(49, 12);
+    context.lineTo(50.5, 15.5);
+    context.lineTo(54, 17);
+    context.lineTo(50.5, 18.5);
+    context.lineTo(49, 22);
+    context.lineTo(47.5, 18.5);
+    context.lineTo(44, 17);
+    context.lineTo(47.5, 15.5);
+    context.closePath();
+    context.fill();
+    const ghost = context.createLinearGradient(22, 15, 42, 51);
+    ghost.addColorStop(0, "#fffefc");
+    ghost.addColorStop(1, "#f3eaff");
+    context.fillStyle = ghost;
+    context.beginPath();
+    context.moveTo(18, 47);
+    context.lineTo(18, 31);
+    context.bezierCurveTo(18, 21, 24, 14, 32, 14);
+    context.bezierCurveTo(40, 14, 46, 21, 46, 31);
+    context.lineTo(46, 47);
+    context.bezierCurveTo(46, 50, 43, 51, 41, 49);
+    context.lineTo(39, 47);
+    context.lineTo(35.5, 50);
+    context.bezierCurveTo(34, 51.3, 32.7, 50.7, 32, 49.7);
+    context.lineTo(30, 47);
+    context.lineTo(27, 50);
+    context.bezierCurveTo(25.4, 51.2, 24, 50.5, 23.3, 49.5);
+    context.lineTo(22, 48);
+    context.bezierCurveTo(20.3, 50, 18, 49, 18, 47);
+    context.fill();
+    context.fillStyle = "#403854";
+    context.beginPath();
+    context.arc(27.2, 31, 2.8, 0, Math.PI * 2);
+    context.arc(36.8, 31, 2.8, 0, Math.PI * 2);
+    context.fill();
+    context.strokeStyle = "#6f6188";
+    context.lineWidth = 1.5;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(29.5, 37.2);
+    context.quadraticCurveTo(32, 39.2, 34.5, 37.2);
+    context.stroke();
+    context.fillStyle = "rgba(243,164,184,.72)";
+    context.beginPath();
+    context.arc(23.2, 36, 2.2, 0, Math.PI * 2);
+    context.arc(40.8, 36, 2.2, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
+  function drawCanvasAppIcon(context, x, y, size) {
+    const image = canvasImageCache.get("icons/icon-192.png") || $("#installAppButton img");
+    if (!image?.complete || !image.naturalWidth) {
+      drawCanvasSoulMark(context, x, y, size);
+      return;
+    }
+    context.save();
+    drawCanvasRoundedRectPath(context, x, y, size, size, size * .24);
+    context.clip();
+    context.drawImage(image, x, y, size, size);
+    context.restore();
+  }
+
+  function colorMixForCanvas(hex, opacity) {
+    const match = String(hex).match(/^#([0-9a-f]{6})$/i);
+    if (!match) return `rgba(143,122,234,${opacity})`;
+    const value = Number.parseInt(match[1], 16);
+    return `rgba(${value >> 16},${value >> 8 & 255},${value & 255},${opacity})`;
+  }
+
+  function drawCanvasDay(context, day, template, x, y, width, height, stickerImages) {
+    drawCanvasCard(context, x, y, width, height, "rgba(255,255,255,.94)", "#e5e1eb");
+    context.fillStyle = "#343044";
+    context.font = "800 30px system-ui, sans-serif";
+    context.fillText(`Day${day.dayNumber}`, x + 24, y + 42);
+    context.font = "800 18px system-ui, sans-serif";
+    context.fillText(formatCompactDate(day.date), x + 24, y + 68);
+    context.fillStyle = "#837e8f";
+    context.font = "500 16px system-ui, sans-serif";
+    context.fillText(day.title, x + 24, y + 93);
+    if (day.status) drawCanvasPill(context, x + 126, y + 14, 108, 36, day.status, "#f9edf4", "#a25e79");
+    const sticker = stickerImages.get(day.sticker);
+    if (sticker) drawCanvasSticker(context, sticker, x + width - 100, y + 20, 72);
+
+    const rowCount = Math.max(day.planItems.length, day.records.length);
+    const entries = Array.from({ length: rowCount }, (_, index) => {
+      const plan = day.planItems[index] || {};
+      const record = day.records[index] || {};
+      return {
+        name: record.name || plan.name || "",
+        value: record.value || plan.value || "",
+        done: typeof record.done === "boolean" ? record.done : null,
+      };
+    }).filter((entry) => entry.name || entry.value || entry.done !== null);
+    entries.slice(0, 5).forEach((entry, index) => {
+      const rowY = y + 132 + index * 34;
+      const mark = entry.done === true ? "√" : entry.done === false ? "×" : "•";
+      context.fillStyle = entry.done === true ? "#36a083" : entry.done === false ? "#d96670" : "#b18d45";
+      context.font = "800 20px system-ui, sans-serif";
+      context.fillText(mark, x + 24, rowY);
+      context.fillStyle = "#454052";
+      context.font = "700 17px system-ui, sans-serif";
+      context.fillText(entry.name || "记录", x + 54, rowY);
+      if (entry.value) {
+        context.fillStyle = "#827d8d";
+        context.font = "500 15px system-ui, sans-serif";
+        drawCanvasText(context, entry.value, x + 190, rowY, width - 220, 20, 1);
+      }
+    });
+    if (entries.length > 5) {
+      context.fillStyle = "#8a8495";
+      context.font = "500 15px system-ui, sans-serif";
+      context.fillText(`另有 ${entries.length - 5} 项记录`, x + 54, y + 132 + 5 * 34);
+    }
+    const footerParts = [];
+    if (day.dietRecord) footerParts.push(`${template.secondFieldLabel}：${day.dietRecord}`);
+    if (template.showWeight && day.weight !== null) footerParts.push(`体重：${formatWeight(day.weight)}`);
+    if (day.note) footerParts.push(day.note);
+    if (footerParts.length) {
+      context.fillStyle = "#6f697b";
+      context.font = "500 15px system-ui, sans-serif";
+      drawCanvasText(context, footerParts.join(" · "), x + 24, y + height - 32, width - 48, 20, 2);
+    }
+  }
+
+  function drawCanvasCard(context, x, y, width, height, fill, stroke) {
+    drawCanvasRoundedRectPath(context, x, y, width, height, 22);
+    context.fillStyle = fill;
+    context.fill();
+    context.strokeStyle = stroke;
+    context.lineWidth = 1;
+    context.stroke();
+  }
+
+  function drawCanvasPill(context, x, y, width, height, text, fill, color) {
+    drawCanvasRoundedRectPath(context, x, y, width, height, height / 2);
+    context.fillStyle = fill;
+    context.fill();
+    context.fillStyle = color;
+    context.font = "700 16px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(text, x + width / 2, y + height / 2);
+    context.textAlign = "left";
+    context.textBaseline = "alphabetic";
+  }
+
+  function drawCanvasProgress(context, x, y, width, percent, color) {
+    context.fillStyle = "#eeebf2";
+    drawCanvasRoundedRectPath(context, x, y, width, 10, 5);
+    context.fill();
+    context.fillStyle = color;
+    drawCanvasRoundedRectPath(context, x, y, Math.max(4, width * percent / 100), 10, 5);
+    context.fill();
+  }
+
+  function drawCanvasSticker(context, image, x, y, size) {
+    context.save();
+    context.fillStyle = "#fff";
+    drawCanvasRoundedRectPath(context, x, y, size, size, 18);
+    context.fill();
+    context.clip();
+    context.drawImage(image, x, y, size, size);
+    context.restore();
+  }
+
+  function drawCanvasRoundedRectPath(context, x, y, width, height, radius) {
+    const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
+    context.beginPath();
+    context.moveTo(x + safeRadius, y);
+    context.lineTo(x + width - safeRadius, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+    context.lineTo(x + width, y + height - safeRadius);
+    context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+    context.lineTo(x + safeRadius, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+    context.lineTo(x, y + safeRadius);
+    context.quadraticCurveTo(x, y, x + safeRadius, y);
+    context.closePath();
+  }
+
+  function drawCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines) {
+    const characters = [...String(text || "")];
+    const lines = [];
+    let line = "";
+    characters.forEach((character) => {
+      const candidate = line + character;
+      if (line && context.measureText(candidate).width > maxWidth) {
+        lines.push(line);
+        line = character;
+      } else {
+        line = candidate;
+      }
+    });
+    if (line) lines.push(line);
+    const visible = lines.slice(0, maxLines);
+    if (lines.length > maxLines && visible.length) {
+      let last = visible[visible.length - 1];
+      while (last && context.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
+      visible[visible.length - 1] = `${last}…`;
+    }
+    visible.forEach((value, index) => context.fillText(value, x, y + index * lineHeight));
+  }
+
   function openChartDialog(chartId = null) {
+    if (!getSpace()) {
+      showToast("请先新建一个空间");
+      return;
+    }
     editingChartId = chartId;
     chartForm.reset();
     seriesEditor.innerHTML = "";
-    $("#chartDialogTitle").textContent = chartId ? "修改折线图" : "添加一张折线图";
+    $("#chartDialogTitle").textContent = chartId ? "修改曲线图" : "添加一张曲线图";
     const template = getSpaceTemplate(chartId ? findChart(chartId)?.spaceId : activeSpaceId);
     chartForm.elements.title.placeholder = `${template.name}记录图表，例如：${template.defaultSeries.name.replace(/\s*\/.*$/, "")}变化`;
 
@@ -1775,7 +3180,7 @@
     }
 
     chartDialog.showModal();
-    window.setTimeout(() => chartForm.elements.title.focus(), 40);
+    focusDialogFieldWithoutScrolling(chartForm, chartForm.elements.title);
   }
 
   function applyPreset(key) {
@@ -1808,11 +3213,21 @@
         <input data-series-name maxlength="24" required placeholder="例如：跑量 / km" value="${escapeAttr(item.name || "")}" />
       </label>
       <label class="field series-color-field">
-        <span>折线颜色</span>
+        <span>曲线颜色</span>
         <select data-series-color>
           ${ALLOWED_COLORS.map((value) => `<option value="${value}"${value === color ? " selected" : ""}>${colorName(value)}</option>`).join("")}
         </select>
       </label>
+      <div class="series-axis-fields">
+        <label class="field">
+          <span>纵轴最小值 <small>留空自动</small></span>
+          <input data-series-axis-min type="number" step="any" inputmode="decimal" placeholder="自动" value="${Number.isFinite(Number(item.axisMin)) && item.axisMin !== null && item.axisMin !== "" ? escapeAttr(item.axisMin) : ""}" />
+        </label>
+        <label class="field">
+          <span>纵轴最大值 <small>留空自动</small></span>
+          <input data-series-axis-max type="number" step="any" inputmode="decimal" placeholder="自动" value="${Number.isFinite(Number(item.axisMax)) && item.axisMax !== null && item.axisMax !== "" ? escapeAttr(item.axisMax) : ""}" />
+        </label>
+      </div>
       <button class="series-remove" type="button" aria-label="删除指标 ${index + 1}">×</button>`;
     seriesEditor.appendChild(row);
     $("[data-series-color]", row).addEventListener("change", (event) => {
@@ -1838,13 +3253,33 @@
   }
 
   function readSeriesEditor() {
-    return $$('[data-series-row]', seriesEditor).map((row, index) => ({
-      id: safeId(row.dataset.seriesId),
-      name: safeString($("[data-series-name]", row).value, 24) || `指标 ${index + 1}`,
-      color: ALLOWED_COLORS.includes($("[data-series-color]", row).value)
-        ? $("[data-series-color]", row).value
-        : ALLOWED_COLORS[index % ALLOWED_COLORS.length],
-    }));
+    const result = [];
+    for (const [index, row] of $$('[data-series-row]', seriesEditor).entries()) {
+      const minInput = $("[data-series-axis-min]", row);
+      const maxInput = $("[data-series-axis-max]", row);
+      const axisMin = minInput.value.trim() === "" ? null : Number(minInput.value);
+      const axisMax = maxInput.value.trim() === "" ? null : Number(maxInput.value);
+      if ((axisMin !== null && !Number.isFinite(axisMin)) || (axisMax !== null && !Number.isFinite(axisMax))) {
+        showToast(`指标 ${index + 1} 的纵轴范围需要填写有效数字`);
+        (axisMin !== null && !Number.isFinite(axisMin) ? minInput : maxInput).focus();
+        return null;
+      }
+      if (axisMin !== null && axisMax !== null && axisMin >= axisMax) {
+        showToast(`指标 ${index + 1} 的最大值要大于最小值`);
+        maxInput.focus();
+        return null;
+      }
+      result.push({
+        id: safeId(row.dataset.seriesId),
+        name: safeString($("[data-series-name]", row).value, 24) || `指标 ${index + 1}`,
+        color: ALLOWED_COLORS.includes($("[data-series-color]", row).value)
+          ? $("[data-series-color]", row).value
+          : ALLOWED_COLORS[index % ALLOWED_COLORS.length],
+        axisMin,
+        axisMax,
+      });
+    }
+    return result;
   }
 
   function colorName(value) {
@@ -1858,17 +3293,19 @@
       "#E799B0": "嘉然 · 贝壳粉",
       "#DB7D74": "贝拉 · 番茄红",
       "#576690": "乃琳 · 深岩暗蓝灰",
-    })[value] || "折线颜色";
+    })[value] || "曲线颜色";
   }
 
   function saveChartFromDialog(event) {
     event.preventDefault();
     if (!chartForm.reportValidity()) return;
     const data = new FormData(chartForm);
+    const series = readSeriesEditor();
+    if (!series) return;
     const next = {
       title: safeString(data.get("title"), 30),
       xLabel: safeString(data.get("xLabel"), 20),
-      series: readSeriesEditor(),
+      series,
     };
 
     if (editingChartId) {
@@ -1898,7 +3335,7 @@
         nodes: [],
         createdAt: Date.now(),
       });
-      showToast("空白折线图已经准备好啦");
+      showToast("空白曲线图已经准备好啦");
     }
 
     saveState(false);
@@ -1909,6 +3346,9 @@
   function renderCharts() {
     captureChartScrollPositions();
     const spaceCharts = getActiveSpaceCharts();
+    const hasActiveSpace = Boolean(getSpace());
+    $("#addChartButton").disabled = !hasActiveSpace;
+    $("#emptyAddButton").disabled = !hasActiveSpace;
     emptyState.hidden = spaceCharts.length > 0;
     chartsGrid.innerHTML = spaceCharts.map((chart, index) => renderChartCard(chart, index, spaceCharts.length)).join("");
 
@@ -1917,6 +3357,9 @@
     });
     $$("[data-edit-chart]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => openChartDialog(button.dataset.editChart));
+    });
+    $$("[data-download-chart]", chartsGrid).forEach((button) => {
+      button.addEventListener("click", () => downloadChartImage(button.dataset.downloadChart));
     });
     $$("[data-delete-chart]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => deleteChart(button.dataset.deleteChart));
@@ -1988,6 +3431,7 @@
           </div>
           <div class="chart-card-actions">
             <button class="chart-action chart-action--add" type="button" data-add-node="${chart.id}">＋ 新节点</button>
+            <button class="chart-action chart-action--download" type="button" data-download-chart="${chart.id}">↓ 下载曲线图</button>
             <span class="chart-order" aria-label="调整图表排序">
               <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="-1" aria-label="曲线图上移"${chartIndex === 0 ? " disabled" : ""}>↑ 曲线图上移</button>
               <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === chartCount - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
@@ -2003,6 +3447,180 @@
       </article>`;
   }
 
+  function downloadChartImage(chartId) {
+    const chart = findChart(chartId);
+    if (!chart || !chart.nodes.length) {
+      showToast("先添加节点，再下载曲线图");
+      return;
+    }
+    try {
+      const canvas = createChartCanvas(chart);
+      downloadCanvasAsPng(canvas, `Asoul-${getSpaceTemplate(chart.spaceId).name}-${chart.title}-曲线图.png`);
+      showToast("高清曲线图已经下载");
+    } catch {
+      showToast("曲线图生成失败，请稍后再试");
+    }
+  }
+
+  function createChartCanvas(chart) {
+    const scale = 2;
+    const width = 1920;
+    const height = 1080;
+    const canvas = document.createElement("canvas");
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const context = canvas.getContext("2d");
+    context.scale(scale, scale);
+    const template = getSpaceTemplate(chart.spaceId);
+    const primary = chart.series[0];
+    const primaryColor = primary?.color || "#8f7aea";
+    const background = context.createLinearGradient(0, 0, width, height);
+    background.addColorStop(0, "#fffdfb");
+    background.addColorStop(.52, "#faf8ff");
+    background.addColorStop(1, colorMixForCanvas(primaryColor, .08));
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
+    context.fillStyle = colorMixForCanvas(primaryColor, .07);
+    context.beginPath();
+    context.arc(width - 80, 60, 350, 0, Math.PI * 2);
+    context.fill();
+    drawCanvasAppIcon(context, width - 145, 64, 76);
+
+    context.fillStyle = primaryColor;
+    context.font = "850 22px system-ui, sans-serif";
+    context.fillText(`ASOUL ${template.id.toUpperCase()} CURVE`, 86, 88);
+    context.fillStyle = "#2f2a40";
+    context.font = "900 54px system-ui, sans-serif";
+    context.fillText(chart.title, 86, 154);
+    context.fillStyle = "#817a89";
+    context.font = "650 20px system-ui, sans-serif";
+    context.fillText(`${chart.nodes.length} 个节点 · ${chart.xLabel} · 生成于 ${formatFriendlyDate(todayIso())}`, 88, 194);
+
+    let legendX = 88;
+    chart.series.forEach((series) => {
+      context.fillStyle = series.color;
+      context.beginPath();
+      context.arc(legendX + 7, 232, 7, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "#554f5d";
+      context.font = "750 17px system-ui, sans-serif";
+      context.fillText(series.name, legendX + 23, 238);
+      legendX += 44 + context.measureText(series.name).width;
+    });
+
+    const plot = { left: 134, top: 304, right: 106, bottom: 150 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const xAt = (index) => chart.nodes.length === 1
+      ? plot.left + plotWidth / 2
+      : plot.left + index / (chart.nodes.length - 1) * plotWidth;
+    const seriesData = chart.series.map((series) => {
+      const values = chart.nodes.map((node) => {
+        const raw = node.values?.[series.id];
+        return raw === null || raw === undefined ? NaN : Number(raw);
+      }).filter(Number.isFinite);
+      let min = values.length ? Math.min(...values) : 0;
+      let max = values.length ? Math.max(...values) : 1;
+      const range = max - min;
+      const padding = range === 0 ? Math.max(Math.abs(max) * .12, 1) : range * .16;
+      min = series.axisMin !== null && series.axisMin !== undefined && Number.isFinite(Number(series.axisMin)) ? Number(series.axisMin) : Math.max(0, min - padding);
+      max = series.axisMax !== null && series.axisMax !== undefined && Number.isFinite(Number(series.axisMax)) ? Number(series.axisMax) : max + padding;
+      if (max <= min) max = min + Math.max(Math.abs(min) * .12, 1);
+      const points = chart.nodes.map((node, index) => {
+        const raw = node.values?.[series.id];
+        const value = raw === null || raw === undefined ? NaN : Number(raw);
+        if (!Number.isFinite(value)) return null;
+        const visible = Math.max(min, Math.min(max, value));
+        return { node, value, x: xAt(index), y: plot.top + (max - visible) / (max - min) * plotHeight };
+      }).filter(Boolean);
+      return { ...series, min, max, points };
+    });
+
+    for (let index = 0; index < 5; index += 1) {
+      const ratio = index / 4;
+      const y = plot.top + ratio * plotHeight;
+      context.strokeStyle = "rgba(87,102,144,.11)";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(plot.left, y);
+      context.lineTo(width - plot.right, y);
+      context.stroke();
+      context.fillStyle = "#858091";
+      context.font = "650 16px system-ui, sans-serif";
+      context.textAlign = "right";
+      context.fillText(formatSeriesValue(seriesData[0], seriesData[0].max - ratio * (seriesData[0].max - seriesData[0].min)), plot.left - 18, y + 6);
+    }
+    context.textAlign = "left";
+
+    seriesData.forEach((series, seriesIndex) => {
+      if (!series.points.length) return;
+      if (seriesIndex === 0 && series.points.length > 1) {
+        const gradient = context.createLinearGradient(0, plot.top, 0, plot.top + plotHeight);
+        gradient.addColorStop(0, colorMixForCanvas(series.color, .18));
+        gradient.addColorStop(1, colorMixForCanvas(series.color, 0));
+        context.beginPath();
+        drawCanvasSmoothPath(context, series.points);
+        context.lineTo(series.points.at(-1).x, plot.top + plotHeight);
+        context.lineTo(series.points[0].x, plot.top + plotHeight);
+        context.closePath();
+        context.fillStyle = gradient;
+        context.fill();
+      }
+      context.beginPath();
+      drawCanvasSmoothPath(context, series.points);
+      context.strokeStyle = series.color;
+      context.lineWidth = seriesIndex === 0 ? 8 : 6;
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.stroke();
+      series.points.forEach((point) => {
+        context.fillStyle = "#fff";
+        context.beginPath();
+        context.arc(point.x, point.y, 13, 0, Math.PI * 2);
+        context.fill();
+        context.strokeStyle = series.color;
+        context.lineWidth = 6;
+        context.stroke();
+      });
+    });
+
+    const maxLabels = 9;
+    const labelEvery = Math.max(1, Math.ceil((chart.nodes.length - 1) / Math.max(1, maxLabels - 1)));
+    chart.nodes.forEach((node, index) => {
+      const x = xAt(index);
+      if (index === 0 || index === chart.nodes.length - 1 || index % labelEvery === 0) {
+        context.fillStyle = "#777182";
+        context.font = "700 17px system-ui, sans-serif";
+        context.textAlign = "center";
+        context.fillText(formatChartAxisLabel(node.x, index === 0), x, height - 102);
+      }
+      const sticker = Object.values(node.stickers || {}).map(safeSticker).find(Boolean) || safeSticker(node.sticker);
+      const image = canvasImageCache.get(sticker);
+      if (image?.complete && image.naturalWidth) {
+        const spacing = plotWidth / Math.max(1, chart.nodes.length - 1);
+        const size = Math.max(28, Math.min(58, spacing * .42));
+        const primaryPoint = seriesData[0].points.find((point) => point.node.id === node.id);
+        if (primaryPoint) drawCanvasSticker(context, image, primaryPoint.x - size / 2, primaryPoint.y - size - 26, size);
+      }
+    });
+    context.textAlign = "left";
+    context.fillStyle = "#8b8592";
+    context.font = "600 16px system-ui, sans-serif";
+    context.fillText("曲线图会采用每条曲线自己的纵轴范围；此图显示左侧第一项指标刻度。", 88, height - 44);
+    return canvas;
+  }
+
+  function drawCanvasSmoothPath(context, points) {
+    if (!points.length) return;
+    context.moveTo(points[0].x, points[0].y);
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const current = points[index];
+      const next = points[index + 1];
+      const offset = (next.x - current.x) * .38;
+      context.bezierCurveTo(current.x + offset, current.y, next.x - offset, next.y, next.x, next.y);
+    }
+  }
+
   function renderEmptyChart(chart) {
     const names = chart.series.map((item) => item.name).join("、");
     return `
@@ -2010,7 +3628,7 @@
         <div class="chart-empty-inner">
           <div class="chart-empty-line" aria-hidden="true"></div>
           <h4>这张图还没有节点</h4>
-          <p>添加第一个“${escapeHtml(chart.xLabel)} / ${escapeHtml(names)}”记录后，折线就会从这里开始生长。</p>
+        <p>添加第一个“${escapeHtml(chart.xLabel)} / ${escapeHtml(names)}”记录后，曲线就会从这里开始生长。</p>
           <button class="secondary-button" type="button" data-add-node="${chart.id}">
             <span aria-hidden="true">＋</span> 添加第一个节点
           </button>
@@ -2038,21 +3656,31 @@
         })
         .filter(Number.isFinite);
       const hasData = finiteValues.length > 0;
-      let min = finiteValues.length ? Math.min(...finiteValues) : 0;
-      let max = finiteValues.length ? Math.max(...finiteValues) : 1;
-      const naturalRange = max - min;
-      const padding = naturalRange === 0 ? Math.max(Math.abs(max) * 0.12, 1) : naturalRange * 0.16;
-      min = Math.max(0, min - padding);
-      max += padding;
+      let automaticMin = finiteValues.length ? Math.min(...finiteValues) : 0;
+      let automaticMax = finiteValues.length ? Math.max(...finiteValues) : 1;
+      const naturalRange = automaticMax - automaticMin;
+      const padding = naturalRange === 0 ? Math.max(Math.abs(automaticMax) * 0.12, 1) : naturalRange * 0.16;
+      automaticMin = Math.max(0, automaticMin - padding);
+      automaticMax += padding;
+      const customMin = series.axisMin !== null && series.axisMin !== undefined && Number.isFinite(Number(series.axisMin)) ? Number(series.axisMin) : null;
+      const customMax = series.axisMax !== null && series.axisMax !== undefined && Number.isFinite(Number(series.axisMax)) ? Number(series.axisMax) : null;
+      let min = customMin ?? automaticMin;
+      let max = customMax ?? automaticMax;
+      if (max <= min) {
+        const fallbackRange = Math.max(Math.abs(min) * 0.12, 1);
+        if (customMax !== null && customMin === null) min = max - fallbackRange;
+        else max = min + fallbackRange;
+      }
       const points = chart.nodes.map((node, index) => {
         const raw = node.values?.[series.id];
         const value = raw === null || raw === undefined ? NaN : Number(raw);
         if (!Number.isFinite(value)) return null;
+        const visibleValue = Math.max(min, Math.min(max, value));
         return {
           node,
           value,
           px: xAt(index),
-          py: margin.top + ((max - value) / (max - min)) * plotHeight,
+          py: margin.top + ((max - visibleValue) / (max - min)) * plotHeight,
         };
       }).filter(Boolean);
       return { ...series, min, max, points, pointByNode: new Map(points.map((point) => [point.node.id, point])), hasData };
@@ -2080,11 +3708,16 @@
         <text class="chart-axis-text${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" x="${margin.left - 13}" y="${y + 4}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
     }).join("");
 
-    const labelEvery = Math.max(1, Math.ceil(chart.nodes.length / (8 * zoom)));
     const nodeSpacing = plotWidth / Math.max(chart.nodes.length - 1, 1);
+    const maxLabels = Math.max(2, Math.floor(plotWidth / 96));
+    const labelEvery = Math.max(1, Math.ceil(Math.max(chart.nodes.length - 1, 1) / Math.max(maxLabels - 1, 1)));
+    const parsedNodeDates = chart.nodes.map((node) => parseChartDate(node.x));
     const xLabels = chart.nodes.map((node, index) => {
-      if (index % labelEvery !== 0 && index !== chart.nodes.length - 1) return "";
-      return `<text class="chart-axis-text" x="${xAt(index)}" y="${height - 34}" text-anchor="middle">${escapeXml(shortLabel(node.x))}</text>`;
+      const date = parsedNodeDates[index];
+      const previousDate = parsedNodeDates[index - 1];
+      const yearChanged = Boolean(date?.year && previousDate?.year && date.year !== previousDate.year);
+      if (index !== 0 && index !== chart.nodes.length - 1 && index % labelEvery !== 0 && !yearChanged) return "";
+      return `<text class="chart-axis-text" x="${xAt(index)}" y="${height - 34}" text-anchor="middle">${escapeXml(formatChartAxisLabel(node.x, index === 0 || yearChanged))}</text>`;
     }).join("");
 
     const lineMarkup = seriesData.map((item) => {
@@ -2100,16 +3733,17 @@
       const label = `${node.x}：${pointValues.map(({ series, point }) => `${series.name} ${formatSeriesValue(series, point.value)}`).join("；")}`;
       const isSelected = selectedNodeByChart.get(chart.id) === node.id;
       const showPointMarker = isSelected || nodeSpacing >= 14 || nodeIndex % labelEvery === 0 || nodeIndex === chart.nodes.length - 1;
+      const stickerSize = Math.max(20, Math.min(seriesData.length > 1 ? 30 : 38, nodeSpacing - 8));
       const stickerMarkup = pointValues.map(({ series, point }, pointIndex) => {
         const sticker = safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""));
-        const showSticker = sticker && (isSelected || (showPointMarker && nodeSpacing >= 58));
-        if (!showSticker) return "";
-        const centerX = point.px;
-        const centerY = point.py - 37;
+        if (!sticker) return "";
+        const centerX = point.px + (pointIndex - (pointValues.length - 1) / 2) * (stickerSize + 4);
+        const centerY = point.py - stickerSize / 2 - 15;
+        const clipRadius = stickerSize / 2;
         const clipId = `clip-${chart.id}-${node.id}-${series.id}`;
-        return `<circle class="point-sticker-bg" cx="${centerX}" cy="${centerY}" r="22" />
-          <clipPath id="${clipId}"><circle cx="${centerX}" cy="${centerY}" r="19" /></clipPath>
-          <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - 19}" y="${centerY - 19}" width="38" height="38" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
+        return `<circle class="point-sticker-bg" cx="${centerX}" cy="${centerY}" r="${clipRadius + 3}" />
+          <clipPath id="${clipId}"><circle cx="${centerX}" cy="${centerY}" r="${clipRadius}" /></clipPath>
+          <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - clipRadius}" y="${centerY - clipRadius}" width="${stickerSize}" height="${stickerSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
       }).join("");
       const cores = showPointMarker ? pointValues.map(({ series, point }) => `
         <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="10" />
@@ -2126,7 +3760,7 @@
     }).join("");
 
     const rangeSummary = seriesData.map((item) => `
-      <span><i style="--series-color:${item.color}"></i>${escapeHtml(item.name)}：${item.hasData ? `${formatSeriesValue(item, item.min)}—${formatSeriesValue(item, item.max)}` : "暂无数据"}</span>
+      <span><i style="--series-color:${item.color}"></i>${escapeHtml(item.name)}：${item.hasData ? `${formatSeriesValue(item, item.min)}—${formatSeriesValue(item, item.max)}` : "暂无数据"}${(item.axisMin !== null && item.axisMin !== undefined) || (item.axisMax !== null && item.axisMax !== undefined) ? " · 自定纵轴" : ""}</span>
     `).join("");
     const axisSeriesNames = seriesData.map((item, index) => `
       ${index ? '<tspan class="chart-axis-separator" dx="10">·</tspan>' : ""}<tspan class="chart-axis-series-name" style="fill:${item.color}"${index ? ' dx="10"' : ""}>● ${escapeXml(item.name)}</tspan>
@@ -2135,9 +3769,9 @@
     return `
       <div class="chart-range-summary">
         ${rangeSummary}
-        ${chart.series.length > 1 ? `<small>纵轴数值按折线颜色对应，各项指标使用独立刻度</small>` : ""}
+        ${chart.series.length > 1 ? `<small>纵轴数值按曲线颜色对应，各项指标使用独立刻度</small>` : ""}
       </div>
-      <div class="chart-view-tools" aria-label="折线图查看范围">
+      <div class="chart-view-tools" aria-label="曲线图查看范围">
         <div class="chart-view-status">
           <span class="chart-view-icon" aria-hidden="true">${chart.nodes.length === 1 ? "◎" : zoom === 1 ? "⌁" : "↔"}</span>
           <span>
@@ -2151,8 +3785,8 @@
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="reset"${!canZoom || zoom === 1 ? " disabled" : ""}>看全局</button>
         </div>
       </div>
-      <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}折线图">
-      <svg class="chart-svg" style="width:${zoom * 100}%;aspect-ratio:${width}/${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}折线图">
+      <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
+      <svg class="chart-svg" style="width:${zoom * 100}%;aspect-ratio:${width}/${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
         <defs>
           <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="${primary.color}" stop-opacity="0.24" />
@@ -2221,13 +3855,13 @@
         if (input && Number.isFinite(value)) input.value = formatSeriesInput(series, value);
       });
     } else if (/日期|时间|day|date/i.test(chart.xLabel)) {
-      nodeForm.elements.x.value = new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(new Date());
+      nodeForm.elements.x.value = todayIso();
     }
 
     renderNodeStickerSeriesTabs(chart);
     renderStickerGrid();
     nodeDialog.showModal();
-    window.setTimeout(() => nodeForm.elements.x.focus(), 40);
+    focusDialogFieldWithoutScrolling(nodeForm, nodeForm.elements.x);
   }
 
   function saveNodeFromDialog(event) {
@@ -2272,6 +3906,8 @@
       selectedNodeByChart.set(chart.id, node.id);
       showToast("新节点已经记下来了");
     }
+
+    Object.values(stickers).forEach(preloadCanvasAsset);
 
     saveState(false);
     nodeDialog.close();
@@ -2630,17 +4266,22 @@
       selectedDayByWeek.clear();
       chartZoomById.clear();
       chartScrollById.clear();
+      selectedGoalId = state.goals[0]?.id || null;
+      selectedProgressGoalId = state.progressGoals[0]?.id || null;
       hydrateProfileForm();
       renderProfileAvatar();
+      renderGoals();
+      renderProgressGoals();
       activeSpaceId = safeSpaceId(state.activeSpaceId);
       const activeWeeks = getActiveSpaceWeeks();
       const activePeriods = getActiveSpacePeriods();
-      selectedWeekId = activeWeeks.at(-1)?.id || null;
+      selectedWeekId = pickRelevantWeek(activeWeeks)?.id || null;
       if (activePeriods.length) weekYearFilter = activePeriods.at(-1).yearMonth.slice(0, 4);
       weekMonthFilter = activePeriods.at(-1)?.yearMonth.slice(5, 7) || "";
       renderSpaceSwitcher();
       renderWeeks();
       renderCharts();
+      preloadCanvasAssets();
       showToast("生活日记已恢复");
     } catch (error) {
       showToast(error?.code === DATA_MODEL.UNSUPPORTED_VERSION_CODE
@@ -2745,6 +4386,27 @@
     return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(date);
   }
 
+  function formatFriendlyDate(value) {
+    const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+
+  function formatGoalDate(value) {
+    const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
+    return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" }).format(date);
+  }
+
+  function getGoalCountdown(targetDate, baseDate = todayIso()) {
+    const [targetYear, targetMonth, targetDay] = (safeDate(targetDate) || todayIso()).split("-").map(Number);
+    const [baseYear, baseMonth, baseDay] = (safeDate(baseDate) || todayIso()).split("-").map(Number);
+    const days = Math.round((
+      Date.UTC(targetYear, targetMonth - 1, targetDay) - Date.UTC(baseYear, baseMonth - 1, baseDay)
+    ) / 86_400_000);
+    if (days > 0) return { days, value: String(days), unit: "天后", phrase: `还有 ${days} 天`, state: "upcoming" };
+    if (days === 0) return { days, value: "今天", unit: "就是此刻", phrase: "就是今天", state: "today" };
+    return { days, value: String(Math.abs(days)), unit: "天前", phrase: `已过去 ${Math.abs(days)} 天`, state: "past" };
+  }
+
   function formatCompactDate(value) {
     const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -2762,7 +4424,14 @@
     const allLocalStickers = Object.values(STICKER_PACKS).flat();
     if (allLocalStickers.includes(sticker)) return sticker;
     const legacyPack = sticker.match(/^图片\/(贝拉|嘉然|乃琳)表情包\//)?.[1];
-    return legacyPack ? LEGACY_STICKER_FALLBACKS[legacyPack] : "";
+    if (legacyPack) return LEGACY_STICKER_FALLBACKS[legacyPack];
+    const numberedFolderMatch = sticker.match(/^图片\/(贝拉|嘉然|乃琳)\/(.+)$/);
+    if (!numberedFolderMatch) return "";
+    const [, packName, oldWithinPack] = numberedFolderMatch;
+    return (STICKER_PACKS[packName] || []).find((path) => {
+      const currentWithinPack = path.replace(new RegExp(`^图片/${packName}/\\d+-`), "");
+      return currentWithinPack === oldWithinPack.replace(/^\d+-/, "");
+    }) || "";
   }
 
   function assetUrl(value) {
@@ -2812,9 +4481,40 @@
     return new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(Number(value));
   }
 
+  function formatProgressNumber(value) {
+    return new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(Number(value) || 0);
+  }
+
+  function formatProgressInput(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? String(Math.round(number * 100) / 100) : "";
+  }
+
+  function formatProgressUpdateTime(value) {
+    const date = new Date(Number(value));
+    if (Number.isNaN(date.getTime())) return "刚刚";
+    return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(date);
+  }
+
   function shortLabel(value) {
     const text = String(value);
     return text.length > 9 ? `${text.slice(0, 8)}…` : text;
+  }
+
+  function parseChartDate(value) {
+    const text = String(value || "").trim();
+    let match = text.match(/^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})(?:日)?$/);
+    if (match) return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+    match = text.match(/^(\d{1,2})[-/.月](\d{1,2})(?:日)?$/);
+    if (match) return { year: null, month: Number(match[1]), day: Number(match[2]) };
+    return null;
+  }
+
+  function formatChartAxisLabel(value, includeYear = false) {
+    const date = parseChartDate(value);
+    if (!date || date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) return shortLabel(value);
+    const monthDay = `${String(date.month).padStart(2, "0")}/${String(date.day).padStart(2, "0")}`;
+    return includeYear && date.year ? `${String(date.year).slice(-2)}/${monthDay}` : monthDay;
   }
 
   function escapeHtml(value) {
@@ -2832,6 +4532,124 @@
 
   function escapeAttr(value) {
     return escapeHtml(value);
+  }
+
+  function focusDialogFieldWithoutScrolling(scrollContainer, field) {
+    window.setTimeout(() => {
+      scrollContainer.scrollTop = 0;
+      field.focus({ preventScroll: true });
+    }, 40);
+  }
+
+  function initSectionNavigation() {
+    const links = $$('[data-nav-section]');
+    const sections = [...new Set(links.map((link) => link.dataset.navSection))]
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+    if (!links.length || !sections.length) return;
+    const setActive = (id) => {
+      links.forEach((link) => {
+        const active = link.dataset.navSection === id;
+        link.classList.toggle("is-active", active);
+        if (active) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    };
+    setActive(sections[0].id);
+    if (!("IntersectionObserver" in window)) return;
+    const visible = new Map();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => visible.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0));
+      const current = sections
+        .map((section) => ({ id: section.id, ratio: visible.get(section.id) || 0, top: Math.abs(section.getBoundingClientRect().top - 110) }))
+        .filter((item) => item.ratio > 0)
+        .sort((a, b) => b.ratio - a.ratio || a.top - b.top)[0];
+      if (current) setActive(current.id);
+    }, { rootMargin: "-12% 0px -58% 0px", threshold: [0, .08, .22, .45] });
+    sections.forEach((section) => observer.observe(section));
+  }
+
+  function initPwa() {
+    const action = $("#installAppButton");
+    if (!action) return;
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    const setAction = (label, mode, title) => {
+      action.querySelector("span").textContent = label;
+      action.dataset.mode = mode;
+      action.title = title;
+      action.disabled = mode === "installed";
+      action.classList.toggle("is-ready", mode === "install" || mode === "update");
+    };
+    if (isStandalone) setAction("已安装", "installed", "当前已作为应用打开");
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      setAction("安装应用", "install", "安装到桌面或手机主屏幕");
+    });
+    action.addEventListener("click", async () => {
+      if (action.dataset.mode === "update" && waitingServiceWorker) {
+        waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+        return;
+      }
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        return;
+      }
+      if (location.protocol === "file:") {
+        showToast("安装需要通过 Cloudflare 地址或本地启动器打开");
+      } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+        showToast("iPhone：点 Safari 分享按钮，再选“添加到主屏幕”");
+      } else {
+        showToast("浏览器暂未提供安装，可在浏览器菜单中选择“安装应用”");
+      }
+    });
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      setAction("已安装", "installed", "当前已安装");
+      showToast("一个魂生活日记已经安装到桌面");
+    });
+
+    if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
+    navigator.serviceWorker.register("sw.js").then((registration) => {
+      const offerUpdate = (worker) => {
+        waitingServiceWorker = worker;
+        setAction("更新应用", "update", "点击刷新到刚刚部署的新版本");
+      };
+      if (registration.waiting) offerUpdate(registration.waiting);
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        if (!worker) return;
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) offerUpdate(worker);
+        });
+      });
+    }).catch(() => {
+      // The diary still works as a normal website if PWA registration is unavailable.
+    });
+  }
+
+  function preloadCanvasAssets() {
+    preloadCanvasAsset("icons/icon-192.png", true);
+    preloadCanvasAsset(state.profile.avatar);
+    state.goals.forEach((goal) => preloadCanvasAsset(goal.sticker));
+    state.progressGoals.forEach((goal) => preloadCanvasAsset(goal.sticker));
+    state.weeks.forEach((week) => week.days.forEach((day) => preloadCanvasAsset(day.sticker)));
+    state.charts.forEach((chart) => chart.nodes.forEach((node) => {
+      preloadCanvasAsset(node.sticker);
+      Object.values(node.stickers || {}).forEach(preloadCanvasAsset);
+    }));
+  }
+
+  function preloadCanvasAsset(value, allowNonSticker = false) {
+    const path = allowNonSticker ? String(value || "") : safeSticker(value);
+    if (!path || canvasImageCache.has(path)) return;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = assetUrl(path);
+    canvasImageCache.set(path, image);
   }
 
   function showToast(message) {
