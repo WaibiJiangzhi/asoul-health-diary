@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="weekly-planner.css?v=0821" />
     <link rel="stylesheet" href="weekly-polish.css?v=0821" />
     <link rel="stylesheet" href="complete-polish.css?v=0821" />
-    <link rel="stylesheet" href="mobile-app.css?v=0825" />
+    <link rel="stylesheet" href="mobile-app.css?v=0826c" />
   </head>
   <body>
     <div class="page-glow page-glow--one" aria-hidden="true"></div>
@@ -85,7 +85,6 @@
                 <strong>今天也来一点枝江冷笑话</strong>
               </div>
               <div class="joke-card-actions">
-                <button id="editJokesButton" type="button">编辑</button>
                 <button id="nextJokeButton" type="button">换一个 ↻</button>
               </div>
             </div>
@@ -702,29 +701,6 @@
       </form>
     </dialog>
 
-    <dialog class="dialog" id="jokeEditorDialog" aria-labelledby="jokeEditorTitle">
-      <form class="dialog-card dialog-card--wide" id="jokeEditorForm" method="dialog">
-        <div class="dialog-head">
-          <div>
-            <span class="eyebrow">COLD JOKE WORKSHOP</span>
-            <h2 id="jokeEditorTitle">编辑我的冷笑话</h2>
-          </div>
-          <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
-        </div>
-        <p class="joke-editor-copy">在这里添加、修改或删除，保存后立即生效。网页会把内容保存在本机；需要同步修改源文件时，再导出新的“冷笑话.js”替换原文件。</p>
-        <p class="joke-editor-file-note"><strong>替换文件后请先按 Ctrl + F5 刷新网页，再点“恢复文件里的笑话”。</strong> 否则网页仍会使用本次打开时读到的旧版本。</p>
-        <div class="joke-editor-list" id="jokeEditorList"></div>
-        <button class="joke-add-row" id="addJokeRowButton" type="button">＋ 添加一条冷笑话</button>
-        <div class="dialog-actions dialog-actions--split joke-editor-actions">
-          <button class="danger-button" id="resetJokesButton" type="button">恢复文件里的笑话</button>
-          <button class="text-button" id="exportJokesButton" type="button">导出冷笑话.js</button>
-          <span class="dialog-spacer"></span>
-          <button class="text-button" type="button" data-close-dialog>取消</button>
-          <button class="primary-button" type="submit">保存笑话</button>
-        </div>
-      </form>
-    </dialog>
-
     <nav class="mobile-bottom-nav" aria-label="手机快捷导航">
       <a href="#home" data-nav-section="home"><span aria-hidden="true">⌂</span><b>首页</b></a>
       <a href="#goalSectionStart" data-nav-section="goalSectionStart"><span aria-hidden="true">◇</span><b>目标</b></a>
@@ -737,6 +713,6 @@
     <script src="data-model.js?v=0821"></script>
     <script src="stickers.js?v=0821"></script>
     <script src="冷笑话.js?v=0821"></script>
-  <script src="app.js?v=0825"></script>
+  <script src="app.js?v=0826c"></script>
   </body>
 </html>

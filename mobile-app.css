@@ -9,6 +9,168 @@
   --soul-gold: #d79b3f; --soul-gold-soft: #fff8e8;
   --soul-shadow: 0 18px 46px rgba(77,59,82,.09);
 }
+
+/* 0826 mobile home refresh: compact hierarchy and an intentional character stage. */
+@media (max-width:900px) {
+  body.is-mobile-app .site-header {
+    min-height:60px !important;
+    padding:8px 16px !important;
+  }
+  body.is-mobile-app .header-tools { display:none !important; }
+  body.is-mobile-app .brand>.brand-asoul-logo { width:88px !important; }
+  body.is-mobile-app .brand>.brand-app-mark { width:34px !important; height:34px !important; }
+
+  body.is-mobile-app .welcome-section {
+    min-height:0 !important;
+    margin:8px 8px 4px !important;
+  }
+  body.is-mobile-app .hero-paper {
+    min-height:0 !important;
+    padding:18px 15px 14px !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-rows:auto 280px auto !important;
+    grid-template-areas:"copy" "cast" "joke" !important;
+    gap:12px !important;
+    align-content:stretch !important;
+    border-color:rgba(87,102,144,.1) !important;
+    border-radius:28px !important;
+    background:
+      radial-gradient(circle at 92% 7%,rgba(231,153,176,.16),transparent 28%),
+      radial-gradient(circle at 8% 38%,rgba(87,102,144,.1),transparent 30%),
+      #fffefa !important;
+    box-shadow:0 16px 42px rgba(71,56,75,.08) !important;
+  }
+  body.is-mobile-app .hero-copy { align-self:start !important; }
+  body.is-mobile-app .hero-kicker {
+    padding:6px 9px !important;
+    color:#576690 !important;
+    background:#f1f3f8 !important;
+  }
+  body.is-mobile-app .hero-copy h1 {
+    margin:11px 0 10px !important;
+    font-size:clamp(36px,10.5vw,44px) !important;
+    line-height:.94 !important;
+  }
+  body.is-mobile-app .hero-copy h1 em { color:#d86f8f !important; }
+  body.is-mobile-app .hero-copy p { display:none !important; }
+  body.is-mobile-app .hero-jump {
+    min-height:42px !important;
+    margin-top:2px !important;
+    padding:0 19px !important;
+    border-radius:14px !important;
+    background:#e799b0 !important;
+    box-shadow:0 9px 20px rgba(231,153,176,.24) !important;
+    font-size:12px !important;
+  }
+
+  body.is-mobile-app .hero-cast {
+    position:relative !important;
+    display:grid !important;
+    min-height:190px !important;
+    height:auto !important;
+    padding:16px 10px 12px !important;
+    grid-area:cast !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:6px !important;
+    align-items:center !important;
+    align-self:stretch !important;
+    overflow:hidden !important;
+    border:1px solid rgba(87,102,144,.08) !important;
+    border-radius:23px !important;
+    background:linear-gradient(145deg,rgba(255,244,247,.9),rgba(244,247,252,.92)) !important;
+  }
+  body.is-mobile-app .hero-cast::before {
+    position:absolute !important;
+    inset:auto 7% -42% !important;
+    display:block !important;
+    height:74% !important;
+    border-radius:50% 50% 0 0 !important;
+    background:rgba(255,255,255,.72) !important;
+    content:"" !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker {
+    position:relative !important;
+    z-index:1 !important;
+    inset:auto !important;
+    display:grid !important;
+    width:100% !important;
+    min-height:0 !important;
+    height:auto !important;
+    grid-template-rows:auto auto !important;
+    justify-items:center !important;
+    align-self:center !important;
+    gap:5px !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker img {
+    width:100% !important;
+    max-width:138px !important;
+    height:auto !important;
+    aspect-ratio:1 !important;
+    object-fit:contain !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker span {
+    position:static !important;
+    display:inline-flex !important;
+    min-height:24px !important;
+    padding:0 8px !important;
+    align-items:center !important;
+    border-radius:999px !important;
+    color:#576690 !important;
+    background:rgba(255,255,255,.82) !important;
+    font-size:9px !important;
+    font-weight:850 !important;
+    transform:none !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker--bella { transform:rotate(-3deg) !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--diana { transform:translateY(-5px) !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--eileen { transform:rotate(3deg) !important; }
+
+  body.is-mobile-app .home-joke-card {
+    margin:0 !important;
+    padding:14px !important;
+    border-color:rgba(219,125,116,.13) !important;
+    border-radius:19px !important;
+    background:linear-gradient(135deg,#fff8f8,#faf9ff) !important;
+    box-shadow:0 8px 22px rgba(87,102,144,.055) !important;
+  }
+  body.is-mobile-app .joke-card-head { align-items:center !important; }
+  body.is-mobile-app .joke-card-head strong { font-size:11px !important; }
+  body.is-mobile-app .joke-card-actions button {
+    min-height:32px !important;
+    padding:0 10px !important;
+    border:1px solid rgba(231,153,176,.15) !important;
+    border-radius:11px !important;
+    color:#b85f7a !important;
+    background:#fff !important;
+    font-size:10px !important;
+  }
+  body.is-mobile-app .home-joke-card>p {
+    margin:11px 0 9px !important;
+    font-size:15px !important;
+    line-height:1.45 !important;
+  }
+  body.is-mobile-app .joke-answer {
+    margin:9px 0 !important;
+    padding:10px 11px !important;
+    border-radius:12px !important;
+    background:#fff !important;
+  }
+  body.is-mobile-app .joke-reveal {
+    min-height:36px !important;
+    padding:0 13px !important;
+    border-radius:11px !important;
+  }
+}
+
+@media (max-width:390px) {
+  body.is-mobile-app .site-header { padding-inline:13px !important; }
+  body.is-mobile-app .brand>.brand-asoul-logo { width:82px !important; }
+  body.is-mobile-app .hero-paper { padding-inline:13px !important; }
+  body.is-mobile-app .hero-copy h1 { font-size:35px !important; }
+  body.is-mobile-app .hero-paper { grid-template-rows:auto 250px auto !important; }
+  body.is-mobile-app .hero-cast { padding-inline:7px !important; gap:2px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker span { padding-inline:6px !important; font-size:8px !important; }
+}
 [data-app-view][hidden], .space-switcher-mobile { display:none !important; }
 .week-item-state { position:relative; }
 .week-item-state summary { list-style:none; }

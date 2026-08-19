@@ -316,9 +316,6 @@
   const avatarForm = $("#avatarForm");
   const avatarStickerTabs = $("#avatarStickerTabs");
   const avatarStickerGrid = $("#avatarStickerGrid");
-  const jokeEditorDialog = $("#jokeEditorDialog");
-  const jokeEditorForm = $("#jokeEditorForm");
-  const jokeEditorList = $("#jokeEditorList");
   const toast = $("#toast");
 
   init();
@@ -398,10 +395,6 @@
     $("#addSeriesButton").addEventListener("click", () => addSeriesEditorRow());
     $("#nextJokeButton").addEventListener("click", showRandomJoke);
     $("#revealJokeButton").addEventListener("click", revealJokeAnswer);
-    $("#editJokesButton").addEventListener("click", openJokeEditor);
-    $("#addJokeRowButton").addEventListener("click", addJokeEditorRow);
-    $("#resetJokesButton").addEventListener("click", resetJokesToFile);
-    $("#exportJokesButton").addEventListener("click", exportJokesFile);
     window.addEventListener("pagehide", flushScheduledSave);
 
     profileForm.addEventListener("input", (event) => {
@@ -421,7 +414,6 @@
     weekStickerForm.addEventListener("submit", saveWeekSticker);
     weekImportForm.addEventListener("submit", importWeekPlan);
     avatarForm.addEventListener("submit", saveAvatarFromDialog);
-    jokeEditorForm.addEventListener("submit", saveJokesFromEditor);
     $$('[name="templateId"]', spaceForm).forEach((input) => input.addEventListener("change", syncSpaceFormTemplate));
     spaceForm.elements.icon.addEventListener("input", () => {
       pendingSpaceIconSticker = "";
@@ -457,7 +449,7 @@
       button.addEventListener("click", () => applyPreset(button.dataset.preset));
     });
 
-    [goalDialog, progressGoalDialog, spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
+    [goalDialog, progressGoalDialog, spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weeklyReportDialog, avatarDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
       });
@@ -4219,93 +4211,10 @@
     showToast("已恢复默认头像");
   }
 
-  function openJokeEditor() {
-    renderJokeEditor(coldJokes);
-    jokeEditorDialog.showModal();
-  }
-
-  function collectJokeEditorRows(keepEmpty = false) {
-    return $$(".joke-editor-row", jokeEditorList).map((row) => ({
-      question: safeString($("[data-joke-question]", row)?.value, 160),
-      answer: safeString($("[data-joke-answer]", row)?.value, 160),
-    })).filter((joke) => keepEmpty || (joke.question && joke.answer));
-  }
-
-  function renderJokeEditor(jokes) {
-    const items = jokes.length ? jokes : [{ question: "", answer: "" }];
-    jokeEditorList.innerHTML = items.map((joke, index) => `
-      <div class="joke-editor-row">
-        <span class="joke-editor-number">${index + 1}</span>
-        <label class="field">
-          <span>题目</span>
-          <textarea data-joke-question maxlength="160" rows="2" placeholder="例如：生蚝掉进泥土里……">${escapeHtml(joke.question)}</textarea>
-        </label>
-        <label class="field">
-          <span>答案</span>
-          <textarea data-joke-answer maxlength="160" rows="2" placeholder="例如：蚝喜欢泥。">${escapeHtml(joke.answer)}</textarea>
-        </label>
-        <button class="joke-remove-row" type="button" data-remove-joke="${index}" aria-label="删除第 ${index + 1} 条笑话">×</button>
-      </div>
-    `).join("");
-
-    $$("[data-remove-joke]", jokeEditorList).forEach((button) => {
-      button.addEventListener("click", () => {
-        const draft = collectJokeEditorRows(true);
-        draft.splice(Number(button.dataset.removeJoke), 1);
-        renderJokeEditor(draft);
-      });
-    });
-  }
-
-  function addJokeEditorRow() {
-    const draft = collectJokeEditorRows(true);
-    if (draft.length >= 100) {
-      showToast("最多保存 100 条冷笑话");
-      return;
-    }
-    draft.push({ question: "", answer: "" });
-    renderJokeEditor(draft);
-    const lastQuestion = $(".joke-editor-row:last-child [data-joke-question]", jokeEditorList);
-    lastQuestion?.focus();
-    lastQuestion?.scrollIntoView({ block: "nearest" });
-  }
-
-  function saveJokesFromEditor(event) {
-    event.preventDefault();
-    const next = collectJokeEditorRows(false);
-    if (!next.length) {
-      showToast("至少保留一条题目和答案都完整的笑话");
-      return;
-    }
-    coldJokes = next;
-    currentJokeIndex = -1;
-    saveJokes();
-    showRandomJoke();
-    jokeEditorDialog.close();
-    showToast("冷笑话卡片已经更新");
-  }
-
-  function resetJokesToFile() {
-    if (!window.confirm("确定恢复为冷笑话.js 里的内容吗？网页里自行编辑的版本会被覆盖。\n\n如果刚替换过文件，请先按 Ctrl + F5 刷新网页，否则仍会恢复旧版本。")) return;
-    coldJokes = DEFAULT_COLD_JOKES.map((joke) => ({ ...joke }));
-    currentJokeIndex = -1;
-    saveJokes();
-    renderJokeEditor(coldJokes);
-    showRandomJoke();
-    showToast("已恢复文件里的冷笑话");
-  }
-
-  function exportJokesFile() {
-    const header = `/* 从 Asoul 一个魂生活日记导出，可继续在网页中管理。 */\n`;
-    const source = `${header}window.ASOUL_COLD_JOKES = ${JSON.stringify(collectJokeEditorRows(false), null, 2)};\n`;
-    downloadTextFile("冷笑话.js", source, "text/javascript;charset=utf-8");
-    showToast("新的冷笑话.js 已下载");
-  }
-
   function showRandomJoke() {
     if (!coldJokes.length) {
-      $("#jokeQuestion").textContent = "在冷笑话.js 里添加你的第一条冷笑话吧。";
-      $("#jokeAnswerText").textContent = "等待一个有灵魂的答案。";
+      $("#jokeQuestion").textContent = "今天的枝江冷笑话正在路上。";
+      $("#jokeAnswerText").textContent = "晚一点再来看看吧。";
       $("#nextJokeButton").disabled = true;
       return;
     }
@@ -4346,18 +4255,6 @@
     window.setTimeout(() => URL.revokeObjectURL(url), 1200);
     rememberManualBackup();
     showToast("备份文件已下载");
-  }
-
-  function downloadTextFile(filename, content, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1200);
   }
 
   async function importBackup(event) {
