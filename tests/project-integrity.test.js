@@ -62,7 +62,6 @@ for (const requiredId of [
   "downloadWeeklySummaryImageButton",
   "weeklyEyebrow",
   "weeklyTitle",
-  "weeklyDescription",
   "chartsEyebrow",
   "chartsTitle",
   "emptyChartExample",
@@ -90,9 +89,9 @@ assert.match(app, /function copyPreviousWeekContext\(/, "AI planning should copy
 assert.doesNotMatch(html, /id="aiPromptOutput"/, "AI planning should not expose a large generated-prompt preview");
 assert.match(html, /本周便签/);
 assert.match(html, /从 Day1 起顺延一天/);
-assert.match(html, /class="hero-jump" href="#goalSectionStart">点击开始/, "hero action must jump to countdowns");
+assert.match(html, /class="hero-jump" href="#goalSectionStart"[^>]*>点击开始/, "hero action must open countdowns");
 assert.doesNotMatch(html, /AI 规划本月/);
-assert.match(html, /href="icons\/icon-192\.png\?v=0818d"/);
+assert.match(html, /href="icons\/icon-192\.png\?v=0819a"/);
 assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-yigehun-app.png")), "missing polished yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
 assert.match(html, /id="installAppButton"/, "PWA installation must live in the header");
@@ -130,6 +129,14 @@ assert.match(html, /name="dayRecorded"/, "single-day settings must expose the re
 assert.match(html, /记录今天/, "recorded-day control must live with daily completion settings");
 assert.doesNotMatch(html, /计入周记录/, "legacy recorded-day wording must be removed");
 assert.match(app, /weekStickerDialog\.close\(\);\s*renderWeeks\(\)/, "saving daily settings must refresh the week timeline immediately");
+assert.match(app, /WEEK_ITEM_STATES = new Set\(\["", "done", "changed", "missed"\]\)/, "weekly items must support done, changed, and missed states");
+assert.match(app, /\["changed", "⚡", "调整"\]/, "weekly items must expose the lightning changed-plan state");
+assert.match(app, /data-record-today/, "the day editor must expose a direct record-today action");
+assert.match(app, /day\.items = plannedDay\.items\.map/, "AI import must use the unified weekly item model");
+assert.doesNotMatch(app, /data-pair-field=|data-set-pair-done|完成与记录/, "the legacy two-column plan/actual editor must be removed");
+assert.doesNotMatch(html, /目标独立于空间保存|背单词、读书或工作项目|用模板或从空白开始|曲线图日记/, "redundant section explanations must be removed");
+assert.match(html, /id="weekSoundToggle"[^>]*aria-pressed="true"/, "sound preference must live in the data view and default on");
+assert.match(html, /id="footerResetDataButton"/, "mobile data view must provide record clearing without the header");
 assert.match(weeklyCss, /week-node-head/, "week overview cards must be styled");
 assert.doesNotMatch(weeklyCss, /week-node-dot/, "legacy circular week nodes must be removed");
 assert.match(weeklyCss, /grid-auto-rows:\s*96px/, "photo sticker rows must not be compressed");
@@ -164,12 +171,16 @@ assert.ok((app.match(/const scale = 2;/g) || []).length >= 3, "weekly and curve 
 assert.match(app, /function moveSelectedMilestone\(/, "countdowns and progress goals must be reorderable");
 assert.match(html, /class="section-nav"/, "desktop section navigation must exist");
 assert.match(html, /class="mobile-bottom-nav"/, "mobile section navigation must exist");
+assert.match(html, /data-app-view="home"/, "the mobile home view must exist");
+assert.match(app, /function initSectionNavigation\(\)[\s\S]*showMobileView/, "mobile navigation must switch real app views");
+assert.match(app, /data-fullscreen-chart/, "mobile curve charts must support fullscreen viewing");
+assert.ok(fs.existsSync(path.join(projectRoot, "mobile-app.css")), "missing final mobile app stylesheet");
 assert.match(app, /data-series-axis-min/, "each curve must expose an optional y-axis minimum");
 assert.match(app, /data-series-axis-max/, "each curve must expose an optional y-axis maximum");
 assert.match(app, /customMin \?\? automaticMin/, "curve rendering must respect custom y-axis bounds");
 
 const fullDemoBackup = JSON.parse(read("示例数据/全功能测试数据.json"));
-assert.equal(fullDemoBackup.version, 9, "full demo data must use the current data version");
+assert.equal(fullDemoBackup.version, 9, "the full demo backup should remain a migration test for version 9");
 assert.equal(fullDemoBackup.goals.length, 4, "full demo data must exercise every countdown layout slot");
 assert.equal(fullDemoBackup.progressGoals.length, 4, "full demo data must contain several progress goals");
 assert.ok(fullDemoBackup.progressGoals.every((goal) => goal.sticker && Array.isArray(goal.spaceIds) && goal.updates.length), "full demo progress goals must include stickers, report spaces, and updates");

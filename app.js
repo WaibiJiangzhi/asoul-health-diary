@@ -2,7 +2,7 @@
   "use strict";
 
   const DATA_MODEL = globalThis.ASOUL_DATA_MODEL || {
-    CURRENT_STATE_VERSION: 9,
+    CURRENT_STATE_VERSION: 10,
     UNSUPPORTED_VERSION_CODE: "ASOUL_UNSUPPORTED_STATE_VERSION",
     DEFAULT_SPACES: [
       { id: "health", type: "health", templateId: "health", name: "健康", icon: "♡" },
@@ -31,6 +31,7 @@
   const MAX_GOALS = 4;
   const MAX_PROGRESS_GOALS = 6;
   const WEEK_ITEMS_NOT_TRACKED = new Set(["跑前热身", "跑后拉伸"]);
+  const WEEK_ITEM_STATES = new Set(["", "done", "changed", "missed"]);
   const DEFAULT_SPACES = DATA_MODEL.DEFAULT_SPACES.map((space) => ({
     ...space,
     iconSticker: "",
@@ -43,15 +44,11 @@
       icon: "♡",
       eyebrow: "一个魂的健康日程",
       heading: "这一周，照顾好身体和心情",
-      description: "训练写在左边，完成情况记在右边。到周末打开周报看一眼，下周安排就更有依据。",
       activeDayLabel: "训练日",
       firstFieldLabel: "健康重点",
       firstFieldPlaceholder: "今天最需要注意的健康事项是什么？",
-      secondFieldLabel: "健康复盘",
-      secondFieldPlaceholder: "身体状态如何，哪里需要调整？",
       itemPlaceholder: "项目，例如：早餐、跑步或早睡",
       targetPlaceholder: "目标，例如：清淡饮食 / 5 km / 23:30 前睡",
-      actualPlaceholder: "补一句记录，例如：平均每组 9 个",
       showWeight: true,
       chartEyebrow: "一个魂的健康轨迹",
       chartHeading: "身体状态，有怎样的变化？",
@@ -65,15 +62,11 @@
       icon: "✎",
       eyebrow: "一个魂的考研打卡",
       heading: "这一周，把目标拆成能完成的小步",
-      description: "学习重点写在上方，科目任务和完成情况逐项打卡；周末复盘节奏，不只统计坐了多久。",
       activeDayLabel: "学习日",
       firstFieldLabel: "学习重点",
       firstFieldPlaceholder: "今天最重要的学习目标是什么？",
-      secondFieldLabel: "复盘总结",
-      secondFieldPlaceholder: "完成了什么，哪里需要调整？",
       itemPlaceholder: "科目，例如：英语阅读",
       targetPlaceholder: "目标，例如：精读 2 篇",
-      actualPlaceholder: "完成记录，例如：完成 2 篇，错 3 题",
       showWeight: false,
       chartEyebrow: "一个魂的备考趋势",
       chartHeading: "努力正在怎样积累？",
@@ -87,15 +80,11 @@
       icon: "▣",
       eyebrow: "一个魂的工作日程",
       heading: "这一周，让重要的事清楚落地",
-      description: "先写工作重点，再逐项记录交付结果；周报会把已完成、未完成和当天笔记汇总在一起。",
       activeDayLabel: "工作日",
       firstFieldLabel: "工作重点",
       firstFieldPlaceholder: "今天最需要推进的事情是什么？",
-      secondFieldLabel: "完成总结",
-      secondFieldPlaceholder: "交付了什么，还有哪些待跟进？",
       itemPlaceholder: "事项，例如：项目方案",
       targetPlaceholder: "目标，例如：完成初稿",
-      actualPlaceholder: "完成记录，例如：已提交评审",
       showWeight: false,
       chartEyebrow: "一个魂的工作趋势",
       chartHeading: "这一阶段，产出与节奏如何？",
@@ -109,15 +98,11 @@
       icon: "✦",
       eyebrow: "一个魂的每周打卡",
       heading: "这一周，把想做的事一点点推进",
-      description: "写下今日重点，拆成可以完成的小任务；周末再回头看看自己的真实节奏。",
       activeDayLabel: "行动日",
       firstFieldLabel: "今日重点",
       firstFieldPlaceholder: "今天最重要的目标是什么？",
-      secondFieldLabel: "复盘总结",
-      secondFieldPlaceholder: "完成了什么，下一步怎么调整？",
       itemPlaceholder: "事项，例如：阅读、练琴或整理房间",
       targetPlaceholder: "目标，例如：完成 30 分钟",
-      actualPlaceholder: "完成记录，例如：完成 25 分钟",
       showWeight: false,
       chartEyebrow: "一个魂的变化轨迹",
       chartHeading: "坚持正在怎样积累？",
@@ -409,6 +394,7 @@
     $("#footerExportButton").addEventListener("click", exportBackup);
     $("#footerImportButton").addEventListener("click", () => $("#importInput").click());
     $("#resetDataButton").addEventListener("click", resetDiaryData);
+    $("#footerResetDataButton").addEventListener("click", resetDiaryData);
     $("#importInput").addEventListener("change", importBackup);
     $("#addSeriesButton").addEventListener("click", () => addSeriesEditorRow());
     $("#nextJokeButton").addEventListener("click", showRandomJoke);
@@ -556,7 +542,7 @@
     const button = $("#weekSoundToggle");
     if (!button) return;
     button.setAttribute("aria-pressed", String(weekSoundEnabled));
-    $("#weekSoundLabel").textContent = weekSoundEnabled ? "提示音开" : "提示音关";
+    $("#weekSoundLabel").textContent = weekSoundEnabled ? "完成提示音：开" : "完成提示音：关";
   }
 
   function playWeekFeedback(done) {
@@ -616,21 +602,52 @@
       .filter((item) => item.name || item.value);
   }
 
+  function buildLegacyWeekItems(day) {
+    const plans = normalizePairList(day?.planItems ?? day?.schedule ?? day?.plans);
+    const records = normalizePairList(day?.records ?? day?.actual ?? day?.results);
+    const rowCount = Math.max(plans.length, records.length);
+    return Array.from({ length: rowCount }, (_, index) => {
+      const plan = plans[index] || {};
+      const record = records[index] || {};
+      const name = plan.name || record.name || "";
+      const target = plan.value || "";
+      const legacyActual = record.value || "";
+      return {
+        id: plan.id || record.id || makeId(),
+        text: [name, target].filter(Boolean).join("：") || legacyActual,
+        state: record.done === true ? "done" : record.done === false ? "missed" : "",
+        legacyActual,
+      };
+    });
+  }
+
+  function normalizeWeekItems(candidate, day) {
+    const source = Array.isArray(candidate) ? candidate : buildLegacyWeekItems(day);
+    return source
+      .slice(0, 24)
+      .map((item) => {
+        const state = safeString(item?.state, 12);
+        return {
+          id: safeId(item?.id),
+          text: safeString(item?.text, 160),
+          state: WEEK_ITEM_STATES.has(state) ? state : "",
+          legacyActual: safeString(item?.legacyActual, 160),
+        };
+      })
+      .filter((item) => item.text || item.state || item.legacyActual);
+  }
+
   function normalizeWeekDay(candidate, index, startDate, templateId = "custom") {
     const day = candidate && typeof candidate === "object" ? candidate : {};
-    const planItems = day.planItems ?? day.schedule ?? day.plans;
-    const records = day.records ?? day.actual ?? day.results;
     const allowedStatuses = ["", "这期拉了", "还不错", "好好好"];
     const status = safeString(day.status, 12);
-    const normalizedRecords = normalizePairList(records)
-      .filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name))
-      .map((item) => ({ ...item, done: item.done ?? (item.value ? true : null) }));
+    const items = normalizeWeekItems(day.items, day)
+      .filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.text.split("：")[0]));
     const recorded = typeof day.recorded === "boolean"
       ? day.recorded
       : Boolean(
           status
-          || normalizedRecords.some((item) => item.done !== null || item.value)
-          || day.dietRecord
+          || items.some((item) => item.state)
           || day.note
           || (day.weight !== null && day.weight !== undefined && day.weight !== "" && Number.isFinite(Number(day.weight))),
         );
@@ -640,10 +657,8 @@
       date: safeDate(day.date) || addDaysIso(startDate, index),
       title: normalizeDayType(day.title, templateId),
       duration: safeString(day.duration, 40),
-      planItems: normalizePairList(planItems).filter((item) => !WEEK_ITEMS_NOT_TRACKED.has(item.name)),
-      records: normalizedRecords,
-      dietPlan: safeString(day.dietPlan, 500),
-      dietRecord: safeString(day.dietRecord, 500),
+      focus: safeString(day.focus ?? day.dietPlan, 500),
+      items,
       weight: safeWeight(day.weight),
       note: safeString(day.note, 600),
       status: allowedStatuses.includes(status) ? status : "",
@@ -795,33 +810,6 @@
     };
   }
 
-  function migrateLegacyHealthWeekFields(candidate, spaces) {
-    const week = candidate && typeof candidate === "object" ? candidate : {};
-    const space = spaces.find((item) => item.id === safeSpaceIdForList(week.spaceId, spaces));
-    if (space?.templateId !== "health" || !Array.isArray(week.days)) return week;
-    return {
-      ...week,
-      days: week.days.map((day) => {
-        if (!day || typeof day !== "object") return day;
-        const dietPlan = safeString(day.dietPlan, 500);
-        const dietRecord = safeString(day.dietRecord, 500);
-        return {
-          ...day,
-          dietPlan: "",
-          dietRecord: "",
-          planItems: [
-            ...(Array.isArray(day.planItems) ? day.planItems : []),
-            ...(dietPlan ? [{ name: "饮食安排", value: dietPlan }] : []),
-          ],
-          records: [
-            ...(Array.isArray(day.records) ? day.records : []),
-            ...(dietRecord ? [{ name: "饮食安排", value: dietRecord, done: true }] : []),
-          ],
-        };
-      }),
-    };
-  }
-
   function loadJokes() {
     try {
       const saved = normalizeJokes(JSON.parse(localStorage.getItem(JOKES_STORAGE_KEY) || "null"));
@@ -843,7 +831,6 @@
   function normalizeState(candidate) {
     const clean = cloneDefault();
     if (!candidate || typeof candidate !== "object") return clean;
-    const sourceVersion = Number(candidate.version) || 1;
     candidate = DATA_MODEL.migrateState(candidate);
 
     clean.spaces = normalizeSpaces(candidate.spaces);
@@ -874,7 +861,7 @@
         : [];
     clean.weeks = sourceWeeks
       .slice(0, 3000)
-      .map((week) => normalizeWeek(sourceVersion < 6 ? migrateLegacyHealthWeekFields(week, clean.spaces) : week, clean.spaces))
+      .map((week) => normalizeWeek(week, clean.spaces))
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
     const uniqueWeeks = new Map();
     clean.weeks.forEach((week) => uniqueWeeks.set(`${week.spaceId}:${week.startDate}`, week));
@@ -1506,14 +1493,13 @@
     const template = getSpaceTemplate();
     $("#weeklyEyebrow").textContent = hasSpace ? template.eyebrow : "一个魂的每周日程安排";
     $("#weeklyTitle").textContent = hasSpace ? template.heading : "建立空间后，再开始安排日程";
-    $("#weeklyDescription").textContent = hasSpace ? template.description : "空间可以暂时留空；需要日程和周报时，建立一个属于自己的空间就好。";
     $("#chartsEyebrow").textContent = hasSpace ? template.chartEyebrow : "一个魂的状态轨迹";
     $("#chartsTitle").textContent = hasSpace ? template.chartHeading : "建立空间后，再记录一条轨迹";
     $(".week-empty h3").textContent = hasSpace ? "先建立一个年月吧" : "先建立一个空间吧";
     $(".empty-state h3").textContent = hasSpace ? "从第一条轨迹开始吧" : "先建立一个空间吧";
     $("#emptyChartExample").textContent = hasSpace ? template.emptyChartExample : "曲线图会跟随空间独立保存；建立空间后即可开始记录。";
     $("#weekEmptyDescription").textContent = hasSpace
-      ? `新建一个年月后，会自动展开这个月所有从周一开始的周条。每天都能填写${template.firstFieldLabel}、计划任务、完成情况和小笔记。`
+      ? `新建年月后，会自动展开当月所有从周一开始的周条。`
       : "日程和周报会跟随空间独立保存；建立空间后即可新建年月。";
     const activeTemplateId = getSpace()?.templateId || "";
     $$('[data-preset-space]').forEach((button) => {
@@ -1733,7 +1719,7 @@
     const period = state.periods.find((item) => item.spaceId === activeSpaceId && item.yearMonth === yearMonth);
     if (!period) return;
     const label = `${weekYearFilter} 年 ${Number(weekMonthFilter)} 月`;
-    if (!window.confirm(`确定删除“${getSpace().name}”里的 ${label} 吗？\n\n这个年月下所有周计划与完成记录都会一起删除。`)) return;
+    if (!window.confirm(`确定删除“${getSpace().name}”里的 ${label} 吗？\n\n这个年月下所有安排、打卡状态和当天小记都会一起删除。`)) return;
     const removedWeekIds = state.weeks
       .filter((week) => week.spaceId === activeSpaceId && week.startDate.startsWith(yearMonth))
       .map((week) => week.id);
@@ -1765,12 +1751,12 @@
     const lines = [`${getSpace(week.spaceId).name}本周便签`, `时间：${formatFriendlyDate(week.startDate)}到${formatFriendlyDate(addDaysIso(week.startDate, 6))}`];
     week.days.forEach((day, dayIndex) => {
       lines.push("", `${weekdays[dayIndex]}  ${formatFriendlyDate(day.date)}  ${day.title}`);
-      lines.push(`${template.firstFieldLabel}：${day.dietPlan || "暂无"}`);
-      const plans = day.planItems.filter((item) => item.name || item.value);
+      lines.push(`${template.firstFieldLabel}：${day.focus || "暂无"}`);
+      const plans = day.items.filter((item) => item.text);
       if (!plans.length) lines.push("计划安排：暂无");
       else {
         lines.push("计划安排：");
-        plans.forEach((item, index) => lines.push(`${index + 1}．${item.name || "事项"}${item.value ? `：${item.value}` : ""}`));
+        plans.forEach((item, index) => lines.push(`${index + 1}．${item.text}`));
       }
       if (day.note) lines.push(`当天小记：${day.note}`);
     });
@@ -1785,7 +1771,7 @@
     const startDayNumber = startIndex + 1;
     const lastDay = week.days[6];
     const hasLastDayData = lastDay && (
-      lastDay.planItems.length || lastDay.records.length || lastDay.dietPlan || lastDay.dietRecord ||
+      lastDay.items.length || lastDay.focus ||
       lastDay.note || lastDay.status || lastDay.sticker || Number.isFinite(lastDay.weight)
     );
     const warning = hasLastDayData
@@ -1915,6 +1901,26 @@
     return day.recorded === true;
   }
 
+  function weekItemStateMark(state) {
+    return ({ done: "✓", changed: "⚡", missed: "×" })[state] || "·";
+  }
+
+  function weekItemStateLabel(state) {
+    return ({ done: "完成", changed: "调整过计划", missed: "未完成" })[state] || "待记录";
+  }
+
+  function countWeekItemStates(week) {
+    return week.days.reduce((counts, day) => {
+      day.items.forEach((item) => {
+        if (item.state === "done") counts.done += 1;
+        else if (item.state === "changed") counts.changed += 1;
+        else if (item.state === "missed") counts.missed += 1;
+        else counts.pending += 1;
+      });
+      return counts;
+    }, { done: 0, changed: 0, missed: 0, pending: 0 });
+  }
+
   function renderWeekDetail(week) {
     if (!week) return;
     let selectedDayId = selectedDayByWeek.get(week.id);
@@ -1924,14 +1930,22 @@
       selectedDayByWeek.set(week.id, selectedDayId);
     }
     const selectedDay = week.days.find((day) => day.id === selectedDayId);
+    const selectedIndex = week.days.findIndex((day) => day.id === selectedDayId);
     $("#shiftWeekButton").textContent = `从 Day${selectedDay.dayNumber} 起顺延一天`;
     $("#shiftWeekButton").title = selectedDay.dayNumber === 1
       ? "从本周第一天开始顺延"
       : `Day1 到 Day${selectedDay.dayNumber - 1} 保持不变`;
     weekDetail.innerHTML = `
       <article class="week-board">
-        <div class="week-day-tabs" role="tablist" aria-label="选择这一周的某一天">
-          ${week.days.map((day) => renderWeekDayTab(day, day.id === selectedDayId)).join("")}
+        <div class="week-day-pager" data-week-day-swipe aria-label="左右切换这周的日期">
+          <button class="week-day-pager-arrow" type="button" data-week-day-step="-1" aria-label="查看前一天"${selectedIndex === 0 ? " disabled" : ""}>←</button>
+          <div class="week-day-tabs" role="tablist" aria-label="当前查看的日期">
+            ${renderWeekDayTab(selectedDay, true)}
+          </div>
+          <button class="week-day-pager-arrow" type="button" data-week-day-step="1" aria-label="查看后一天"${selectedIndex === week.days.length - 1 ? " disabled" : ""}>→</button>
+        </div>
+        <div class="week-day-dots" role="tablist" aria-label="快速选择日期">
+          ${week.days.map((day) => `<button type="button" data-select-week-day="${day.id}" aria-label="切换到 Day${day.dayNumber}" aria-selected="${day.id === selectedDayId}" class="${day.id === selectedDayId ? "is-active" : ""}">${day.dayNumber}</button>`).join("")}
         </div>
         ${renderWeekDayEditor(week, selectedDay)}
       </article>`;
@@ -1951,7 +1965,42 @@
         openWeekStickerPicker(week.id, dayId);
       });
     });
+    $$('[data-week-day-step]', weekDetail).forEach((button) => {
+      button.addEventListener("click", () => selectAdjacentWeekDay(week, Number(button.dataset.weekDayStep)));
+    });
+    bindWeekDaySwipe(week);
     bindInlineWeekDayEditor(week, selectedDay);
+  }
+
+  function selectAdjacentWeekDay(week, direction) {
+    const currentId = selectedDayByWeek.get(week.id);
+    const currentIndex = Math.max(0, week.days.findIndex((day) => day.id === currentId));
+    const nextIndex = Math.max(0, Math.min(week.days.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex) return;
+    selectedDayByWeek.set(week.id, week.days[nextIndex].id);
+    renderWeekDetail(week);
+  }
+
+  function bindWeekDaySwipe(week) {
+    const surface = $("[data-week-day-swipe]", weekDetail);
+    if (!surface) return;
+    let startX = null;
+    let startY = null;
+    surface.addEventListener("touchstart", (event) => {
+      const touch = event.touches[0];
+      startX = touch?.clientX ?? null;
+      startY = touch?.clientY ?? null;
+    }, { passive: true });
+    surface.addEventListener("touchend", (event) => {
+      if (startX === null || startY === null) return;
+      const touch = event.changedTouches[0];
+      const deltaX = (touch?.clientX ?? startX) - startX;
+      const deltaY = (touch?.clientY ?? startY) - startY;
+      startX = null;
+      startY = null;
+      if (Math.abs(deltaX) < 44 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+      selectAdjacentWeekDay(week, deltaX < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   function renderWeekDayTab(day, selected) {
@@ -1978,39 +2027,49 @@
   function renderWeekDayEditor(week, day) {
     const template = getSpaceTemplate(week.spaceId);
     const statusClass = ({ "这期拉了": "missed", "还不错": "okay", "好好好": "great" })[day.status] || "pending";
-    const rowCount = Math.max(day.planItems.length, day.records.length, 1);
+    const rowCount = Math.max(day.items.length, 1);
     const rows = Array.from({ length: rowCount }, (_, index) => {
-      const plan = day.planItems[index] || {};
-      const record = day.records[index] || {};
+      const item = day.items[index] || {};
+      const state = WEEK_ITEM_STATES.has(item.state) ? item.state : "";
+      const stateMeta = {
+        "": { mark: "○", label: "待记录" },
+        done: { mark: "✓", label: "按计划完成" },
+        changed: { mark: "⚡", label: "调整过计划" },
+        missed: { mark: "×", label: "未完成" },
+      }[state];
       return `
-        <div class="week-pair-row" data-week-pair-index="${index}">
-          <span class="week-pair-number">${String(index + 1).padStart(2, "0")}</span>
-          <div class="week-pair-plan">
-            <input data-pair-field="name" maxlength="36" aria-label="第 ${index + 1} 项计划名称" placeholder="${escapeAttr(template.itemPlaceholder)}" value="${escapeAttr(plan.name || record.name || "")}" />
-            <input data-pair-field="plan" maxlength="80" aria-label="第 ${index + 1} 项计划目标" placeholder="${escapeAttr(template.targetPlaceholder)}" value="${escapeAttr(plan.value || "")}" />
-          </div>
-          <div class="week-pair-record">
-            <span class="week-pair-checks" aria-label="第 ${index + 1} 项是否完成">
-              <button type="button" data-set-pair-done="true" aria-pressed="${record.done === true}" title="已完成">√</button>
-              <button type="button" data-set-pair-done="false" aria-pressed="${record.done === false}" title="未完成">×</button>
-            </span>
-            <input data-pair-field="actual" maxlength="80" aria-label="第 ${index + 1} 项完成记录" placeholder="${escapeAttr(template.actualPlaceholder)}" value="${escapeAttr(record.value || "")}" />
-          </div>
-          <button type="button" data-remove-week-pair="${index}" aria-label="删除第 ${index + 1} 项">×</button>
+        <div class="week-item-row week-item-row--${state || "pending"}" data-week-item-index="${index}">
+          <span class="week-item-number">${String(index + 1).padStart(2, "0")}</span>
+          <input class="week-item-text" data-week-item-text maxlength="160" aria-label="第 ${index + 1} 项计划" placeholder="${escapeAttr(template.itemPlaceholder)}：${escapeAttr(template.targetPlaceholder)}" value="${escapeAttr(item.text || "")}" />
+          <details class="week-item-state">
+            <summary class="week-item-state-current" aria-label="第 ${index + 1} 项当前状态：${stateMeta.label}" title="${stateMeta.label}"><b>${stateMeta.mark}</b><span>${stateMeta.label}</span></summary>
+            <div class="week-item-state-choices" aria-label="选择第 ${index + 1} 项状态">
+              ${[["done", "✓", "完成"], ["changed", "⚡", "调整"], ["missed", "×", "未完成"]].map(([value, mark, label]) => `<button type="button" data-set-week-item-state="${value}" aria-pressed="${state === value}"><b>${mark}</b><span>${label}</span></button>`).join("")}
+              <button type="button" data-set-week-item-state="" aria-pressed="${state === ""}"><b>○</b><span>清除</span></button>
+            </div>
+          </details>
+          <button class="week-item-remove" type="button" data-remove-week-item="${index}" aria-label="删除第 ${index + 1} 项">×</button>
         </div>`;
     }).join("");
 
     return `
       <section class="week-inline-day week-inline-day--${statusClass}" data-inline-week="${week.id}" data-inline-day="${day.id}">
-        <div class="week-paired-text">
-          <label><span>${escapeHtml(template.firstFieldLabel)}</span><input data-day-text-field="dietPlan" maxlength="500" placeholder="${escapeAttr(template.firstFieldPlaceholder)}" value="${escapeAttr(day.dietPlan)}" /></label>
-          <label><span>${escapeHtml(template.secondFieldLabel)}</span><input data-day-text-field="dietRecord" maxlength="500" placeholder="${escapeAttr(template.secondFieldPlaceholder)}" value="${escapeAttr(day.dietRecord)}" /></label>
+        <header class="week-inline-day-head">
+          <div><span>DAY ${day.dayNumber} · ${escapeHtml(formatCompactDate(day.date))}</span><strong>${escapeHtml(day.title)}</strong></div>
+          <div>
+            <button class="week-record-today${day.recorded ? " is-recorded" : ""}" type="button" data-record-today aria-pressed="${day.recorded}">${day.recorded ? "✓ 今天已记录" : "记录今天"}</button>
+            <button class="week-day-configure" type="button" data-configure-current-day>当天设置</button>
+          </div>
+        </header>
+
+        <div class="week-focus-field">
+          <label><span>${escapeHtml(template.firstFieldLabel)}</span><input data-day-text-field="focus" maxlength="500" placeholder="${escapeAttr(template.firstFieldPlaceholder)}" value="${escapeAttr(day.focus)}" /></label>
         </div>
 
-        <div class="week-pair-table">
-          <div class="week-pair-table-head"><span></span><strong>计划安排</strong><strong>完成与记录</strong><span></span></div>
-          <div class="week-pair-rows">${rows}</div>
-          <button class="week-add-pair" type="button" data-add-week-pair>＋ 添加一项安排</button>
+        <div class="week-item-table">
+          <div class="week-item-table-head"><strong>计划安排</strong><small>✓ 完成　⚡ 调整过　× 未完成</small></div>
+          <div class="week-item-rows">${rows}</div>
+          <button class="week-add-item" type="button" data-add-week-item>＋ 添加一项安排</button>
         </div>
 
         ${template.showWeight ? `<div class="week-paired-text week-weight-text">
@@ -2024,39 +2083,27 @@
       </section>`;
   }
 
-  function ensureWeekPair(day, index) {
-    while (day.planItems.length <= index) day.planItems.push({ id: makeId(), name: "", value: "" });
-    while (day.records.length <= index) day.records.push({ id: makeId(), name: day.planItems[index]?.name || "", value: "", done: null });
-    return { plan: day.planItems[index], record: day.records[index] };
+  function ensureWeekItem(day, index) {
+    while (day.items.length <= index) day.items.push({ id: makeId(), text: "", state: "", legacyActual: "" });
+    return day.items[index];
   }
 
   function bindInlineWeekDayEditor(week, day) {
-    $$('[data-pair-field]', weekDetail).forEach((input) => {
+    $$('[data-week-item-text]', weekDetail).forEach((input) => {
       input.addEventListener("input", () => {
-        const row = input.closest('[data-week-pair-index]');
-        const index = Number(row.dataset.weekPairIndex);
-        const pair = ensureWeekPair(day, index);
-        const value = safeString(input.value, input.dataset.pairField === "name" ? 36 : 80);
-        if (input.dataset.pairField === "name") {
-          pair.plan.name = value;
-          pair.record.name = value;
-        } else if (input.dataset.pairField === "plan") {
-          pair.plan.value = value;
-        } else {
-          pair.record.value = value;
-        }
+        const row = input.closest('[data-week-item-index]');
+        const item = ensureWeekItem(day, Number(row.dataset.weekItemIndex));
+        item.text = safeString(input.value, 160);
         scheduleSave();
       });
-      input.addEventListener("change", () => window.setTimeout(() => renderWeekDetail(week), 0));
     });
 
-    $$('[data-set-pair-done]', weekDetail).forEach((button) => {
+    $$('[data-set-week-item-state]', weekDetail).forEach((button) => {
       button.addEventListener("click", () => {
-        const row = button.closest('[data-week-pair-index]');
-        const pair = ensureWeekPair(day, Number(row.dataset.weekPairIndex));
-        const nextDone = button.dataset.setPairDone === "true";
-        pair.record.done = pair.record.done === nextDone ? null : nextDone;
-        if (pair.record.done !== null) playWeekFeedback(pair.record.done);
+        const row = button.closest('[data-week-item-index]');
+        const item = ensureWeekItem(day, Number(row.dataset.weekItemIndex));
+        item.state = WEEK_ITEM_STATES.has(button.dataset.setWeekItemState) ? button.dataset.setWeekItemState : "";
+        if (item.state) playWeekFeedback(item.state !== "missed");
         saveState(false);
         renderWeekDetail(week);
       });
@@ -2082,27 +2129,31 @@
       renderWeekDetail(week);
     });
 
-    $$('[data-remove-week-pair]', weekDetail).forEach((button) => {
+    $$('[data-remove-week-item]', weekDetail).forEach((button) => {
       button.addEventListener("click", () => {
-        const index = Number(button.dataset.removeWeekPair);
-        day.planItems.splice(index, 1);
-        day.records.splice(index, 1);
+        day.items.splice(Number(button.dataset.removeWeekItem), 1);
         saveState(false);
         renderWeekDetail(week);
       });
     });
-    $("[data-add-week-pair]", weekDetail).addEventListener("click", () => {
-      if (Math.max(day.planItems.length, day.records.length) >= 24) {
+    $("[data-add-week-item]", weekDetail).addEventListener("click", () => {
+      if (day.items.length >= 24) {
         showToast("一天最多添加 24 项");
         return;
       }
-      day.planItems.push({ id: makeId(), name: "", value: "" });
-      day.records.push({ id: makeId(), name: "", value: "", done: null });
+      day.items.push({ id: makeId(), text: "", state: "", legacyActual: "" });
       saveState(false);
       renderWeekDetail(week);
-      const lastName = $$('[data-pair-field="name"]', weekDetail).at(-1);
-      lastName?.focus();
+      $$('[data-week-item-text]', weekDetail).at(-1)?.focus();
     });
+
+    $("[data-record-today]", weekDetail)?.addEventListener("click", () => {
+      day.recorded = !day.recorded;
+      saveState(false);
+      renderWeeks();
+      showToast(day.recorded ? `Day${day.dayNumber} 已计入本周记录` : `Day${day.dayNumber} 已取消记录`);
+    });
+    $("[data-configure-current-day]", weekDetail)?.addEventListener("click", () => openWeekStickerPicker(week.id, day.id));
   }
 
   function openWeekStickerPicker(weekId, dayId) {
@@ -2231,27 +2282,24 @@
     if (!previousWeek) return "这是当前空间最早的一周，提示词不会虚构历史完成情况。";
     const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
     const recordedDays = previousWeek.days.filter(hasWeekDayRecord).length;
-    const doneItems = previousWeek.days.reduce((sum, day) => sum + day.records.filter((item) => item.done === true).length, 0);
-    const missedItems = previousWeek.days.reduce((sum, day) => sum + day.records.filter((item) => item.done === false).length, 0);
+    const stateCounts = countWeekItemStates(previousWeek);
     const details = previousWeek.days.map((day, index) => {
       if (!hasWeekDayRecord(day)) return "";
-      const done = day.records.filter((item) => item.done === true).length;
-      const missed = day.records.filter((item) => item.done === false).length;
-      const parts = [day.status || "已记录", `任务完成 ${done} 项${missed ? `、未完成 ${missed} 项` : ""}`];
-      const taskDetails = day.records.map((record, recordIndex) => {
-        if (record.done === null && !record.value) return "";
-        const name = record.name || day.planItems[recordIndex]?.name || `任务 ${recordIndex + 1}`;
-        const result = record.done === true ? "完成" : record.done === false ? "未完成" : "已记录";
-        return `${name}${record.value ? `（${record.value}）` : ""}：${result}`;
-      }).filter(Boolean);
+      const done = day.items.filter((item) => item.state === "done").length;
+      const changed = day.items.filter((item) => item.state === "changed").length;
+      const missed = day.items.filter((item) => item.state === "missed").length;
+      const parts = [day.status || "已记录", `任务完成 ${done} 项${changed ? `、调整 ${changed} 项` : ""}${missed ? `、未完成 ${missed} 项` : ""}`];
+      const taskDetails = day.items
+        .filter((item) => item.text || item.state)
+        .map((item, itemIndex) => `${item.text || `任务 ${itemIndex + 1}`}：${weekItemStateLabel(item.state)}`);
       if (taskDetails.length) parts.push(`明细：${taskDetails.join("；")}`);
-      if (day.dietRecord) parts.push(`实际：${day.dietRecord}`);
+      if (day.focus) parts.push(`${getSpaceTemplate(previousWeek.spaceId).firstFieldLabel}：${day.focus}`);
       if (Number.isFinite(day.weight)) parts.push(`体重：${day.weight} 斤`);
       return `${weekdays[index]}：${parts.join("；")}`;
     }).filter(Boolean);
     return [
-      `上一周 ${formatDateRange(previousWeek.startDate)}，记录 ${recordedDays}/7 天，完成 ${doneItems} 项，未完成 ${missedItems} 项。`,
-      ...(details.length ? details : ["这一周还没有填写具体完成记录。"]),
+      `上一周 ${formatDateRange(previousWeek.startDate)}，记录 ${recordedDays}/7 天，完成 ${stateCounts.done} 项，调整 ${stateCounts.changed} 项，未完成 ${stateCounts.missed} 项。`,
+      ...(details.length ? details : ["这一周还没有打卡记录。"]),
     ].join("\n");
   }
 
@@ -2261,14 +2309,14 @@
     const days = Array.from({ length: 7 }, (_, index) => [
       `【Day${index + 1}】${template.activeDayLabel}`,
       "【重点】",
-      "【任务】事项名称｜具体目标",
+      "【任务】写成一条清楚、可直接执行的安排",
     ].join("\n")).join("\n");
     return [
       `请为我制定“${getSpace(week.spaceId).name}”空间 ${formatDateRange(week.startDate)} 的可执行周计划。本周从周一开始，共 7 天。`,
       "请结合我刚才发给你的真实情况与上周记录控制任务量，宁可留出余量，也不要机械地把每天塞满。",
       "",
       `“重点”用于填写${template.firstFieldLabel}；“任务”每行一项，可以重复多行。没有任务的日子请写“【DayX】休息日”。当天小记由我本人记录，请不要生成、总结或修改。`,
-      "请严格保留下方所有【】标记、日期和 Day 编号，只替换标记后面的内容。任务名称和目标之间使用全角竖线“｜”。不要添加解释、表格、代码块或 JSON。",
+      "请严格保留下方所有【】标记、日期和 Day 编号，只替换标记后面的内容。每项任务单独一行，不要添加解释、表格、代码块或 JSON。",
       "",
       `【周开始】${week.startDate}`,
       days,
@@ -2321,7 +2369,7 @@
       const dayMatch = line.match(/^【Day\s*([1-7])】\s*(.*)$/i);
       if (dayMatch && currentWeek) {
         const index = Number(dayMatch[1]) - 1;
-        currentDay = currentWeek.days[index] || { planItems: [] };
+        currentDay = currentWeek.days[index] || { items: [] };
         currentDay.title = safeString(dayMatch[2], 36) || "休息日";
         currentWeek.days[index] = currentDay;
         return;
@@ -2329,16 +2377,13 @@
       if (!currentDay) return;
       const focusMatch = line.match(/^【重点】\s*(.*)$/);
       if (focusMatch) {
-        currentDay.dietPlan = safeString(focusMatch[1], 500);
+        currentDay.focus = safeString(focusMatch[1], 500);
         return;
       }
       const taskMatch = line.match(/^【任务】\s*(.*)$/);
       if (taskMatch) {
-        const [name, ...targetParts] = taskMatch[1].split(/[｜|]/);
-        const value = targetParts.join("｜");
-        if (safeString(name, 36) || safeString(value, 80)) {
-          currentDay.planItems.push({ name: safeString(name, 36), value: safeString(value, 80) });
-        }
+        const task = safeString(taskMatch[1].replace(/[｜|]/, "："), 160);
+        if (task) currentDay.items.push({ text: task, state: "", legacyActual: "" });
         return;
       }
     });
@@ -2362,15 +2407,19 @@
       week.days.forEach((plannedDay, index) => {
         const day = existing.days[index];
         day.title = plannedDay.title;
-        day.dietPlan = plannedDay.dietPlan;
-        day.planItems = plannedDay.planItems;
+        day.focus = plannedDay.focus;
+        day.items = plannedDay.items.map((item, itemIndex) => ({
+          ...item,
+          state: day.items[itemIndex]?.state || "",
+          legacyActual: day.items[itemIndex]?.legacyActual || "",
+        }));
       });
       selectedWeekId = existing.id;
     });
     saveState(false);
     weekImportDialog.close();
     renderWeeks();
-    showToast("本周计划已导入，原有完成记录已保留");
+    showToast("本周计划已导入，原有状态与当天小记已保留");
   }
 
   async function copyWeekPlanText() {
@@ -2419,21 +2468,16 @@
     }
 
     week.days.forEach((day) => {
-      const plannedItems = day.planItems.filter((item) => item.name || item.value);
-      const actualItems = day.records.filter((item) => item.done !== null || item.value);
+      const plannedItems = day.items.filter((item) => item.text || item.state);
       lines.push("", "", `## Day${day.dayNumber} · ${formatCompactDate(day.date)} · ${day.title}`);
+      lines.push(`- 是否记录：${day.recorded ? "已记录" : "未记录"}`);
       lines.push(`- 完成状态：${day.status || "未选择"}`);
       if (template.showWeight) lines.push(`- 体重：${formatWeight(day.weight)}`);
-      lines.push(`- ${template.firstFieldLabel}：${day.dietPlan || "未填写"}`);
-      lines.push(`- ${template.secondFieldLabel}：${day.dietRecord || "未填写"}`);
+      lines.push(`- ${template.firstFieldLabel}：${day.focus || "未填写"}`);
       lines.push("");
       lines.push("- 计划安排：");
-      lines.push(...(plannedItems.length ? plannedItems.map((item) => `  - ${item.name}${item.value ? `：${item.value}` : ""}`) : ["  - 无"]));
-      lines.push("- 实际完成：");
-      lines.push(...(actualItems.length ? actualItems.map((item) => {
-        const mark = item.done === true ? "√" : item.done === false ? "×" : "·";
-        return `  - ${mark} ${item.name || "记录"}${item.value ? `：${item.value}` : ""}`;
-      }) : ["  - 未记录"]));
+      lines.push(...(plannedItems.length ? plannedItems.map((item) => `  - ${weekItemStateMark(item.state)} ${item.text || "未填写安排"}`) : ["  - 无"]));
+      if (day.note) lines.push(`- 当天小记：${day.note}`);
     });
     return lines.join("\n");
   }
@@ -2447,8 +2491,7 @@
       summary[key] = (summary[key] || 0) + 1;
       return summary;
     }, {});
-    const completedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === true).length, 0);
-    const missedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === false).length, 0);
+    const itemCounts = countWeekItemStates(week);
 
     weeklyReportContent.innerHTML = `
       <header class="weekly-report-capture-head">
@@ -2458,8 +2501,9 @@
           <p>${escapeHtml(formatDateRange(week.startDate))}</p>
         </div>
         <div class="weekly-report-score" aria-label="本周记录汇总">
-          <span><b>${completedCount}</b> 已完成</span>
-          <span><b>${missedCount}</b> 未完成</span>
+          <span><b>${itemCounts.done}</b> 已完成</span>
+          <span><b>${itemCounts.changed}</b> 已调整</span>
+          <span><b>${itemCounts.missed}</b> 未完成</span>
         </div>
       </header>
       ${renderWeeklyReportGoals(addDaysIso(week.startDate, 6), week.spaceId)}
@@ -2522,16 +2566,7 @@
 
   function renderWeeklyReportDay(day, spaceId = "health") {
     const template = getSpaceTemplate(spaceId);
-    const rowCount = Math.max(day.planItems.length, day.records.length);
-    const entries = Array.from({ length: rowCount }, (_, index) => {
-      const plan = day.planItems[index] || {};
-      const record = day.records[index] || {};
-      return {
-        name: record.name || plan.name || "",
-        value: record.value || plan.value || "",
-        done: typeof record.done === "boolean" ? record.done : null,
-      };
-    }).filter((item) => item.name || item.value || item.done !== null);
+    const entries = day.items.filter((item) => item.text || item.state);
     const statusClass = ({ "这期拉了": "missed", "还不错": "okay", "好好好": "great" })[day.status] || "pending";
     return `
       <article class="weekly-report-day weekly-report-day--${statusClass}">
@@ -2545,12 +2580,11 @@
         </header>
         <ul>
           ${entries.length ? entries.map((item) => {
-            const mark = item.done === true ? "√" : item.done === false ? "×" : "·";
-            const markClass = item.done === true ? "done" : item.done === false ? "missed" : "pending";
-            return `<li><b class="is-${markClass}">${mark}</b><span>${escapeHtml(item.name || "记录")}</span>${item.value ? `<small>${escapeHtml(item.value)}</small>` : ""}</li>`;
+            const markClass = item.state || "pending";
+            return `<li><b class="is-${markClass}">${weekItemStateMark(item.state)}</b><span>${escapeHtml(item.text || "未填写安排")}</span></li>`;
           }).join("") : "<li class=\"is-empty\">还没有安排</li>"}
         </ul>
-        ${day.dietRecord ? `<p class="weekly-report-diet"><b>${escapeHtml(template.secondFieldLabel)}</b>${escapeHtml(day.dietRecord)}</p>` : ""}
+        ${day.focus ? `<p class="weekly-report-diet"><b>${escapeHtml(template.firstFieldLabel)}</b>${escapeHtml(day.focus)}</p>` : ""}
         ${template.showWeight && day.weight !== null ? `<p class="weekly-report-weight"><b>体重</b><strong>${escapeHtml(formatWeight(day.weight))}</strong></p>` : ""}
         ${day.note ? `<p class="weekly-report-note">${escapeHtml(day.note)}</p>` : ""}
       </article>`;
@@ -2652,8 +2686,7 @@
 
     drawCanvasAppIcon(context, width - outer - 58, outer + 5, 58);
 
-    const completedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === true).length, 0);
-    const missedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === false).length, 0);
+    const itemCounts = countWeekItemStates(week);
     const recordedCount = week.days.filter((day) => day.recorded === true).length;
     context.fillStyle = "#7865cf";
     context.font = "800 14px system-ui, sans-serif";
@@ -2664,9 +2697,10 @@
     context.fillStyle = "#777287";
     context.font = "650 17px system-ui, sans-serif";
     context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 104);
-    drawCanvasPill(context, outer, outer + 124, 132, 38, `${completedCount} 项完成`, "#eaf6f2", "#397f6d");
-    drawCanvasPill(context, outer + 142, outer + 124, 132, 38, `${missedCount} 项未完成`, "#fff0f2", "#a85f6b");
-    drawCanvasPill(context, outer + 284, outer + 124, 132, 38, `${recordedCount} 天已记录`, "#f1edff", "#6d59be");
+    drawCanvasPill(context, outer, outer + 124, 126, 38, `${itemCounts.done} 项完成`, "#eaf6f2", "#397f6d");
+    drawCanvasPill(context, outer + 136, outer + 124, 126, 38, `${itemCounts.changed} 项调整`, "#fff7df", "#9a6c25");
+    drawCanvasPill(context, outer + 272, outer + 124, 126, 38, `${itemCounts.missed} 项未完成`, "#fff0f2", "#a85f6b");
+    drawCanvasPill(context, outer + 408, outer + 124, 126, 38, `${recordedCount} 天记录`, "#f1edff", "#6d59be");
 
     let y = outer + 176;
     if (milestones.length) {
@@ -2746,21 +2780,14 @@
   }
 
   function getCanvasDayEntries(day) {
-    const rowCount = Math.max(day.planItems.length, day.records.length);
-    return Array.from({ length: rowCount }, (_, index) => {
-      const plan = day.planItems[index] || {};
-      const record = day.records[index] || {};
-      return {
-        name: record.name || plan.name || "",
-        value: record.value || plan.value || "",
-        done: typeof record.done === "boolean" ? record.done : null,
-      };
-    }).filter((entry) => entry.name || entry.value || entry.done !== null);
+    return day.items
+      .filter((item) => item.text || item.state)
+      .map((item) => ({ text: item.text, state: item.state }));
   }
 
   function getCanvasDayHeight(day) {
     const entryCount = Math.min(7, getCanvasDayEntries(day).length);
-    const hasFooter = Boolean(day.dietRecord || day.weight !== null || day.note);
+    const hasFooter = Boolean(day.focus || day.weight !== null || day.note);
     return 138 + Math.max(1, entryCount) * 31 + (hasFooter ? 54 : 20);
   }
 
@@ -2793,20 +2820,15 @@
     const entries = getCanvasDayEntries(day);
     const listX = x + 128;
     const listY = y + 132;
-    (entries.length ? entries : [{ name: "当天没有安排事项", value: "", done: null }]).slice(0, 7).forEach((entry, entryIndex) => {
+    (entries.length ? entries : [{ text: "当天没有安排事项", state: "" }]).slice(0, 7).forEach((entry, entryIndex) => {
       const rowY = listY + entryIndex * 31;
-      const mark = entry.done === true ? "√" : entry.done === false ? "×" : "•";
-      context.fillStyle = entry.done === true ? "#32977c" : entry.done === false ? "#cc626c" : "#b18d45";
+      const mark = weekItemStateMark(entry.state);
+      context.fillStyle = entry.state === "done" ? "#32977c" : entry.state === "changed" ? "#d69a31" : entry.state === "missed" ? "#cc626c" : "#9a929f";
       context.font = "900 17px system-ui, sans-serif";
       context.fillText(mark, listX, rowY);
       context.fillStyle = "#484251";
       context.font = "760 14px system-ui, sans-serif";
-      context.fillText(entry.name || "记录", listX + 28, rowY);
-      if (entry.value) {
-        context.fillStyle = "#807987";
-        context.font = "520 13px system-ui, sans-serif";
-        drawCanvasText(context, entry.value, listX + 154, rowY, width - 310, 18, 1);
-      }
+      drawCanvasText(context, entry.text || "未填写安排", listX + 28, rowY, width - 190, 18, 1);
     });
     if (entries.length > 7) {
       context.fillStyle = "#8e8794";
@@ -2814,7 +2836,7 @@
       context.fillText(`另有 ${entries.length - 7} 项，请在网页中查看`, listX + 28, listY + 7 * 31);
     }
     const footerParts = [];
-    if (day.dietRecord) footerParts.push(`${template.secondFieldLabel}：${day.dietRecord}`);
+    if (day.focus) footerParts.push(`${template.firstFieldLabel}：${day.focus}`);
     if (template.showWeight && day.weight !== null) footerParts.push(`体重：${formatWeight(day.weight)}`);
     if (day.note) footerParts.push(`当天小记：${day.note}`);
     if (footerParts.length) {
@@ -2848,8 +2870,7 @@
       ...goals.map((goal) => ({ type: "countdown", data: goal })),
       ...progressGoals.map((goal) => ({ type: "progress", data: goal })),
     ].slice(0, 4);
-    const completedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === true).length, 0);
-    const missedCount = week.days.reduce((count, day) => count + day.records.filter((item) => item.done === false).length, 0);
+    const itemCounts = countWeekItemStates(week);
     const recordedCount = week.days.filter((day) => day.recorded === true).length;
 
     const background = context.createLinearGradient(0, 0, width, height);
@@ -2877,8 +2898,9 @@
     context.fillStyle = "#777287";
     context.font = "650 24px system-ui, sans-serif";
     context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 132);
-    drawCanvasPill(context, width - outer - 430, outer + 102, 132, 50, `${completedCount} 完成`, "#eaf6f2", "#397f6d");
-    drawCanvasPill(context, width - outer - 284, outer + 102, 132, 50, `${missedCount} 未完成`, "#fff0f2", "#a85f6b");
+    drawCanvasPill(context, width - outer - 560, outer + 102, 132, 50, `${itemCounts.done} 完成`, "#eaf6f2", "#397f6d");
+    drawCanvasPill(context, width - outer - 414, outer + 102, 132, 50, `${itemCounts.changed} 调整`, "#fff7df", "#9a6c25");
+    drawCanvasPill(context, width - outer - 268, outer + 102, 132, 50, `${itemCounts.missed} 未完成`, "#fff0f2", "#a85f6b");
 
     const milestoneY = 280;
     context.fillStyle = "#6252ad";
@@ -2920,16 +2942,17 @@
       if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, x + dayWidth - 64, daysY + 18, 48);
       if (day.status) drawCanvasPill(context, x + 16, daysY + 88, Math.min(92, dayWidth - 32), 30, day.status, colorMixForCanvas(tone, .1), tone);
       const entries = getCanvasDayEntries(day);
-      const done = entries.filter((entry) => entry.done === true).length;
-      const missed = entries.filter((entry) => entry.done === false).length;
+      const done = entries.filter((entry) => entry.state === "done").length;
+      const changed = entries.filter((entry) => entry.state === "changed").length;
+      const missed = entries.filter((entry) => entry.state === "missed").length;
       context.fillStyle = "#4a4553";
       context.font = "780 15px system-ui, sans-serif";
       drawCanvasText(context, day.title || "生活日", x + 18, daysY + 148, dayWidth - 36, 20, 2);
       context.fillStyle = "#817b88";
       context.font = "600 13px system-ui, sans-serif";
-      context.fillText(`${done} 完成 · ${missed} 未完成`, x + 18, daysY + 198);
+      context.fillText(`${done} 完成 · ${changed} 调整 · ${missed} 未完成`, x + 18, daysY + 198);
       context.fillText(day.recorded ? "今天已记录" : "等待记录", x + 18, daysY + 224);
-      drawCanvasProgress(context, x + 18, daysY + 250, dayWidth - 36, entries.length ? done / entries.length * 100 : 0, tone);
+      drawCanvasProgress(context, x + 18, daysY + 250, dayWidth - 36, entries.length ? (done + changed) / entries.length * 100 : 0, tone);
     });
 
     context.fillStyle = "#8c8693";
@@ -3037,30 +3060,16 @@
     const sticker = stickerImages.get(day.sticker);
     if (sticker) drawCanvasSticker(context, sticker, x + width - 100, y + 20, 72);
 
-    const rowCount = Math.max(day.planItems.length, day.records.length);
-    const entries = Array.from({ length: rowCount }, (_, index) => {
-      const plan = day.planItems[index] || {};
-      const record = day.records[index] || {};
-      return {
-        name: record.name || plan.name || "",
-        value: record.value || plan.value || "",
-        done: typeof record.done === "boolean" ? record.done : null,
-      };
-    }).filter((entry) => entry.name || entry.value || entry.done !== null);
+    const entries = getCanvasDayEntries(day);
     entries.slice(0, 5).forEach((entry, index) => {
       const rowY = y + 132 + index * 34;
-      const mark = entry.done === true ? "√" : entry.done === false ? "×" : "•";
-      context.fillStyle = entry.done === true ? "#36a083" : entry.done === false ? "#d96670" : "#b18d45";
+      const mark = weekItemStateMark(entry.state);
+      context.fillStyle = entry.state === "done" ? "#36a083" : entry.state === "changed" ? "#d69a31" : entry.state === "missed" ? "#d96670" : "#9a929f";
       context.font = "800 20px system-ui, sans-serif";
       context.fillText(mark, x + 24, rowY);
       context.fillStyle = "#454052";
       context.font = "700 17px system-ui, sans-serif";
-      context.fillText(entry.name || "记录", x + 54, rowY);
-      if (entry.value) {
-        context.fillStyle = "#827d8d";
-        context.font = "500 15px system-ui, sans-serif";
-        drawCanvasText(context, entry.value, x + 190, rowY, width - 220, 20, 1);
-      }
+      drawCanvasText(context, entry.text || "未填写安排", x + 54, rowY, width - 78, 20, 1);
     });
     if (entries.length > 5) {
       context.fillStyle = "#8a8495";
@@ -3068,7 +3077,7 @@
       context.fillText(`另有 ${entries.length - 5} 项记录`, x + 54, y + 132 + 5 * 34);
     }
     const footerParts = [];
-    if (day.dietRecord) footerParts.push(`${template.secondFieldLabel}：${day.dietRecord}`);
+    if (day.focus) footerParts.push(`${template.firstFieldLabel}：${day.focus}`);
     if (template.showWeight && day.weight !== null) footerParts.push(`体重：${formatWeight(day.weight)}`);
     if (day.note) footerParts.push(day.note);
     if (footerParts.length) {
@@ -3370,6 +3379,9 @@
     $$("[data-zoom-chart]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => changeChartZoom(button.dataset.zoomChart, button.dataset.zoomAction));
     });
+    $$("[data-fullscreen-chart]", chartsGrid).forEach((button) => {
+      button.addEventListener("click", () => toggleChartFullscreen(button));
+    });
     $$("[data-edit-selected-node]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => openNodeDialog(button.dataset.chartId, button.dataset.editSelectedNode));
     });
@@ -3384,6 +3396,34 @@
       });
     });
     restoreChartScrollPositions();
+  }
+
+  async function toggleChartFullscreen(button) {
+    const card = button.closest(".chart-card");
+    if (!card) return;
+    try {
+      if (card.classList.contains("is-pseudo-fullscreen")) {
+        card.classList.remove("is-pseudo-fullscreen");
+        document.body.classList.remove("has-pseudo-fullscreen-chart");
+        button.textContent = "全屏查看";
+        return;
+      }
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      if (!card.requestFullscreen) {
+        card.classList.add("is-pseudo-fullscreen");
+        document.body.classList.add("has-pseudo-fullscreen-chart");
+        button.textContent = "退出全屏";
+        card.scrollTop = 0;
+        return;
+      }
+      await card.requestFullscreen({ navigationUI: "hide" });
+      screen.orientation?.lock?.("landscape").catch(() => {});
+    } catch {
+      showToast("全屏没有打开，可将手机横过来查看");
+    }
   }
 
   function renderChartCard(chart, chartIndex, chartCount) {
@@ -3725,6 +3765,8 @@
       return `<path class="chart-line" style="--chart-color:${item.color}" d="${path}" />`;
     }).join("");
 
+    const compactChart = window.matchMedia("(max-width: 900px)").matches;
+    const mobileStickerEvery = Math.max(1, Math.ceil(chart.nodes.length / 5));
     const pointMarkup = chart.nodes.map((node, nodeIndex) => {
       const pointValues = seriesData.map((item) => ({
         series: item,
@@ -3734,7 +3776,8 @@
       const isSelected = selectedNodeByChart.get(chart.id) === node.id;
       const showPointMarker = isSelected || nodeSpacing >= 14 || nodeIndex % labelEvery === 0 || nodeIndex === chart.nodes.length - 1;
       const stickerSize = Math.max(20, Math.min(seriesData.length > 1 ? 30 : 38, nodeSpacing - 8));
-      const stickerMarkup = pointValues.map(({ series, point }, pointIndex) => {
+      const showStickerAtNode = !compactChart || zoom > 1 || isSelected || nodeIndex === 0 || nodeIndex === chart.nodes.length - 1 || nodeIndex % mobileStickerEvery === 0;
+      const stickerMarkup = showStickerAtNode ? pointValues.map(({ series, point }, pointIndex) => {
         const sticker = safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""));
         if (!sticker) return "";
         const centerX = point.px + (pointIndex - (pointValues.length - 1) / 2) * (stickerSize + 4);
@@ -3744,7 +3787,7 @@
         return `<circle class="point-sticker-bg" cx="${centerX}" cy="${centerY}" r="${clipRadius + 3}" />
           <clipPath id="${clipId}"><circle cx="${centerX}" cy="${centerY}" r="${clipRadius}" /></clipPath>
           <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - clipRadius}" y="${centerY - clipRadius}" width="${stickerSize}" height="${stickerSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
-      }).join("");
+      }).join("") : "";
       const cores = showPointMarker ? pointValues.map(({ series, point }) => `
         <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="10" />
         <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="6" />
@@ -3783,6 +3826,7 @@
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="reset"${!canZoom || zoom === 1 ? " disabled" : ""}>看全局</button>
+          <button type="button" data-fullscreen-chart="${chart.id}">全屏查看</button>
         </div>
       </div>
       <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
@@ -4547,6 +4591,8 @@
       .map((id) => document.getElementById(id))
       .filter(Boolean);
     if (!links.length || !sections.length) return;
+    const views = $$('[data-app-view]');
+    const mobileQuery = window.matchMedia("(max-width: 900px)");
     const setActive = (id) => {
       links.forEach((link) => {
         const active = link.dataset.navSection === id;
@@ -4555,10 +4601,57 @@
         else link.removeAttribute("aria-current");
       });
     };
-    setActive(sections[0].id);
+
+    const resolveHashView = () => {
+      const id = location.hash.slice(1);
+      return views.some((view) => view.dataset.appView === id) ? id : "home";
+    };
+    const showMobileView = (id, { updateHistory = false, scroll = true } = {}) => {
+      const nextId = views.some((view) => view.dataset.appView === id) ? id : "home";
+      views.forEach((view) => { view.hidden = view.dataset.appView !== nextId; });
+      document.body.classList.add("is-mobile-app");
+      document.body.dataset.activeView = nextId;
+      setActive(nextId);
+      if (nextId === "weeklySection") renderWeeks();
+      if (nextId === "chartsSection") renderCharts();
+      if (updateHistory) history.pushState({ appView: nextId }, "", nextId === "home" ? "#top" : `#${nextId}`);
+      if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
+    };
+    const syncLayout = () => {
+      if (mobileQuery.matches) {
+        showMobileView(resolveHashView(), { scroll: false });
+        return;
+      }
+      document.body.classList.remove("is-mobile-app");
+      document.body.removeAttribute("data-active-view");
+      views.forEach((view) => { view.hidden = false; });
+      setActive(sections[0].id);
+    };
+
+    links.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        if (!mobileQuery.matches) return;
+        event.preventDefault();
+        showMobileView(link.dataset.navSection, { updateHistory: true });
+      });
+    });
+    $$('[data-nav-home]').forEach((link) => {
+      link.addEventListener("click", (event) => {
+        if (!mobileQuery.matches) return;
+        event.preventDefault();
+        showMobileView("home", { updateHistory: true });
+      });
+    });
+    window.addEventListener("popstate", () => {
+      if (mobileQuery.matches) showMobileView(resolveHashView());
+    });
+    mobileQuery.addEventListener?.("change", syncLayout);
+    syncLayout();
+
     if (!("IntersectionObserver" in window)) return;
     const visible = new Map();
     const observer = new IntersectionObserver((entries) => {
+      if (mobileQuery.matches) return;
       entries.forEach((entry) => visible.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0));
       const current = sections
         .map((section) => ({ id: section.id, ratio: visible.get(section.id) || 0, top: Math.abs(section.getBoundingClientRect().top - 110) }))
@@ -4580,7 +4673,10 @@
       action.disabled = mode === "installed";
       action.classList.toggle("is-ready", mode === "install" || mode === "update");
     };
-    if (isStandalone) setAction("已安装", "installed", "当前已作为应用打开");
+    if (isStandalone) {
+      action.hidden = true;
+      action.setAttribute("aria-hidden", "true");
+    }
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
@@ -4607,7 +4703,8 @@
     });
     window.addEventListener("appinstalled", () => {
       deferredInstallPrompt = null;
-      setAction("已安装", "installed", "当前已安装");
+      action.hidden = true;
+      action.setAttribute("aria-hidden", "true");
       showToast("一个魂生活日记已经安装到桌面");
     });
 
@@ -4616,6 +4713,8 @@
     navigator.serviceWorker.register("sw.js").then((registration) => {
       const offerUpdate = (worker) => {
         waitingServiceWorker = worker;
+        action.hidden = false;
+        action.removeAttribute("aria-hidden");
         setAction("更新应用", "update", "点击刷新到刚刚部署的新版本");
       };
       if (registration.waiting) offerUpdate(registration.waiting);

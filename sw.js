@@ -1,20 +1,21 @@
-const VERSION = "asoul-life-v14-0818d";
+const VERSION = "asoul-life-v15-0819a";
 const SHELL_CACHE = `${VERSION}-shell`;
 const IMAGE_CACHE = `${VERSION}-images`;
 const SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=0818d",
-  "./weekly-planner.css?v=0818d",
-  "./weekly-polish.css?v=0818d",
-  "./complete-polish.css?v=0818d",
-  "./data-model.js?v=0818d",
-  "./stickers.js?v=0818d",
-  "./冷笑话.js?v=0818d",
-  "./app.js?v=0818d",
+  "./styles.css?v=0819a",
+  "./weekly-planner.css?v=0819a",
+  "./weekly-polish.css?v=0819a",
+  "./complete-polish.css?v=0819a",
+  "./mobile-app.css?v=0819a",
+  "./data-model.js?v=0819a",
+  "./stickers.js?v=0819a",
+  "./冷笑话.js?v=0819a",
+  "./app.js?v=0819a",
   "./favicon.svg",
-  "./manifest.webmanifest?v=0818d",
-  "./icons/icon-192.png?v=0818d",
+  "./manifest.webmanifest?v=0819a",
+  "./icons/icon-192.png?v=0819a",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./图片/其他图片/Asoul-高清.png",

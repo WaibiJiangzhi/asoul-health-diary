@@ -7,25 +7,26 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="一个魂日记" />
-    <link rel="icon" type="image/png" href="icons/icon-192.png?v=0818d" />
-    <link rel="apple-touch-icon" href="icons/icon-192.png?v=0818d" />
-    <link rel="manifest" href="manifest.webmanifest?v=0818d" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png?v=0819a" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png?v=0819a" />
+    <link rel="manifest" href="manifest.webmanifest?v=0819a" />
     <meta
       name="description"
       content="Asoul 一个魂生活日记——在本地记录属于你的每一点变化。"
     />
     <title>Asoul 一个魂生活日记</title>
-    <link rel="stylesheet" href="styles.css?v=0818d" />
-    <link rel="stylesheet" href="weekly-planner.css?v=0818d" />
-    <link rel="stylesheet" href="weekly-polish.css?v=0818d" />
-    <link rel="stylesheet" href="complete-polish.css?v=0818d" />
+    <link rel="stylesheet" href="styles.css?v=0819a" />
+    <link rel="stylesheet" href="weekly-planner.css?v=0819a" />
+    <link rel="stylesheet" href="weekly-polish.css?v=0819a" />
+    <link rel="stylesheet" href="complete-polish.css?v=0819a" />
+    <link rel="stylesheet" href="mobile-app.css?v=0819a" />
   </head>
   <body>
     <div class="page-glow page-glow--one" aria-hidden="true"></div>
     <div class="page-glow page-glow--two" aria-hidden="true"></div>
 
     <header class="site-header">
-      <a class="brand" href="#top" aria-label="返回页面顶部">
+      <a class="brand" href="#top" data-nav-home aria-label="返回首页">
         <img src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
@@ -35,7 +36,7 @@
       </a>
       <div class="header-tools">
         <button class="install-app-button" id="installAppButton" type="button" title="把生活日记安装到桌面或手机主屏幕">
-          <img src="icons/icon-192.png?v=0818d" alt="" />
+          <img src="icons/icon-192.png?v=0819a" alt="" />
           <span>安装应用</span>
         </button>
         <span class="local-badge" title="自动保存到当前浏览器；只有点击“备份”才会下载 JSON 文件"><i aria-hidden="true"></i> 浏览器内自动保存</span>
@@ -55,7 +56,7 @@
     </nav>
 
     <main id="top">
-      <section class="welcome-section" aria-labelledby="profileTitle">
+      <section class="welcome-section" data-app-view="home" aria-labelledby="profileTitle">
         <div class="hero-paper">
           <span class="hero-tape hero-tape--left" aria-hidden="true"></span>
           <span class="hero-spark hero-spark--one" aria-hidden="true">✦</span>
@@ -66,7 +67,7 @@
             <img class="hero-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
             <h1 id="profileTitle">今天过得<br /><em>怎么样呀~</em></h1>
             <p>给生活里的目标留个坐标。每一次开始、坚持和改变，都值得<br />被认真看见。</p>
-            <a class="hero-jump" href="#goalSectionStart">点击开始 <span aria-hidden="true">↓</span></a>
+            <a class="hero-jump" href="#goalSectionStart" data-nav-section="goalSectionStart">点击开始 <span aria-hidden="true">↓</span></a>
           </div>
 
           <div class="hero-cast" aria-label="贝拉、嘉然和乃琳表情插画">
@@ -132,12 +133,11 @@
         </div>
       </section>
 
-      <section class="goal-section" id="goalSectionStart" aria-labelledby="goalSectionTitle">
+      <section class="goal-section" id="goalSectionStart" data-app-view="goalSectionStart" aria-labelledby="goalSectionTitle">
         <div class="goal-section-head">
           <div>
             <span class="eyebrow">MY MILESTONES</span>
             <h2 id="goalSectionTitle">目标与倒计时</h2>
-            <p>目标独立于空间保存。考研、生日、交付或旅行，都可以放在这里慢慢靠近。</p>
           </div>
           <div class="goal-section-actions">
             <span id="goalLimitText">0 / 4 个倒计时</span>
@@ -160,7 +160,6 @@
             <div>
               <span class="eyebrow">MY PROGRESS</span>
               <h3 id="progressGoalTitle">进度目标</h3>
-              <p>背单词、读书或工作项目，都可以按每次完成量一点点推进。</p>
             </div>
             <div class="progress-goal-actions">
               <span id="progressGoalLimitText">0 / 6 个进度目标</span>
@@ -181,11 +180,10 @@
         </section>
       </section>
 
-      <section class="space-section" id="spaceSectionStart" aria-labelledby="spaceSectionTitle">
+      <section class="space-section" id="spaceSectionStart" data-app-view="spaceSectionStart" aria-labelledby="spaceSectionTitle">
         <div class="space-section-copy">
           <span class="eyebrow">MY LIFE SPACES</span>
           <h2 id="spaceSectionTitle">今天，想推进哪一条生活线？</h2>
-          <p>用模板或从空白开始建立自己的空间；每个空间的日程和周报彼此独立。</p>
           <div class="space-section-actions">
             <span id="spaceLimitText">3 / 8 个空间</span>
             <button class="secondary-button" id="addSpaceButton" type="button">＋ 新建空间</button>
@@ -196,18 +194,11 @@
         <div class="space-switcher" id="spaceSwitcher" role="group" aria-label="选择记录空间"></div>
       </section>
 
-      <section class="weekly-section" id="weeklySection" aria-labelledby="weeklyTitle">
+      <section class="weekly-section" id="weeklySection" data-app-view="weeklySection" aria-labelledby="weeklyTitle">
         <div class="weekly-heading" id="weeklyTrackStart">
           <div>
             <span class="eyebrow" id="weeklyEyebrow">一个魂的每周日程安排</span>
             <h2 id="weeklyTitle">这一周，按自己的节奏来</h2>
-            <p id="weeklyDescription">计划写在左边，完成情况记在右边。到周末打开周报看一眼，下周安排就有依据啦。</p>
-          </div>
-          <div class="weekly-heading-actions">
-            <a class="secondary-button weekly-chart-jump" href="#chartsTrackStart">曲线图日记 <span aria-hidden="true">↓</span></a>
-            <button class="week-sound-toggle" id="weekSoundToggle" type="button" aria-pressed="true" title="切换完成提示音">
-              <span aria-hidden="true">♪</span><span id="weekSoundLabel">提示音开</span>
-            </button>
           </div>
         </div>
 
@@ -232,7 +223,7 @@
               </div>
             </div>
             <div class="week-timeline" id="weekTimeline" role="list" aria-label="每周计划时间线"></div>
-            <p class="week-record-rule"><b>怎样算已记录？</b>在某一天的“设置”里点击“记录今天”并保存；周条会立即更新。</p>
+            <p class="week-record-rule">点击当天的“记录今天”，即可计入本周。</p>
           </div>
 
           <div class="week-empty" id="weekEmpty">
@@ -248,7 +239,7 @@
         </div>
       </section>
 
-      <section class="charts-section" id="chartsSection" aria-labelledby="chartsTitle">
+      <section class="charts-section" id="chartsSection" data-app-view="chartsSection" aria-labelledby="chartsTitle">
         <div class="section-heading" id="chartsTrackStart">
           <div>
             <span class="eyebrow" id="chartsEyebrow">一个魂的状态轨迹</span>
@@ -290,7 +281,7 @@
         </div>
       </section>
 
-      <section class="data-vault" id="dataVaultStart" aria-labelledby="dataVaultTitle">
+      <section class="data-vault" id="dataVaultStart" data-app-view="dataVaultStart" aria-labelledby="dataVaultTitle">
         <div class="data-vault-mark" aria-hidden="true">◆</div>
         <div class="data-vault-copy">
           <span class="eyebrow">本地数据保险箱</span>
@@ -299,8 +290,10 @@
           <span class="data-vault-status" id="backupStatusText" role="status">还没有记录手动备份时间</span>
         </div>
         <div class="data-vault-actions">
+          <button class="secondary-button data-sound-toggle" id="weekSoundToggle" type="button" aria-pressed="true"><span id="weekSoundLabel">完成提示音：开</span></button>
           <button class="primary-button" id="footerExportButton" type="button">立即备份</button>
           <button class="secondary-button" id="footerImportButton" type="button">恢复数据</button>
+          <button class="secondary-button danger-button" id="footerResetDataButton" type="button">清空记录</button>
         </div>
       </section>
     </main>
@@ -562,7 +555,6 @@
           </div>
           <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
         </div>
-        <p class="avatar-dialog-copy">今天是否安排任务、完成状态和表情，都在这里一起设置。</p>
         <div class="week-day-dialog-settings">
           <label class="week-day-dialog-type">
             <span>今天是</span>
@@ -619,7 +611,7 @@
             <span class="ai-copy-number">1</span>
             <div>
               <strong>复制上周情况</strong>
-              <small id="aiPreviousWeekSummary">网页会读取当前空间更早一周的真实完成记录。</small>
+              <small id="aiPreviousWeekSummary">网页会读取当前空间更早一周的真实打卡状态。</small>
             </div>
             <button class="secondary-button" id="copyPreviousWeekButton" type="button">复制上周情况</button>
           </section>
@@ -635,7 +627,7 @@
         <section class="ai-import-final">
           <div>
             <strong>最后，粘贴 AI 返回的完整文本</strong>
-            <small>只会更新计划与重点，不会覆盖完成状态、实际记录、表情或当天小记。</small>
+            <small>只会更新计划与重点，不会覆盖打卡状态、表情或当天小记。</small>
           </div>
           <label class="field field--wide week-import-paste">
             <textarea name="payload" rows="13" placeholder="从【周开始】开始，把 AI 返回的完整内容粘贴到这里……"></textarea>
@@ -733,9 +725,9 @@
     </nav>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="data-model.js?v=0818d"></script>
-    <script src="stickers.js?v=0818d"></script>
-    <script src="冷笑话.js?v=0818d"></script>
-    <script src="app.js?v=0818d"></script>
+    <script src="data-model.js?v=0819a"></script>
+    <script src="stickers.js?v=0819a"></script>
+    <script src="冷笑话.js?v=0819a"></script>
+    <script src="app.js?v=0819a"></script>
   </body>
 </html>

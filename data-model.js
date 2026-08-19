@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const CURRENT_STATE_VERSION = 9;
+  const CURRENT_STATE_VERSION = 10;
   const MIN_SUPPORTED_STATE_VERSION = 1;
   const UNSUPPORTED_VERSION_CODE = "ASOUL_UNSUPPORTED_STATE_VERSION";
   const DEFAULT_SPACES = Object.freeze([
@@ -116,6 +116,48 @@
         })),
       })),
       version: 9,
+    })],
+    [9, (state) => ({
+      ...state,
+      weeks: (Array.isArray(state.weeks) ? state.weeks : []).map((week) => ({
+        ...week,
+        days: (Array.isArray(week?.days) ? week.days : []).map((day) => {
+          const plans = Array.isArray(day?.planItems) ? day.planItems : [];
+          const records = Array.isArray(day?.records) ? day.records : [];
+          const rowCount = Math.max(plans.length, records.length);
+          const items = Array.from({ length: rowCount }, (_, index) => {
+            const plan = plans[index] && typeof plans[index] === "object" ? plans[index] : {};
+            const record = records[index] && typeof records[index] === "object" ? records[index] : {};
+            const name = String(plan.name ?? plan.activity ?? record.name ?? record.activity ?? "").trim();
+            const target = String(plan.value ?? plan.target ?? "").trim();
+            const text = [name, target].filter(Boolean).join("：");
+            const legacyActual = String(record.value ?? record.result ?? "").trim();
+            const done = record.done ?? record.completed;
+            return {
+              id: plan.id || record.id || `legacy-item-${index + 1}`,
+              text: text || legacyActual,
+              state: done === true ? "done" : done === false ? "missed" : "",
+              ...(legacyActual ? { legacyActual } : {}),
+            };
+          }).filter((item) => item.text || item.state || item.legacyActual);
+          const dietPlan = String(day?.dietPlan ?? "").trim();
+          const dietRecord = String(day?.dietRecord ?? "").trim();
+          if (dietPlan) {
+            items.push({
+              id: `legacy-diet-${items.length + 1}`,
+              text: `饮食安排：${dietPlan}`,
+              state: dietRecord ? "done" : "",
+              ...(dietRecord ? { legacyActual: dietRecord } : {}),
+            });
+          }
+          return {
+            ...day,
+            focus: String(day?.focus ?? "").trim(),
+            items,
+          };
+        }),
+      })),
+      version: 10,
     })],
   ]);
 
