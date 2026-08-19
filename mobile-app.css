@@ -65,7 +65,7 @@
     min-height:0 !important;
     padding:20px 16px 15px !important;
     grid-template-columns:minmax(0,1fr) !important;
-    grid-template-rows:auto 232px auto !important;
+    grid-template-rows:auto 300px auto !important;
     grid-template-areas:"copy" "cast" "joke" !important;
     gap:13px !important;
     align-content:stretch !important;
@@ -140,14 +140,11 @@
 
   body.is-mobile-app .hero-cast {
     position:relative !important;
-    display:grid !important;
+    display:block !important;
     min-height:0 !important;
     height:auto !important;
-    padding:7px 7px 18px !important;
+    padding:0 !important;
     grid-area:cast !important;
-    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-    gap:0 !important;
-    align-items:end !important;
     align-self:stretch !important;
     overflow:visible !important;
     border:0 !important;
@@ -157,66 +154,170 @@
   body.is-mobile-app .hero-cast::before {
     position:absolute !important;
     z-index:0 !important;
-    right:4% !important;
-    bottom:22px !important;
-    left:4% !important;
+    top:38px !important;
+    left:50% !important;
     display:block !important;
-    height:3px !important;
+    width:220px !important;
+    height:220px !important;
     border:0 !important;
-    border-radius:999px !important;
-    background:linear-gradient(90deg,#e799b0 0 29%,transparent 29% 35%,#db7d74 35% 64%,transparent 64% 70%,#576690 70% 100%) !important;
+    border-radius:50% !important;
+    background:radial-gradient(circle at 42% 42%,rgba(231,153,176,.2),rgba(87,102,144,.09) 62%,transparent 63%) !important;
     content:"" !important;
-    transform:rotate(-1.5deg) !important;
+    transform:translateX(-50%) !important;
   }
   body.is-mobile-app .hero-cast::after {
     position:absolute !important;
     z-index:0 !important;
-    right:10% !important;
-    bottom:8px !important;
-    left:10% !important;
+    top:22px !important;
+    right:-25px !important;
     display:block !important;
-    height:34px !important;
-    border-top:1px solid rgba(87,102,144,.22) !important;
+    width:116px !important;
+    height:70px !important;
+    border:1px solid rgba(87,102,144,.16) !important;
     border-radius:50% !important;
     background:transparent !important;
+    box-shadow:-266px 128px 0 -13px transparent,-266px 128px 0 -12px rgba(231,153,176,.14) !important;
     content:"" !important;
-    transform:rotate(1.5deg) !important;
+    transform:rotate(-18deg) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker {
-    position:relative !important;
-    z-index:1 !important;
-    inset:auto !important;
-    display:flex !important;
-    width:100% !important;
+    position:absolute !important;
+    display:block !important;
     min-height:0 !important;
-    height:100% !important;
-    align-items:end !important;
-    justify-content:center !important;
-    align-self:stretch !important;
-    gap:0 !important;
+    filter:none !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker img {
-    width:118% !important;
-    max-width:150px !important;
-    height:auto !important;
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:100% !important;
     aspect-ratio:1 !important;
     object-fit:contain !important;
     filter:drop-shadow(0 10px 14px rgba(69,53,72,.1)) saturate(.97) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker span {
-    display:none !important;
+    position:absolute !important;
+    z-index:3 !important;
+    display:inline-flex !important;
+    min-width:max-content !important;
+    min-height:27px !important;
+    padding:0 9px !important;
+    align-items:center !important;
+    border:2px solid #fff !important;
+    border-radius:9px !important;
+    box-shadow:0 6px 14px rgba(67,45,66,.11) !important;
+    font-size:9px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker--bella {
-    background:radial-gradient(circle at 52% 68%,rgba(219,125,116,.14) 0 34%,transparent 35%) !important;
-    transform:rotate(-3deg) translateY(3px) !important;
+    z-index:2 !important;
+    top:-3px !important;
+    right:5px !important;
+    bottom:auto !important;
+    left:auto !important;
+    width:151px !important;
+    height:151px !important;
+    background:transparent !important;
+    transform:rotate(4deg) !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker--bella span {
+    top:7px !important;
+    right:-4px !important;
+    bottom:auto !important;
+    left:auto !important;
+    color:#c65c76 !important;
+    background:#fff1f4 !important;
+    transform:rotate(5deg) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker--diana {
-    background:radial-gradient(circle at 50% 66%,rgba(231,153,176,.17) 0 35%,transparent 36%) !important;
-    transform:translateY(-8px) !important;
+    z-index:3 !important;
+    top:78px !important;
+    right:auto !important;
+    bottom:auto !important;
+    left:3px !important;
+    width:148px !important;
+    height:148px !important;
+    background:transparent !important;
+    transform:rotate(-5deg) !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker--diana span {
+    top:auto !important;
+    right:auto !important;
+    bottom:0 !important;
+    left:-3px !important;
+    color:#b85670 !important;
+    background:#ffe9ef !important;
+    transform:rotate(-5deg) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker--eileen {
-    background:radial-gradient(circle at 48% 68%,rgba(87,102,144,.14) 0 34%,transparent 35%) !important;
-    transform:rotate(3deg) translateY(3px) !important;
+    z-index:4 !important;
+    top:auto !important;
+    right:18px !important;
+    bottom:0 !important;
+    left:auto !important;
+    width:153px !important;
+    height:153px !important;
+    background:transparent !important;
+    transform:rotate(3deg) !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker--eileen span {
+    top:auto !important;
+    right:-3px !important;
+    bottom:1px !important;
+    left:auto !important;
+    color:#576690 !important;
+    background:#eef1f8 !important;
+    transform:rotate(3deg) !important;
+  }
+  body.is-mobile-app .hero-line {
+    position:absolute !important;
+    z-index:1 !important;
+    right:auto !important;
+    bottom:5px !important;
+    left:-13px !important;
+    display:block !important;
+    width:150px !important;
+    height:60px !important;
+    border:0 !important;
+    opacity:.82 !important;
+  }
+  body.is-mobile-app .hero-line::before {
+    position:absolute !important;
+    inset:4px 0 3px !important;
+    display:block !important;
+    background:linear-gradient(90deg,#e799b0,#db7d74 58%,#f2bf55) !important;
+    clip-path:polygon(0 75%,22% 38%,45% 66%,68% 18%,86% 47%,100% 27%,100% 34%,86% 55%,68% 27%,45% 75%,22% 47%,0 84%) !important;
+    content:"" !important;
+  }
+  body.is-mobile-app .hero-line i {
+    position:absolute !important;
+    z-index:2 !important;
+    display:block !important;
+    width:9px !important;
+    height:9px !important;
+    border:2px solid #fff !important;
+    border-radius:50% !important;
+    box-shadow:0 2px 7px rgba(74,56,94,.14) !important;
+  }
+  body.is-mobile-app .hero-line i:nth-child(1) { left:-3px !important; top:42px !important; }
+  body.is-mobile-app .hero-line i:nth-child(2) { left:20% !important; top:20px !important; background:#e799b0 !important; }
+  body.is-mobile-app .hero-line i:nth-child(3) { left:43% !important; top:37px !important; background:#db7d74 !important; }
+  body.is-mobile-app .hero-line i:nth-child(4) { left:67% !important; top:8px !important; background:#f2bf55 !important; }
+  body.is-mobile-app .hero-line i:nth-child(5) { right:-3px !important; top:16px !important; background:#576690 !important; }
+  body.is-mobile-app .hero-spark--one {
+    top:280px !important;
+    left:25px !important;
+    color:#f1bb3d !important;
+    font-size:27px !important;
+    transform:rotate(-12deg) !important;
+  }
+  body.is-mobile-app .hero-spark--two {
+    top:103px !important;
+    right:35px !important;
+    color:#e799b0 !important;
+    font-size:38px !important;
+    transform:rotate(-12deg) !important;
   }
 
   body.is-mobile-app .home-joke-card {
@@ -280,8 +381,11 @@
   body.is-mobile-app .header-tools>#updateAppButton { min-width:30px !important; padding-inline:4px !important; font-size:9px !important; }
   body.is-mobile-app .hero-paper { padding-inline:13px !important; }
   body.is-mobile-app .hero-copy h1 { font-size:35px !important; }
-  body.is-mobile-app .hero-paper { grid-template-rows:auto 218px auto !important; }
-  body.is-mobile-app .hero-cast { padding-inline:7px !important; gap:2px !important; }
+  body.is-mobile-app .hero-paper { grid-template-rows:auto 280px auto !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--bella { right:1px !important; width:142px !important; height:142px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--diana { top:72px !important; left:0 !important; width:138px !important; height:138px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--eileen { right:10px !important; width:145px !important; height:145px !important; }
+  body.is-mobile-app .hero-line { width:135px !important; }
 }
 [data-app-view][hidden], .space-switcher-mobile { display:none !important; }
 .week-item-state { position:relative; }
