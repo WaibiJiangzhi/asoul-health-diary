@@ -26,7 +26,7 @@
     "#35a8bb",
     "#a77957",
   ];
-  const CHART_ZOOM_LEVELS = [1, 2, 4, 8, 12];
+  const CHART_ZOOM_LEVELS = [1, 2, 4, 8];
   const MAX_SPACES = 8;
   const MAX_GOALS = 4;
   const MAX_PROGRESS_GOALS = 6;
@@ -427,21 +427,9 @@
       pendingSpaceIconSticker = "";
       renderSpaceIconPicker();
     });
-    $("#spaceIconClearButton").addEventListener("click", () => {
-      pendingSpaceIconSticker = "";
-      renderSpaceIconPicker();
-    });
     $("#spaceIconPicker").addEventListener("toggle", renderSpaceIconPicker);
     $("#goalStickerPicker").addEventListener("toggle", renderGoalStickerPicker);
-    $("#clearGoalStickerButton").addEventListener("click", () => {
-      pendingGoalSticker = "";
-      renderGoalStickerPicker();
-    });
     $("#progressGoalStickerPicker").addEventListener("toggle", renderProgressGoalStickerPicker);
-    $("#clearProgressGoalStickerButton").addEventListener("click", () => {
-      pendingProgressGoalSticker = "";
-      renderProgressGoalStickerPicker();
-    });
     $("#clearAvatarButton").addEventListener("click", clearAvatar);
     deleteNodeButton.addEventListener("click", deleteActiveNode);
     $("#clearWeekStickerButton").addEventListener("click", clearWeekSticker);
@@ -1334,7 +1322,9 @@
       });
     });
     const stickers = STICKER_PACKS[activeProgressGoalStickerPack] || [];
-    progressGoalStickerGrid.innerHTML = stickers.map((path, index) => `
+    progressGoalStickerGrid.innerHTML = `
+      <button class="sticker-item sticker-item--blank${pendingProgressGoalSticker ? "" : " is-selected"}" type="button" data-progress-goal-sticker="" aria-label="不使用表情"><span>留空</span></button>
+    ` + stickers.map((path, index) => `
       <button class="sticker-item${pendingProgressGoalSticker === path ? " is-selected" : ""}" type="button" data-progress-goal-sticker="${escapeAttr(path)}" aria-label="选择${activeProgressGoalStickerPack}进度目标表情 ${index + 1}">
         <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
       </button>
@@ -1486,7 +1476,9 @@
       });
     });
     const stickers = STICKER_PACKS[activeGoalStickerPack] || [];
-    goalStickerGrid.innerHTML = stickers.map((path, index) => `
+    goalStickerGrid.innerHTML = `
+      <button class="sticker-item sticker-item--blank${pendingGoalSticker ? "" : " is-selected"}" type="button" data-goal-sticker="" aria-label="不使用表情"><span>留空</span></button>
+    ` + stickers.map((path, index) => `
       <button class="sticker-item${pendingGoalSticker === path ? " is-selected" : ""}" type="button" data-goal-sticker="${escapeAttr(path)}" aria-label="选择${activeGoalStickerPack}倒计时表情 ${index + 1}">
         <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
       </button>
@@ -1528,8 +1520,6 @@
 
   function renderSpaceSwitcher() {
     if (!spaceSwitcher) return;
-    const activeIndex = Math.max(0, state.spaces.findIndex((space) => space.id === activeSpaceId));
-    const activeSpace = state.spaces[activeIndex];
     const renderSpaceButton = (space, extraClass = "") => {
       const template = getSpaceTemplate(space.id);
       const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
@@ -1546,11 +1536,8 @@
         </div>`;
     };
     spaceSwitcher.innerHTML = state.spaces.length ? `
-      <div class="space-switcher-mobile" data-space-swipe aria-label="左右切换空间">
-        <button class="space-switcher-arrow" type="button" data-space-step="-1" aria-label="上一个空间"${activeIndex === 0 ? " disabled" : ""}>←</button>
-        ${renderSpaceButton(activeSpace, " is-mobile-current")}
-        <button class="space-switcher-arrow" type="button" data-space-step="1" aria-label="下一个空间"${activeIndex === state.spaces.length - 1 ? " disabled" : ""}>→</button>
-        <div class="space-switcher-dots" aria-hidden="true">${state.spaces.map((space) => `<i class="${space.id === activeSpaceId ? "is-active" : ""}"></i>`).join("")}</div>
+      <div class="space-switcher-mobile" data-space-rail aria-label="左右滑动切换日程空间">
+        ${state.spaces.map((space) => renderSpaceButton(space, space.id === activeSpaceId ? " is-mobile-current" : "")).join("")}
       </div>
       <div class="space-switcher-desktop">${state.spaces.map((space) => renderSpaceButton(space)).join("")}</div>
     ` : `
@@ -1561,10 +1548,24 @@
     $$('[data-space-id]', spaceSwitcher).forEach((button) => {
       button.addEventListener("click", () => selectSpace(button.dataset.spaceId));
     });
-    $$('[data-space-step]', spaceSwitcher).forEach((button) => {
-      button.addEventListener("click", () => selectAdjacentSpace(Number(button.dataset.spaceStep)));
+    window.requestAnimationFrame(() => {
+      const rail = $(".space-switcher-mobile", spaceSwitcher);
+      const current = $(".is-mobile-current", rail);
+      if (rail && current) rail.scrollTo({ left: Math.max(0, current.offsetLeft - (rail.clientWidth - current.clientWidth) / 2), behavior: "smooth" });
     });
-    bindSpaceSwipe();
+    const chartSpaceSwitcher = $("#chartSpaceSwitcher");
+    if (chartSpaceSwitcher) {
+      chartSpaceSwitcher.innerHTML = state.spaces.length ? `
+        <span>当前空间</span>
+        <div>${state.spaces.map((space) => {
+          const template = getSpaceTemplate(space.id);
+          const icon = template.iconSticker
+            ? `<img src="${escapeAttr(assetUrl(template.iconSticker))}" alt="" />`
+            : escapeHtml(template.icon);
+          return `<button type="button" data-chart-space-id="${space.id}" aria-pressed="${space.id === activeSpaceId}" class="${space.id === activeSpaceId ? "is-active" : ""}"><i>${icon}</i>${escapeHtml(space.name)}</button>`;
+        }).join("")}</div>` : "";
+      $$('[data-chart-space-id]', chartSpaceSwitcher).forEach((button) => button.addEventListener("click", () => selectSpace(button.dataset.chartSpaceId)));
+    }
     $("#spaceLimitText").textContent = `${state.spaces.length} / ${MAX_SPACES} 个空间`;
     $("#addSpaceButton").disabled = state.spaces.length >= MAX_SPACES;
     $("#editSpaceButton").disabled = !getSpace();
@@ -1620,8 +1621,8 @@
   function syncSpaceCopy() {
     const hasSpace = Boolean(getSpace());
     const template = getSpaceTemplate();
-    $("#weeklyEyebrow").textContent = hasSpace ? `一个魂的${getSpace().name}打卡` : "一个魂的每周日程安排";
-    $("#weeklyTitle").textContent = hasSpace ? "这一周，按自己的节奏来" : "建立空间后，再开始安排日程";
+    $("#weeklyEyebrow").textContent = "WEEKLY SOUL PLAN";
+    $("#weeklyTitle").textContent = hasSpace ? `一个魂的${getSpace().name}打卡` : "建立空间后，再开始安排日程";
     $("#chartsEyebrow").textContent = hasSpace ? template.chartEyebrow : "一个魂的状态轨迹";
     $("#chartsTitle").textContent = hasSpace ? template.chartHeading : "建立空间后，再记录一条轨迹";
     $(".week-empty h3").textContent = hasSpace ? "先建立一个年月吧" : "先建立一个空间吧";
@@ -1700,7 +1701,9 @@
       });
     });
     const stickers = STICKER_PACKS[activeSpaceIconPack] || [];
-    spaceIconStickerGrid.innerHTML = stickers.map((path, index) => `
+    spaceIconStickerGrid.innerHTML = `
+      <button class="sticker-item sticker-item--blank${pendingSpaceIconSticker ? "" : " is-selected"}" type="button" data-space-icon-sticker="" aria-label="使用空间符号"><span>留空</span></button>
+    ` + stickers.map((path, index) => `
       <button class="sticker-item${pendingSpaceIconSticker === path ? " is-selected" : ""}" type="button" data-space-icon-sticker="${escapeAttr(path)}" aria-label="选择${activeSpaceIconPack}表情 ${index + 1}">
         <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
       </button>
@@ -1919,9 +1922,9 @@
     weekTimeline.dataset.count = String(filteredWeeks.length);
     $("#addWeekButton").disabled = !hasActiveSpace;
     $("#emptyAddWeekButton").disabled = !hasActiveSpace;
-    ["#shiftWeekButton", "#showSelectedWeekReportButton"].forEach((selector) => {
-      $(selector).disabled = filteredWeeks.length === 0;
-    });
+    $("#shiftWeekButton").hidden = true;
+    $("#shiftWeekButton").disabled = filteredWeeks.length === 0;
+    $("#showSelectedWeekReportButton").disabled = filteredWeeks.length === 0;
     if (!filteredWeeks.length) {
       $("#shiftWeekButton").textContent = "日程顺延一天";
       $("#shiftWeekButton").removeAttribute("title");
@@ -2056,30 +2059,16 @@
       : `Day1 到 Day${selectedDay.dayNumber - 1} 保持不变`;
     weekDetail.innerHTML = `
       <article class="week-board">
-        <div class="week-day-pager" data-week-day-swipe aria-label="左右切换这周的日期">
-          <div class="week-day-tabs" role="tablist" aria-label="当前查看的日期">
-            ${renderWeekDayTab(selectedDay, true)}
-          </div>
-        </div>
         <div class="week-day-stepper" aria-label="切换当天">
           <button type="button" data-week-day-step="-1" aria-label="前一天"${selectedIndex === 0 ? " disabled" : ""}>←</button>
-          <strong>Day ${selectedDay.dayNumber} <small>/ 7</small></strong>
+          <strong>Day ${selectedDay.dayNumber} <small>/ 7 · ${escapeHtml(formatCompactDate(selectedDay.date))}</small></strong>
           <button type="button" data-week-day-step="1" aria-label="后一天"${selectedIndex === week.days.length - 1 ? " disabled" : ""}>→</button>
         </div>
         ${renderWeekDayEditor(week, selectedDay)}
       </article>`;
-
-    $$('[data-select-week-day]', weekDetail).forEach((button) => {
-      button.addEventListener("click", () => {
-        const dayId = button.dataset.selectWeekDay;
-        selectedDayByWeek.set(week.id, dayId);
-        renderWeekDetail(week);
-      });
-    });
     $$('[data-week-day-step]', weekDetail).forEach((button) => {
       button.addEventListener("click", () => selectAdjacentWeekDay(week, Number(button.dataset.weekDayStep)));
     });
-    bindWeekDaySwipe(week);
     bindInlineWeekDayEditor(week, selectedDay);
   }
 
@@ -2161,13 +2150,28 @@
         </div>`;
     }).join("");
 
+    const sticker = safeSticker(day.sticker);
+    const statuses = [
+      ["", "未设置"],
+      ["这期拉了", "这期拉了"],
+      ["还不错", "还不错"],
+      ["好好好", "好好好"],
+    ].map(([value, label]) => `<button type="button" data-set-day-status="${value}" aria-pressed="${day.status === value}" class="${day.status === value ? "is-active" : ""}">${label}</button>`).join("");
+
     return `
       <section class="week-inline-day week-inline-day--${statusClass}" data-inline-week="${week.id}" data-inline-day="${day.id}">
         <header class="week-inline-day-head">
-          <div><span>DAY ${day.dayNumber} · ${escapeHtml(formatCompactDate(day.date))}</span><strong>${escapeHtml(day.title)}</strong></div>
-          <div>
+          <div class="week-day-identity">
+            <span>DAY ${day.dayNumber} · ${escapeHtml(formatCompactDate(day.date))}</span>
+            <input data-day-text-field="title" maxlength="20" aria-label="这一天的名称" value="${escapeAttr(day.title)}" />
+          </div>
+          <button class="week-day-sticker-button" type="button" data-pick-day-sticker aria-label="选择今天的表情">
+            ${sticker ? `<img src="${escapeAttr(assetUrl(sticker))}" alt="今天的表情" />` : `<span aria-hidden="true">＋</span><small>选表情</small>`}
+          </button>
+          <div class="week-day-statuses" aria-label="今天完成得怎么样">${statuses}</div>
+          <div class="week-day-primary-actions">
             <button class="week-record-today${day.recorded ? " is-recorded" : ""}" type="button" data-record-today aria-pressed="${day.recorded}">${day.recorded ? "✓ 今天已记录" : "记录今天"}</button>
-            <button class="week-day-configure" type="button" data-configure-current-day>当天设置</button>
+            <button class="week-shift-day" type="button" data-shift-current-day>顺延一天</button>
           </div>
         </header>
 
@@ -2221,7 +2225,7 @@
     $$('[data-day-text-field]', weekDetail).forEach((input) => {
       input.addEventListener("input", () => {
         const field = input.dataset.dayTextField;
-        day[field] = safeString(input.value, field === "note" ? 600 : 500);
+        day[field] = safeString(input.value, field === "note" ? 600 : field === "title" ? 20 : 500);
         scheduleSave();
       });
       input.addEventListener("change", () => window.setTimeout(() => renderWeekDetail(week), 0));
@@ -2262,7 +2266,16 @@
       renderWeeks();
       showToast(day.recorded ? `Day${day.dayNumber} 已计入本周记录` : `Day${day.dayNumber} 已取消记录`);
     });
-    $("[data-configure-current-day]", weekDetail)?.addEventListener("click", () => openWeekStickerPicker(week.id, day.id));
+    $$('[data-set-day-status]', weekDetail).forEach((button) => {
+      button.addEventListener("click", () => {
+        day.status = ["这期拉了", "还不错", "好好好"].includes(button.dataset.setDayStatus) ? button.dataset.setDayStatus : "";
+        if (day.status) playWeekFeedback(day.status !== "这期拉了");
+        saveState(false);
+        renderWeekDetail(week);
+      });
+    });
+    $("[data-pick-day-sticker]", weekDetail)?.addEventListener("click", () => openWeekStickerPicker(week.id, day.id));
+    $("[data-shift-current-day]", weekDetail)?.addEventListener("click", () => shiftWeekScheduleByOneDay(week.id));
   }
 
   function openWeekStickerPicker(weekId, dayId) {
@@ -2272,14 +2285,8 @@
     openWeekStickerWeekId = weekId;
     openWeekStickerDayId = dayId;
     selectedWeekSticker = day.sticker || "";
-    const activeDayLabel = getSpaceTemplate(week.spaceId).activeDayLabel;
     $("#weekStickerEyebrow").textContent = `DAY ${day.dayNumber} · ${formatCompactDate(day.date)}`;
-    $("#weekStickerDialogTitle").textContent = `设置 Day${day.dayNumber}`;
-    weekStickerForm.elements.dayType.innerHTML = `<option value="${escapeAttr(activeDayLabel)}">${escapeHtml(activeDayLabel)}</option><option value="休息日">休息日</option>`;
-    weekStickerForm.elements.dayType.setAttribute("aria-label", `选择${activeDayLabel}或休息日`);
-    weekStickerForm.elements.dayType.value = day.title === activeDayLabel ? activeDayLabel : "休息日";
-    weekStickerForm.elements.dayRecorded.checked = day.recorded === true;
-    $$('[name="dayStatus"]', weekStickerForm).forEach((input) => { input.checked = input.value === day.status; });
+    $("#weekStickerDialogTitle").textContent = `Day${day.dayNumber} 的表情`;
     renderWeekStickerTabs();
     renderWeekStickerGrid();
     weekStickerDialog.showModal();
@@ -2290,11 +2297,6 @@
     const week = findWeek(openWeekStickerWeekId);
     const day = week?.days.find((item) => item.id === openWeekStickerDayId);
     if (!week || !day) return;
-    const formData = new FormData(weekStickerForm);
-    const activeDayLabel = getSpaceTemplate(week.spaceId).activeDayLabel;
-    day.title = formData.get("dayType") === activeDayLabel ? activeDayLabel : "休息日";
-    day.status = ["这期拉了", "还不错", "好好好"].includes(formData.get("dayStatus")) ? formData.get("dayStatus") : "";
-    day.recorded = formData.get("dayRecorded") === "on";
     day.sticker = safeSticker(selectedWeekSticker);
     preloadCanvasAsset(day.sticker);
     saveState(false);
@@ -2325,7 +2327,7 @@
   function renderWeekStickerGrid() {
     const stickers = STICKER_PACKS[activeWeekStickerPack] || [];
     weekStickerGrid.innerHTML = `
-      <button class="sticker-item${selectedWeekSticker ? "" : " is-selected"}" type="button" data-week-sticker="" aria-label="不使用表情"><span class="sticker-none">不选</span></button>
+      <button class="sticker-item${selectedWeekSticker ? "" : " is-selected"}" type="button" data-week-sticker="" aria-label="留空"><span class="sticker-none">留空</span></button>
       ${stickers.map((path, index) => `
         <button class="sticker-item${selectedWeekSticker === path ? " is-selected" : ""}" type="button" data-week-sticker="${escapeAttr(path)}" aria-label="${activeWeekStickerPack}表情 ${index + 1}">
           <img src="${escapeAttr(path)}" alt="" loading="lazy" />
@@ -2350,7 +2352,6 @@
     weekImportForm.elements.profile.value = getAiContextProfile(context);
     const template = getSpaceTemplate();
     weekImportForm.elements.profile.placeholder = template.aiContextExample;
-    $("#aiContextHint").textContent = `把与“${getSpace().name}”有关的基础、目标、可用时间、喜好和限制写在一个文本框里；这些内容只保存在当前空间。`;
     $("#weekImportDialogTitle").textContent = `AI 规划本周 · ${formatDateRange(week.startDate)}`;
     const previousWeek = findPreviousWeek(week);
     $("#aiPreviousWeekSummary").textContent = previousWeek
@@ -3334,11 +3335,11 @@
       <div class="series-axis-fields">
         <label class="field">
           <span>纵轴最小值 <small>留空自动</small></span>
-          <input data-series-axis-min type="number" step="any" inputmode="decimal" placeholder="自动" value="${Number.isFinite(Number(item.axisMin)) && item.axisMin !== null && item.axisMin !== "" ? escapeAttr(item.axisMin) : ""}" />
+          <input data-series-axis-min type="number" step="any" inputmode="decimal" placeholder="留空自动" value="${Number.isFinite(Number(item.axisMin)) && item.axisMin !== null && item.axisMin !== "" ? escapeAttr(item.axisMin) : ""}" />
         </label>
         <label class="field">
           <span>纵轴最大值 <small>留空自动</small></span>
-          <input data-series-axis-max type="number" step="any" inputmode="decimal" placeholder="自动" value="${Number.isFinite(Number(item.axisMax)) && item.axisMax !== null && item.axisMax !== "" ? escapeAttr(item.axisMax) : ""}" />
+          <input data-series-axis-max type="number" step="any" inputmode="decimal" placeholder="留空自动" value="${Number.isFinite(Number(item.axisMax)) && item.axisMax !== null && item.axisMax !== "" ? escapeAttr(item.axisMax) : ""}" />
         </label>
       </div>
       <button class="series-remove" type="button" aria-label="删除指标 ${index + 1}">×</button>`;
@@ -3544,7 +3545,6 @@
             <details class="chart-action-menu">
               <summary aria-label="管理曲线图">•••</summary>
               <div>
-                <button class="menu-close" type="button" data-close-menu aria-label="关闭图表管理">×</button>
                 <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="-1" aria-label="曲线图上移"${chartIndex === 0 ? " disabled" : ""}>↑ 曲线图上移</button>
                 <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === chartCount - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
                 <button class="chart-action chart-action--settings" type="button" data-edit-chart="${chart.id}"><span aria-hidden="true">⚙</span> 图表设置</button>
@@ -3752,7 +3752,7 @@
     const zoomIndex = CHART_ZOOM_LEVELS.indexOf(zoom);
     const canZoom = chart.nodes.length > 1;
     const compactChart = window.matchMedia("(max-width: 900px)").matches;
-    const width = (compactChart ? 720 : 920) * zoom;
+    const width = compactChart ? 720 : 920;
     const height = compactChart ? 500 : 370;
     const margin = { top: compactChart ? 76 : 58, right: 34, bottom: compactChart ? 72 : 62, left: chart.series.length > 1 ? (compactChart ? 98 : 112) : 76 };
     const plotWidth = width - margin.left - margin.right;
@@ -3883,21 +3883,13 @@
         ${rangeSummary}
         ${chart.series.length > 1 ? `<small>纵轴数值按曲线颜色对应，各项指标使用独立刻度</small>` : ""}
       </div>
-      <div class="chart-view-tools" aria-label="曲线图查看范围">
-        <div class="chart-view-status">
-          <span class="chart-view-icon" aria-hidden="true">${chart.nodes.length === 1 ? "◎" : zoom === 1 ? "⌁" : "↔"}</span>
-          <span>
-            <strong>${chart.nodes.length === 1 ? "起点" : zoom === 1 ? "趋势预览" : `${zoom}× 放大`}</strong>
-            <small>${chart.nodes.length === 1 ? "第一条轨迹已点亮" : zoom === 1 ? `${chart.nodes.length} 个节点` : "左右滑动查看"}</small>
-          </span>
-        </div>
-        <div>
-          <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
-          <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
-        </div>
+      <div class="chart-zoom-bar" aria-label="曲线图缩放">
+        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
+        <strong>${zoom}×</strong>
+        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
       </div>
       <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
-      <svg class="chart-svg" style="width:${zoom * 100}%;aspect-ratio:${width}/${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
+      <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
         <defs>
           <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="${primary.color}" stop-opacity="0.24" />

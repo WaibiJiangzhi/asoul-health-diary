@@ -85,14 +85,14 @@ for (const [packName, expectedFirstFolder] of [["贝拉", "5-"], ["嘉然", "5-"
 }
 
 assert.match(html, /AI 规划本周/);
-assert.match(html, /使用你习惯的 AI，生成符合网页模板格式的本周计划即可/, "AI planning should lead with the simple outcome");
+assert.match(html, /把模板交给 AI，再把生成的计划粘贴回来/, "AI planning should lead with the simple outcome");
 assert.match(app, /function copyPreviousWeekContext\(/, "AI planning should copy the previous week separately");
 assert.doesNotMatch(html, /id="aiPromptOutput"/, "AI planning should not expose a large generated-prompt preview");
 assert.doesNotMatch(html, /本周便签/, "the PWA should replace the old mobile-note export");
-assert.match(html, /从 Day1 起顺延一天/);
+assert.match(app, /data-shift-current-day/);
 assert.match(html, /class="hero-jump" href="#goalSectionStart"[^>]*>点击开始/, "hero action must open countdowns");
 assert.doesNotMatch(html, /AI 规划本月/);
-assert.match(html, /href="icons\/icon-192\.png\?v=0820b"/);
+assert.match(html, /href="icons\/icon-192\.png\?v=0821"/);
 assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-yigehun-app.png")), "missing polished yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
 assert.match(html, /class="personal-preferences personal-preferences--install"[\s\S]*id="installAppButton"/, "PWA installation must live in the personal view");
@@ -118,7 +118,7 @@ assert.match(app, /renderWeeklyReportGoals/, "weekly reports must include goal c
 assert.match(app, /function renderGoalStickerPicker\(/, "countdowns must support optional stickers");
 assert.match(app, /function renderGoalSpaceOptions\(/, "countdowns must allow selecting report spaces");
 assert.match(app, /goal\.spaceIds\.includes\(spaceId\)/, "weekly reports must filter countdowns by space");
-assert.match(html, /可以不选，也可以选择一个或多个空间/, "countdowns must allow no report space");
+assert.match(app, /new Set\(Array\.isArray\(selectedSpaceIds\) \? selectedSpaceIds : \[\]\)/, "countdowns must allow no report space");
 assert.doesNotMatch(app, /请至少选择一个要显示周报的空间/, "countdown space selection must be optional");
 assert.match(app, /const source = Array\.isArray\(candidate\) \? candidate : DEFAULT_SPACES/, "an explicitly empty space list must stay empty");
 assert.doesNotMatch(app, /至少要保留一个空间/, "all spaces must be removable");
@@ -126,8 +126,8 @@ assert.doesNotMatch(app, /data-edit-goal/, "countdown cards must not contain the
 assert.match(app, /week-node-progress/, "week cards must show recorded-day progress");
 assert.match(app, /function pickRelevantWeek\(/, "week navigation must prefer the current or nearest week");
 assert.match(app, /return day\.recorded === true/, "recorded-day count must use the explicit day setting");
-assert.match(html, /name="dayRecorded"/, "single-day settings must expose the recorded-day switch");
-assert.match(html, /记录今天/, "recorded-day control must live with daily completion settings");
+assert.match(app, /data-record-today/, "single-day editor must expose the recorded-day switch");
+assert.match(app, /记录今天|今天已记录/, "recorded-day control must live with daily completion settings");
 assert.doesNotMatch(html, /计入周记录/, "legacy recorded-day wording must be removed");
 assert.match(app, /weekStickerDialog\.close\(\);\s*renderWeeks\(\)/, "saving daily settings must refresh the week timeline immediately");
 assert.match(app, /WEEK_ITEM_STATES = new Set\(\["", "done", "changed", "missed"\]\)/, "weekly items must support done, changed, and missed states");
