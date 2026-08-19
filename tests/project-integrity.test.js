@@ -69,7 +69,6 @@ for (const requiredId of [
   "copyPreviousWeekButton",
   "aiPreviousWeekSummary",
   "installAppButton",
-  "installPreferenceRow",
   "updateAppButton",
 ]) {
   assert.ok(ids.includes(requiredId), `missing HTML id: ${requiredId}`);
@@ -95,7 +94,7 @@ assert.doesNotMatch(html, /AI 规划本月/);
 assert.match(html, /href="icons\/icon-192\.png\?v=0821"/);
 assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-yigehun-app.png")), "missing polished yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
-assert.match(html, /class="personal-preferences personal-preferences--install"[\s\S]*id="installAppButton"/, "PWA installation must live in the personal view");
+assert.match(html, /class="header-tools"[\s\S]*id="installAppButton"/, "PWA installation must be discoverable in the mobile header");
 assert.match(html, /href="https:\/\/www\.doubao\.com\/chat\/"/, "AI planning should offer an optional Doubao jump link");
 assert.doesNotMatch(html, /class="pwa-prompt"/, "PWA installation must not interrupt users with an automatic popup");
 assert.ok(fs.existsSync(path.join(projectRoot, "sw.js")), "missing service worker");

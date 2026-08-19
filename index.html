@@ -7,6 +7,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="一个魂日记" />
+    <script>document.documentElement.classList.add("js");</script>
+    <style>
+      @media (max-width: 900px) {
+        html.js body:not(.mobile-app-ready) [data-app-view]:not(#home),
+        html.js body:not(.mobile-app-ready) footer {
+          display: none !important;
+        }
+      }
+    </style>
     <link rel="icon" type="image/png" href="icons/icon-192.png?v=0821" />
     <link rel="apple-touch-icon" href="icons/icon-192.png?v=0821" />
     <link rel="manifest" href="manifest.webmanifest?v=0821" />
@@ -19,7 +28,7 @@
     <link rel="stylesheet" href="weekly-planner.css?v=0821" />
     <link rel="stylesheet" href="weekly-polish.css?v=0821" />
     <link rel="stylesheet" href="complete-polish.css?v=0821" />
-    <link rel="stylesheet" href="mobile-app.css?v=0822a" />
+    <link rel="stylesheet" href="mobile-app.css?v=0824c" />
   </head>
   <body>
     <div class="page-glow page-glow--one" aria-hidden="true"></div>
@@ -29,7 +38,7 @@
       <a class="brand" href="#top" data-nav-home aria-label="返回首页">
         <img class="brand-asoul-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
         <span class="brand-app-mark" aria-label="一个魂生活日记">
-          <img src="icons/icon-yigehun.png?v=0821" alt="" />
+          <img src="icons/icon-yigehun-app.png?v=0824" alt="" />
         </span>
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
@@ -41,6 +50,7 @@
         <span class="local-badge" title="自动保存到当前浏览器；只有点击“备份”才会下载 JSON 文件"><i aria-hidden="true"></i> 浏览器内自动保存</span>
         <button class="text-button header-data-action header-data-action--backup" id="exportButton" type="button">备份</button>
         <button class="text-button header-data-action header-data-action--restore" id="importButton" type="button">恢复</button>
+        <button class="text-button header-install-action" id="installAppButton" type="button" title="安装到桌面或手机主屏幕" hidden><span>安装</span></button>
         <button class="text-button header-update-action" id="updateAppButton" type="button" hidden>更新</button>
         <button class="text-button reset-data-button" id="resetDataButton" type="button">清空记录</button>
         <input id="importInput" type="file" accept="application/json" hidden />
@@ -160,18 +170,7 @@
             <span class="personal-preference-icon" aria-hidden="true">♪</span>
             <span><strong>提示音</strong><small>记录完成时，给今天一个轻轻的回应</small></span>
           </div>
-          <button class="preference-switch data-sound-toggle" id="weekSoundToggle" type="button" aria-pressed="true"><span id="weekSoundLabel">已开启</span><i aria-hidden="true"></i></button>
-        </div>
-
-        <div class="personal-preferences personal-preferences--install" id="installPreferenceRow" aria-label="应用安装与更新" hidden>
-          <div class="personal-preference-copy">
-            <span class="personal-preference-icon personal-preference-icon--app" aria-hidden="true"><img src="icons/icon-yigehun.png?v=0821" alt="" /></span>
-            <span><strong>一个魂手机应用</strong><small>安装到主屏幕后，可以像 App 一样打开</small></span>
-          </div>
-          <button class="install-app-button" id="installAppButton" type="button" title="把生活日记安装到桌面或手机主屏幕">
-            <img src="icons/icon-192.png?v=0821" alt="" />
-            <span>安装应用</span>
-          </button>
+          <button class="preference-switch data-sound-toggle" id="weekSoundToggle" type="button" aria-pressed="true"><span id="weekSoundLabel">开</span><i aria-hidden="true"></i></button>
         </div>
       </section>
 
@@ -559,7 +558,7 @@
         </div>
 
         <div class="dialog-actions dialog-actions--split">
-          <button class="danger-button" id="deleteNodeButton" type="button" hidden>删除这个节点</button>
+          <button class="danger-button" id="deleteNodeButton" type="button" hidden>删除节点</button>
           <span class="dialog-spacer"></span>
           <button class="text-button" type="button" data-close-dialog>取消</button>
           <button class="primary-button" type="submit">保存节点</button>
@@ -738,6 +737,6 @@
     <script src="data-model.js?v=0821"></script>
     <script src="stickers.js?v=0821"></script>
     <script src="冷笑话.js?v=0821"></script>
-    <script src="app.js?v=0822a"></script>
+  <script src="app.js?v=0824"></script>
   </body>
 </html>

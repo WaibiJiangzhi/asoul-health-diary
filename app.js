@@ -49,7 +49,7 @@
       firstFieldPlaceholder: "今天最想推进的一件事",
       itemPlaceholder: "项目，例如：早餐、跑步或早睡",
       targetPlaceholder: "目标，例如：清淡饮食 / 5 km / 23:30 前睡",
-      showWeight: true,
+      showWeight: false,
       chartEyebrow: "一个魂的健康轨迹",
       chartHeading: "身体状态，有怎样的变化？",
       emptyChartExample: "例如：横轴写“日期”，指标写“体重 / 斤”，明天再来添加一个新节点。",
@@ -544,7 +544,7 @@
     const button = $("#weekSoundToggle");
     if (!button) return;
     button.setAttribute("aria-pressed", String(weekSoundEnabled));
-    $("#weekSoundLabel").textContent = weekSoundEnabled ? "已开启" : "已关闭";
+    $("#weekSoundLabel").textContent = weekSoundEnabled ? "开" : "关";
   }
 
   function playWeekFeedback(done) {
@@ -1619,18 +1619,18 @@
   }
 
   function syncSpaceCopy() {
-    const hasSpace = Boolean(getSpace());
-    const template = getSpaceTemplate();
+    const space = getSpace();
+    const hasSpace = Boolean(space);
     $("#weeklyEyebrow").textContent = "WEEKLY SOUL PLAN";
-    $("#weeklyTitle").textContent = hasSpace ? `一个魂的${getSpace().name}打卡` : "建立空间后，再开始安排日程";
-    $("#chartsEyebrow").textContent = hasSpace ? template.chartEyebrow : "一个魂的状态轨迹";
-    $("#chartsTitle").textContent = hasSpace ? template.chartHeading : "建立空间后，再记录一条轨迹";
+    $("#weeklyTitle").textContent = hasSpace ? `一个魂的${space.name}打卡` : "建立空间后，再开始安排日程";
+    $("#chartsEyebrow").textContent = "MY SOUL TRACK";
+    $("#chartsTitle").textContent = hasSpace ? `一个魂的${space.name}轨迹` : "建立空间后，再记录一条轨迹";
     $(".week-empty h3").textContent = hasSpace ? "先建立一个年月吧" : "先建立一个空间吧";
     $(".empty-state h3").textContent = hasSpace ? "从第一条轨迹开始吧" : "先建立一个空间吧";
-    $("#emptyChartExample").textContent = hasSpace ? template.emptyChartExample : "曲线图会跟随空间独立保存；建立空间后即可开始记录。";
+    $("#emptyChartExample").textContent = hasSpace ? "添加一条想长期观察的变化。" : "建立空间后即可开始记录。";
     $("#weekEmptyDescription").textContent = hasSpace
-      ? `新建年月后，会自动展开当月所有从周一开始的周条。`
-      : "日程和周报会跟随空间独立保存；建立空间后即可新建年月。";
+      ? "新建年月后，会自动生成当月周条。"
+      : "建立空间后即可新建年月。";
     const activeTemplateId = getSpace()?.templateId || "";
     $$('[data-preset-space]').forEach((button) => {
       button.hidden = button.dataset.presetSpace !== activeTemplateId;
@@ -2188,10 +2188,6 @@
           <button class="week-add-item" type="button" data-add-week-item>＋ 添加一项安排</button>
         </div>
 
-        ${template.showWeight ? `<div class="week-paired-text week-weight-text">
-          <label><span>今日体重</span><span class="week-weight-input"><input data-day-weight type="number" min="20" max="500" step="0.1" inputmode="decimal" aria-label="今日体重，单位斤" placeholder="例如：105" value="${day.weight === null ? "" : escapeAttr(day.weight)}" /><b>斤</b></span></label>
-        </div>` : ""}
-
         <label class="week-inline-note">
           <span>当天小记</span>
           <textarea data-day-text-field="note" maxlength="600" placeholder="写下一句想留给今天的话">${escapeHtml(day.note)}</textarea>
@@ -2232,17 +2228,6 @@
         scheduleSave();
       });
       input.addEventListener("change", () => window.setTimeout(() => renderWeekDetail(week), 0));
-    });
-
-    const weightInput = $("[data-day-weight]", weekDetail);
-    weightInput?.addEventListener("input", () => {
-      day.weight = safeWeight(weightInput.value);
-      scheduleSave();
-    });
-    weightInput?.addEventListener("change", () => {
-      if (weightInput.value.trim() && day.weight === null) showToast("体重请填写 20–500 斤内的有效数字");
-      saveState(false);
-      renderWeekDetail(week);
     });
 
     $$('[data-remove-week-item]', weekDetail).forEach((button) => {
@@ -2407,7 +2392,6 @@
         .map((item, itemIndex) => `${item.text || `任务 ${itemIndex + 1}`}：${weekItemStateLabel(item.state)}`);
       if (taskDetails.length) parts.push(`明细：${taskDetails.join("；")}`);
       if (day.focus) parts.push(`${getSpaceTemplate(previousWeek.spaceId).firstFieldLabel}：${day.focus}`);
-      if (Number.isFinite(day.weight)) parts.push(`体重：${day.weight} 斤`);
       return `${weekdays[index]}：${parts.join("；")}`;
     }).filter(Boolean);
     return [
@@ -2580,7 +2564,6 @@
       lines.push("", "", `## Day${day.dayNumber} · ${formatCompactDate(day.date)} · ${day.title}`);
       lines.push(`- 是否记录：${day.recorded ? "已记录" : "未记录"}`);
       lines.push(`- 完成状态：${day.status || "未选择"}`);
-      if (template.showWeight) lines.push(`- 体重：${formatWeight(day.weight)}`);
       lines.push(`- ${template.firstFieldLabel}：${day.focus || "未填写"}`);
       lines.push("");
       lines.push("- 计划安排：");
@@ -2687,7 +2670,6 @@
           }).join("") : "<li class=\"is-empty\">还没有安排</li>"}
         </ul>
         ${day.focus ? `<p class="weekly-report-diet"><b>${escapeHtml(template.firstFieldLabel)}</b>${escapeHtml(day.focus)}</p>` : ""}
-        ${template.showWeight && day.weight !== null ? `<p class="weekly-report-weight"><b>体重</b><strong>${escapeHtml(formatWeight(day.weight))}</strong></p>` : ""}
         ${day.note ? `<p class="weekly-report-note">${escapeHtml(day.note)}</p>` : ""}
       </article>`;
   }
@@ -2800,8 +2782,8 @@
     context.font = "650 17px system-ui, sans-serif";
     context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 104);
     drawCanvasPill(context, outer, outer + 124, 126, 38, `${itemCounts.done} 项完成`, "#eaf6f2", "#397f6d");
-    drawCanvasPill(context, outer + 136, outer + 124, 126, 38, `${itemCounts.changed} 项调整`, "#fff7df", "#9a6c25");
-    drawCanvasPill(context, outer + 272, outer + 124, 126, 38, `${itemCounts.missed} 项未完成`, "#fff0f2", "#a85f6b");
+    drawCanvasPill(context, outer + 136, outer + 124, 126, 38, `${itemCounts.changed} 项调整`, "#edf0f6", "#576690");
+    drawCanvasPill(context, outer + 272, outer + 124, 126, 38, `${itemCounts.missed} 项未完成`, "#f1ecee", "#6f5d64");
     drawCanvasPill(context, outer + 408, outer + 124, 126, 38, `${recordedCount} 天记录`, "#f1edff", "#6d59be");
 
     let y = outer + 176;
@@ -2827,10 +2809,10 @@
       return summary;
     }, {});
     const statuses = [
-      ["好好好", "#fff0ec", "#ad594b"],
-      ["还不错", "#fceef4", "#aa607c"],
-      ["这期拉了", "#eef1f8", "#596a8b"],
-      ["未设置", "#f5f0e7", "#7a6b53"],
+      ["好好好", "#fbeceb", "#b2574f"],
+      ["还不错", "#fdf0f4", "#a95b77"],
+      ["这期拉了", "#f1ecee", "#6f5d64"],
+      ["未设置", "#efedf0", "#6f6a72"],
     ];
     let statusX = outer;
     statuses.forEach(([label, fill, color]) => {
@@ -2889,13 +2871,13 @@
 
   function getCanvasDayHeight(day) {
     const entryCount = Math.min(7, getCanvasDayEntries(day).length);
-    const hasFooter = Boolean(day.focus || day.weight !== null || day.note);
+    const hasFooter = Boolean(day.focus || day.note);
     return 138 + Math.max(1, entryCount) * 31 + (hasFooter ? 54 : 20);
   }
 
   function drawCanvasDayVertical(context, day, template, x, y, width, height, stickerImages, index) {
     const tones = ["#8871ec", "#e88da9", "#4ea78e", "#dd756b"];
-    const statusColors = { "好好好": "#db7d74", "还不错": "#e799b0", "这期拉了": "#576690" };
+    const statusColors = { "好好好": "#db7d74", "还不错": "#e799b0", "这期拉了": "#88727c" };
     const tone = statusColors[day.status] || tones[index % tones.length];
     drawCanvasCard(context, x, y, width, height, "rgba(255,255,255,.95)", colorMixForCanvas(tone, .18));
     context.fillStyle = tone;
@@ -2939,7 +2921,6 @@
     }
     const footerParts = [];
     if (day.focus) footerParts.push(`${template.firstFieldLabel}：${day.focus}`);
-    if (template.showWeight && day.weight !== null) footerParts.push(`体重：${formatWeight(day.weight)}`);
     if (day.note) footerParts.push(`当天小记：${day.note}`);
     if (footerParts.length) {
       context.strokeStyle = "#ede9f0";
@@ -3029,7 +3010,7 @@
     const dayWidth = (width - outer * 2 - dayGap * 6) / 7;
     week.days.forEach((day, index) => {
       const x = outer + index * (dayWidth + dayGap);
-      const tone = { "好好好": "#db7d74", "还不错": "#e799b0", "这期拉了": "#576690" }[day.status] || "#b89558";
+      const tone = { "好好好": "#db7d74", "还不错": "#e799b0", "这期拉了": "#88727c" }[day.status] || "#8a838d";
       drawCanvasCard(context, x, daysY, dayWidth, 286, "rgba(255,255,255,.94)", colorMixForCanvas(tone, .18));
       context.fillStyle = tone;
       drawCanvasRoundedRectPath(context, x, daysY, dayWidth, 7, 4);
@@ -3129,7 +3110,7 @@
   }
 
   function drawCanvasAppIcon(context, x, y, size) {
-    const image = canvasImageCache.get("icons/icon-192.png") || $("#installAppButton img");
+    const image = canvasImageCache.get("icons/icon-yigehun-app.png");
     if (!image?.complete || !image.naturalWidth) {
       drawCanvasSoulMark(context, x, y, size);
       return;
@@ -3180,7 +3161,6 @@
     }
     const footerParts = [];
     if (day.focus) footerParts.push(`${template.firstFieldLabel}：${day.focus}`);
-    if (template.showWeight && day.weight !== null) footerParts.push(`体重：${formatWeight(day.weight)}`);
     if (day.note) footerParts.push(day.note);
     if (footerParts.length) {
       context.fillStyle = "#6f697b";
@@ -3484,6 +3464,18 @@
     $$("[data-edit-selected-node]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => openNodeDialog(button.dataset.chartId, button.dataset.editSelectedNode));
     });
+    $$(".chart-action-menu", chartsGrid).forEach((menu) => {
+      const summary = $("summary", menu);
+      const panel = $(":scope > div", menu);
+      summary?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const shouldOpen = !menu.hasAttribute("open");
+        $$(".chart-action-menu[open]", chartsGrid).forEach((other) => other.removeAttribute("open"));
+        if (shouldOpen) menu.setAttribute("open", "");
+      });
+      panel?.addEventListener("click", (event) => event.stopPropagation());
+    });
     $$("[data-node-id]", chartsGrid).forEach((point) => {
       const select = () => selectChartNode(point.dataset.chartId, point.dataset.nodeId);
       point.addEventListener("click", select);
@@ -3749,7 +3741,8 @@
     const zoomIndex = Math.max(0, CHART_ZOOM_LEVELS.indexOf(zoom));
     const canZoom = chart.nodes.length > 1;
     const compactChart = window.matchMedia("(max-width: 900px)").matches;
-    const visualScale = 1 + zoomIndex * (compactChart ? 0.18 : 0.1);
+    const mobileVisualScales = [1, 1.3, 1.65, 2];
+    const visualScale = compactChart ? mobileVisualScales[zoomIndex] : 1 + zoomIndex * 0.1;
     const baseWidth = compactChart ? 360 : 920;
     const width = Math.round(baseWidth * zoom);
     const height = Math.round((compactChart ? 360 : 370) * (1 + zoomIndex * 0.08));
@@ -3823,7 +3816,7 @@
         .join("");
       return `
         <line class="chart-grid-line" x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" />
-        <text class="chart-axis-text${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" style="font-size:${axisFontSize.toFixed(2)}px" x="${margin.left - 9 * visualScale}" y="${y + 4 * visualScale}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
+        <text class="chart-axis-text chart-axis-text--y${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" style="font-size:${axisFontSize.toFixed(2)}px" x="${margin.left - 9 * visualScale}" y="${y + 4 * visualScale}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
     }).join("");
 
     const nodeSpacing = plotWidth / Math.max(chart.nodes.length - 1, 1);
@@ -3885,6 +3878,15 @@
     const axisSeriesNames = seriesData.map((item, index) => `
       ${index ? '<tspan class="chart-axis-separator" dx="10">·</tspan>' : ""}<tspan class="chart-axis-series-name" style="fill:${item.color}"${index ? ' dx="10"' : ""}>● ${escapeXml(item.name)}</tspan>
     `).join("");
+    const fixedYAxis = compactChart ? Array.from({ length: tickCount }, (_, index) => {
+      const ratio = index / (tickCount - 1);
+      const top = ((margin.top + ratio * plotHeight) / height) * 100;
+      const labels = seriesData
+        .filter((item) => item.hasData)
+        .map((item) => `<b style="color:${item.color}">${escapeHtml(formatSeriesValue(item, item.max - ratio * (item.max - item.min)))}</b>`)
+        .join("<i>/</i>");
+      return `<span style="top:${top.toFixed(3)}%">${labels}</span>`;
+    }).join("") : "";
 
     return `
       <div class="chart-range-summary">
@@ -3896,6 +3898,8 @@
         <strong>${zoom}×</strong>
         <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
       </div>
+      <div class="chart-plot-shell">
+      ${compactChart ? `<div class="chart-y-axis-fixed" aria-hidden="true">${fixedYAxis}</div>` : ""}
       <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
       <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height};--chart-visual-scale:${visualScale}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
         <defs>
@@ -3912,6 +3916,7 @@
         ${xLabels}
         ${pointMarkup}
       </svg>
+      </div>
       </div>`;
   }
 
@@ -3969,6 +3974,12 @@
       nodeForm.elements.x.value = todayIso();
     }
 
+    const existingSticker = Object.values(selectedNodeStickers).find(Boolean) || "";
+    activeStickerPack = Object.entries(STICKER_PACKS)
+      .find(([, stickers]) => stickers.includes(existingSticker))?.[0]
+      || Object.keys(STICKER_PACKS)[0]
+      || "";
+    renderStickerTabs();
     renderNodeStickerSeriesTabs(chart);
     renderStickerGrid();
     nodeDialog.showModal();
@@ -4122,7 +4133,7 @@
     const stickers = STICKER_PACKS[activeStickerPack] || [];
     const activeSticker = safeSticker(selectedNodeStickers[activeNodeStickerSeriesId]);
     stickerGrid.innerHTML = `
-      <button class="sticker-item${activeSticker ? "" : " is-selected"}" type="button" data-sticker="" aria-label="不使用表情"><span class="sticker-none">不选</span></button>
+      <button class="sticker-item${activeSticker ? "" : " is-selected"}" type="button" data-sticker="" aria-label="表情留空"><span class="sticker-none">留空</span></button>
       ${stickers.map((path, index) => `
         <button class="sticker-item${activeSticker === path ? " is-selected" : ""}" type="button" data-sticker="${escapeAttr(path)}" aria-label="${activeStickerPack}表情 ${index + 1}">
           <img src="${escapeAttr(path)}" alt="" loading="lazy" />
@@ -4680,6 +4691,7 @@
       views.forEach((view) => { view.hidden = view.dataset.appView !== nextId; });
       document.body.classList.add("is-mobile-app");
       document.body.dataset.activeView = nextId;
+      document.body.classList.add("mobile-app-ready");
       setActive(nextId);
       if (nextId === "spaceSectionStart") renderWeeks();
       if (nextId === "chartsSection") renderCharts();
@@ -4692,6 +4704,7 @@
         return;
       }
       document.body.classList.remove("is-mobile-app");
+      document.body.classList.add("mobile-app-ready");
       document.body.removeAttribute("data-active-view");
       views.forEach((view) => { view.hidden = false; });
       setActive(sections[0].id);
@@ -4747,7 +4760,6 @@
 
   function initPwa() {
     const action = $("#installAppButton");
-    const installRow = $("#installPreferenceRow");
     const updateAction = $("#updateAppButton");
     if (!action) return;
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -4756,12 +4768,12 @@
       action.title = title;
       action.classList.add("is-ready");
     };
-    installRow.hidden = true;
+    action.hidden = isStandalone;
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
-      if (!isStandalone) installRow.hidden = false;
-      setInstallAction("安装应用", "安装到桌面或手机主屏幕");
+      if (!isStandalone) action.hidden = false;
+      setInstallAction("安装", "安装到桌面或手机主屏幕");
     });
     action.addEventListener("click", async () => {
       if (deferredInstallPrompt) {
@@ -4780,7 +4792,7 @@
     });
     window.addEventListener("appinstalled", () => {
       deferredInstallPrompt = null;
-      installRow.hidden = true;
+      action.hidden = true;
       showToast("一个魂生活日记已经安装到桌面");
     });
     updateAction?.addEventListener("click", () => {
@@ -4812,7 +4824,7 @@
   }
 
   function preloadCanvasAssets() {
-    preloadCanvasAsset("icons/icon-192.png", true);
+    preloadCanvasAsset("icons/icon-yigehun-app.png", true);
     preloadCanvasAsset(state.profile.avatar);
     state.goals.forEach((goal) => preloadCanvasAsset(goal.sticker));
     state.progressGoals.forEach((goal) => preloadCanvasAsset(goal.sticker));
