@@ -65,7 +65,7 @@
     min-height:0 !important;
     padding:20px 16px 15px !important;
     grid-template-columns:minmax(0,1fr) !important;
-    grid-template-rows:auto 270px auto !important;
+    grid-template-rows:auto 300px auto !important;
     grid-template-areas:"copy" "cast" "joke" !important;
     gap:13px !important;
     align-content:stretch !important;
@@ -79,35 +79,10 @@
     box-shadow:0 14px 38px rgba(71,56,75,.075) !important;
   }
   body.is-mobile-app .hero-paper::before {
-    position:absolute !important;
-    z-index:0 !important;
-    top:-57px !important;
-    right:-50px !important;
-    display:block !important;
-    width:148px !important;
-    height:148px !important;
-    border:1px solid rgba(231,153,176,.2) !important;
-    border-radius:50% !important;
-    background:transparent !important;
-    box-shadow:0 0 0 24px rgba(87,102,144,.018) !important;
-    content:"" !important;
-    pointer-events:none !important;
+    display:none !important;
   }
   body.is-mobile-app .hero-paper::after {
-    position:absolute !important;
-    z-index:0 !important;
-    top:255px !important;
-    left:-41px !important;
-    display:block !important;
-    width:88px !important;
-    height:56px !important;
-    border:1px solid rgba(87,102,144,.13) !important;
-    border-radius:50% !important;
-    background:transparent !important;
-    content:"" !important;
-    opacity:.72 !important;
-    transform:rotate(-15deg) !important;
-    pointer-events:none !important;
+    display:none !important;
   }
   body.is-mobile-app .hero-copy { align-self:start !important; }
   body.is-mobile-app .hero-kicker {
@@ -155,31 +130,34 @@
   body.is-mobile-app .hero-cast::before {
     position:absolute !important;
     z-index:0 !important;
-    top:47px !important;
+    top:34px !important;
     left:50% !important;
     display:block !important;
-    width:178px !important;
-    height:178px !important;
+    width:232px !important;
+    height:232px !important;
     border:0 !important;
     border-radius:50% !important;
-    background:radial-gradient(circle at 42% 42%,rgba(231,153,176,.15),rgba(87,102,144,.065) 62%,transparent 63%) !important;
+    background:radial-gradient(circle at 44% 43%,rgba(255,255,255,.76) 0 10%,rgba(231,153,176,.31) 30%,rgba(219,125,116,.16) 47%,rgba(87,102,144,.13) 63%,transparent 79%) !important;
     content:"" !important;
+    filter:blur(8px) !important;
+    opacity:1 !important;
     transform:translateX(-50%) !important;
   }
   body.is-mobile-app .hero-cast::after {
     position:absolute !important;
     z-index:0 !important;
-    top:22px !important;
-    right:-25px !important;
-    display:none !important;
-    width:116px !important;
-    height:70px !important;
-    border:1px solid rgba(87,102,144,.16) !important;
+    top:69px !important;
+    right:auto !important;
+    left:50% !important;
+    display:block !important;
+    width:246px !important;
+    height:154px !important;
+    border:1px dashed rgba(87,102,144,.13) !important;
     border-radius:50% !important;
     background:transparent !important;
-    box-shadow:-266px 128px 0 -13px transparent,-266px 128px 0 -12px rgba(231,153,176,.14) !important;
+    box-shadow:none !important;
     content:"" !important;
-    transform:rotate(-18deg) !important;
+    transform:translateX(-50%) rotate(-12deg) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker {
     position:absolute !important;
@@ -204,21 +182,21 @@
     min-height:25px !important;
     padding:0 8px !important;
     align-items:center !important;
-    border:2px solid #fff !important;
-    border-radius:9px !important;
-    box-shadow:0 6px 14px rgba(67,45,66,.11) !important;
+    border:1.5px solid rgba(255,255,255,.96) !important;
+    border-radius:10px !important;
+    box-shadow:0 5px 13px rgba(67,45,66,.09) !important;
     font-size:8.5px !important;
     font-weight:900 !important;
     line-height:1 !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker--bella {
     z-index:2 !important;
-    top:8px !important;
-    right:12px !important;
+    top:10px !important;
+    right:22px !important;
     bottom:auto !important;
     left:auto !important;
-    width:132px !important;
-    height:132px !important;
+    width:124px !important;
+    height:124px !important;
     background:transparent !important;
     transform:rotate(4deg) !important;
   }
@@ -233,12 +211,12 @@
   }
   body.is-mobile-app .hero-cast .hero-sticker--diana {
     z-index:3 !important;
-    top:93px !important;
+    top:105px !important;
     right:auto !important;
     bottom:auto !important;
-    left:11px !important;
-    width:126px !important;
-    height:126px !important;
+    left:14px !important;
+    width:120px !important;
+    height:120px !important;
     background:transparent !important;
     transform:rotate(-5deg) !important;
   }
@@ -254,11 +232,11 @@
   body.is-mobile-app .hero-cast .hero-sticker--eileen {
     z-index:4 !important;
     top:auto !important;
-    right:25px !important;
-    bottom:2px !important;
+    right:28px !important;
+    bottom:0 !important;
     left:auto !important;
-    width:137px !important;
-    height:137px !important;
+    width:132px !important;
+    height:132px !important;
     background:transparent !important;
     transform:rotate(3deg) !important;
   }
@@ -271,17 +249,60 @@
     background:#eef1f8 !important;
     transform:rotate(3deg) !important;
   }
+  body.is-mobile-app .hero-fan-symbol {
+    position:absolute !important;
+    z-index:5 !important;
+    display:grid !important;
+    width:36px !important;
+    height:36px !important;
+    place-items:center !important;
+    border:2px solid rgba(255,255,255,.97) !important;
+    border-radius:13px !important;
+    background:#fff !important;
+    box-shadow:0 7px 16px rgba(67,45,66,.11) !important;
+  }
+  body.is-mobile-app .hero-fan-symbol svg {
+    width:24px !important;
+    height:24px !important;
+    overflow:visible !important;
+    fill:none !important;
+    stroke:currentColor !important;
+    stroke-width:2.5 !important;
+    stroke-linecap:round !important;
+    stroke-linejoin:round !important;
+  }
+  body.is-mobile-app .hero-fan-symbol--star {
+    top:60px !important;
+    left:-12px !important;
+    color:#db7d74 !important;
+    background:#fff2ef !important;
+    transform:rotate(-11deg) !important;
+  }
+  body.is-mobile-app .hero-fan-symbol--candy {
+    top:12px !important;
+    right:-10px !important;
+    color:#d66f8e !important;
+    background:#fff0f4 !important;
+    transform:rotate(8deg) !important;
+  }
+  body.is-mobile-app .hero-fan-symbol--icecream {
+    top:10px !important;
+    left:-13px !important;
+    color:#576690 !important;
+    background:#f0f2f8 !important;
+    transform:rotate(-8deg) !important;
+  }
   body.is-mobile-app .hero-line {
     position:absolute !important;
     z-index:1 !important;
     right:auto !important;
-    bottom:8px !important;
-    left:-7px !important;
+    bottom:9px !important;
+    left:22px !important;
     display:block !important;
-    width:124px !important;
+    width:130px !important;
     height:60px !important;
     border:0 !important;
-    opacity:.58 !important;
+    opacity:.62 !important;
   }
   body.is-mobile-app .hero-line::before {
     position:absolute !important;
@@ -307,15 +328,15 @@
   body.is-mobile-app .hero-line i:nth-child(4) { left:67% !important; top:8px !important; background:#f2bf55 !important; }
   body.is-mobile-app .hero-line i:nth-child(5) { right:-3px !important; top:16px !important; background:#576690 !important; }
   body.is-mobile-app .hero-spark--one {
-    top:287px !important;
-    left:27px !important;
+    top:302px !important;
+    left:32px !important;
     color:#f1bb3d !important;
     font-size:23px !important;
     transform:rotate(-12deg) !important;
   }
   body.is-mobile-app .hero-spark--two {
-    top:103px !important;
-    right:35px !important;
+    top:108px !important;
+    right:31px !important;
     color:#e799b0 !important;
     font-size:38px !important;
     transform:rotate(-12deg) !important;
@@ -382,11 +403,13 @@
   body.is-mobile-app .header-tools>#updateAppButton { min-width:30px !important; padding-inline:4px !important; font-size:9px !important; }
   body.is-mobile-app .hero-paper { padding-inline:13px !important; }
   body.is-mobile-app .hero-copy h1 { font-size:35px !important; }
-  body.is-mobile-app .hero-paper { grid-template-rows:auto 258px auto !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--bella { top:8px !important; right:3px !important; width:124px !important; height:124px !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--diana { top:88px !important; left:2px !important; width:118px !important; height:118px !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--eileen { right:12px !important; width:128px !important; height:128px !important; }
-  body.is-mobile-app .hero-line { width:112px !important; }
+  body.is-mobile-app .hero-paper { grid-template-rows:auto 284px auto !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--bella { top:8px !important; right:8px !important; width:116px !important; height:116px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--diana { top:101px !important; left:3px !important; width:114px !important; height:114px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--eileen { right:14px !important; width:124px !important; height:124px !important; }
+  body.is-mobile-app .hero-fan-symbol { width:33px !important; height:33px !important; border-radius:12px !important; }
+  body.is-mobile-app .hero-fan-symbol svg { width:22px !important; height:22px !important; }
+  body.is-mobile-app .hero-line { left:15px !important; width:118px !important; }
 }
 [data-app-view][hidden], .space-switcher-mobile { display:none !important; }
 .week-item-state { position:relative; }
