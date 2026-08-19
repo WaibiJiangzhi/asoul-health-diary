@@ -1,4 +1,4 @@
-const VERSION = "asoul-life-v27-0826c";
+const VERSION = "asoul-life-v28-0827";
 const SHELL_CACHE = `${VERSION}-shell`;
 const IMAGE_CACHE = `${VERSION}-images`;
 const SHELL = [
@@ -8,7 +8,7 @@ const SHELL = [
   "./weekly-planner.css?v=0821",
   "./weekly-polish.css?v=0821",
   "./complete-polish.css?v=0821",
-  "./mobile-app.css?v=0826c",
+  "./mobile-app.css?v=0827",
   "./data-model.js?v=0821",
   "./stickers.js?v=0821",
   "./冷笑话.js?v=0821",

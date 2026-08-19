@@ -13,12 +13,49 @@
 /* 0826 mobile home refresh: compact hierarchy and an intentional character stage. */
 @media (max-width:900px) {
   body.is-mobile-app .site-header {
-    min-height:60px !important;
-    padding:8px 16px !important;
+    min-height:62px !important;
+    padding:8px 13px !important;
   }
-  body.is-mobile-app .header-tools { display:none !important; }
-  body.is-mobile-app .brand>.brand-asoul-logo { width:88px !important; }
-  body.is-mobile-app .brand>.brand-app-mark { width:34px !important; height:34px !important; }
+  body.is-mobile-app .header-tools {
+    display:flex !important;
+    width:auto !important;
+    margin-left:auto !important;
+    padding:3px !important;
+    align-items:center !important;
+    gap:1px !important;
+    border:1px solid rgba(87,102,144,.09) !important;
+    border-radius:13px !important;
+    background:rgba(255,255,255,.72) !important;
+    box-shadow:0 5px 16px rgba(62,52,70,.045) !important;
+  }
+  body.is-mobile-app .header-tools .local-badge,
+  body.is-mobile-app .header-tools>.reset-data-button { display:none !important; }
+  body.is-mobile-app .header-tools>#exportButton,
+  body.is-mobile-app .header-tools>#importButton,
+  body.is-mobile-app .header-tools>#installAppButton,
+  body.is-mobile-app .header-tools>#updateAppButton {
+    width:auto !important;
+    min-width:34px !important;
+    min-height:31px !important;
+    height:31px !important;
+    margin:0 !important;
+    padding:0 6px !important;
+    border:0 !important;
+    border-radius:10px !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+  }
+  body.is-mobile-app .header-tools>#exportButton { color:#576690 !important; }
+  body.is-mobile-app .header-tools>#importButton { color:#c5657e !important; }
+  body.is-mobile-app .header-tools>#installAppButton { color:#39836f !important; }
+  body.is-mobile-app .header-tools>#updateAppButton { color:#b86258 !important; background:#fff2ef !important; }
+  body.is-mobile-app .header-tools>button[hidden] { display:none !important; }
+  body.is-mobile-app .brand { gap:8px !important; }
+  body.is-mobile-app .brand>.brand-asoul-logo { width:82px !important; }
+  body.is-mobile-app .brand>.brand-app-mark { width:31px !important; height:31px !important; }
 
   body.is-mobile-app .welcome-section {
     min-height:0 !important;
@@ -26,19 +63,50 @@
   }
   body.is-mobile-app .hero-paper {
     min-height:0 !important;
-    padding:18px 15px 14px !important;
+    padding:20px 16px 15px !important;
     grid-template-columns:minmax(0,1fr) !important;
-    grid-template-rows:auto 280px auto !important;
+    grid-template-rows:auto 232px auto !important;
     grid-template-areas:"copy" "cast" "joke" !important;
-    gap:12px !important;
+    gap:13px !important;
     align-content:stretch !important;
-    border-color:rgba(87,102,144,.1) !important;
+    overflow:hidden !important;
+    border-color:rgba(87,102,144,.12) !important;
     border-radius:28px !important;
     background:
-      radial-gradient(circle at 92% 7%,rgba(231,153,176,.16),transparent 28%),
-      radial-gradient(circle at 8% 38%,rgba(87,102,144,.1),transparent 30%),
+      repeating-linear-gradient(0deg,transparent 0 31px,rgba(87,102,144,.026) 31px 32px),
+      radial-gradient(circle at 92% 7%,rgba(231,153,176,.13),transparent 25%),
       #fffefa !important;
-    box-shadow:0 16px 42px rgba(71,56,75,.08) !important;
+    box-shadow:0 14px 38px rgba(71,56,75,.075) !important;
+  }
+  body.is-mobile-app .hero-paper::before {
+    position:absolute !important;
+    z-index:0 !important;
+    top:-78px !important;
+    right:-72px !important;
+    display:block !important;
+    width:184px !important;
+    height:184px !important;
+    border:1px solid rgba(231,153,176,.28) !important;
+    border-radius:50% !important;
+    background:transparent !important;
+    box-shadow:0 0 0 22px rgba(231,153,176,.035),0 0 0 44px rgba(87,102,144,.025) !important;
+    content:"" !important;
+    pointer-events:none !important;
+  }
+  body.is-mobile-app .hero-paper::after {
+    position:absolute !important;
+    z-index:0 !important;
+    top:245px !important;
+    left:-58px !important;
+    display:block !important;
+    width:128px !important;
+    height:82px !important;
+    border:1px solid rgba(87,102,144,.18) !important;
+    border-radius:50% !important;
+    background:transparent !important;
+    content:"" !important;
+    transform:rotate(-18deg) !important;
+    pointer-events:none !important;
   }
   body.is-mobile-app .hero-copy { align-self:start !important; }
   body.is-mobile-app .hero-kicker {
@@ -47,11 +115,18 @@
     background:#f1f3f8 !important;
   }
   body.is-mobile-app .hero-copy h1 {
-    margin:11px 0 10px !important;
-    font-size:clamp(36px,10.5vw,44px) !important;
-    line-height:.94 !important;
+    margin:12px 0 11px !important;
+    font-size:clamp(37px,10.8vw,45px) !important;
+    line-height:.92 !important;
   }
-  body.is-mobile-app .hero-copy h1 em { color:#d86f8f !important; }
+  body.is-mobile-app .hero-copy h1 em {
+    color:#d86f8f !important;
+    text-decoration:underline !important;
+    text-decoration-thickness:8px !important;
+    text-decoration-color:rgba(245,205,83,.68) !important;
+    text-underline-offset:-4px !important;
+    text-decoration-skip-ink:none !important;
+  }
   body.is-mobile-app .hero-copy p { display:none !important; }
   body.is-mobile-app .hero-jump {
     min-height:42px !important;
@@ -66,72 +141,102 @@
   body.is-mobile-app .hero-cast {
     position:relative !important;
     display:grid !important;
-    min-height:190px !important;
+    min-height:0 !important;
     height:auto !important;
-    padding:16px 10px 12px !important;
+    padding:7px 7px 18px !important;
     grid-area:cast !important;
     grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-    gap:6px !important;
-    align-items:center !important;
+    gap:0 !important;
+    align-items:end !important;
     align-self:stretch !important;
-    overflow:hidden !important;
-    border:1px solid rgba(87,102,144,.08) !important;
-    border-radius:23px !important;
-    background:linear-gradient(145deg,rgba(255,244,247,.9),rgba(244,247,252,.92)) !important;
+    overflow:visible !important;
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
   }
   body.is-mobile-app .hero-cast::before {
     position:absolute !important;
-    inset:auto 7% -42% !important;
+    z-index:0 !important;
+    right:4% !important;
+    bottom:22px !important;
+    left:4% !important;
     display:block !important;
-    height:74% !important;
-    border-radius:50% 50% 0 0 !important;
-    background:rgba(255,255,255,.72) !important;
+    height:3px !important;
+    border:0 !important;
+    border-radius:999px !important;
+    background:linear-gradient(90deg,#e799b0 0 29%,transparent 29% 35%,#db7d74 35% 64%,transparent 64% 70%,#576690 70% 100%) !important;
     content:"" !important;
+    transform:rotate(-1.5deg) !important;
+  }
+  body.is-mobile-app .hero-cast::after {
+    position:absolute !important;
+    z-index:0 !important;
+    right:10% !important;
+    bottom:8px !important;
+    left:10% !important;
+    display:block !important;
+    height:34px !important;
+    border-top:1px solid rgba(87,102,144,.22) !important;
+    border-radius:50% !important;
+    background:transparent !important;
+    content:"" !important;
+    transform:rotate(1.5deg) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker {
     position:relative !important;
     z-index:1 !important;
     inset:auto !important;
-    display:grid !important;
+    display:flex !important;
     width:100% !important;
     min-height:0 !important;
-    height:auto !important;
-    grid-template-rows:auto auto !important;
-    justify-items:center !important;
-    align-self:center !important;
-    gap:5px !important;
+    height:100% !important;
+    align-items:end !important;
+    justify-content:center !important;
+    align-self:stretch !important;
+    gap:0 !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker img {
-    width:100% !important;
-    max-width:138px !important;
+    width:118% !important;
+    max-width:150px !important;
     height:auto !important;
     aspect-ratio:1 !important;
     object-fit:contain !important;
+    filter:drop-shadow(0 10px 14px rgba(69,53,72,.1)) saturate(.97) !important;
   }
   body.is-mobile-app .hero-cast .hero-sticker span {
-    position:static !important;
-    display:inline-flex !important;
-    min-height:24px !important;
-    padding:0 8px !important;
-    align-items:center !important;
-    border-radius:999px !important;
-    color:#576690 !important;
-    background:rgba(255,255,255,.82) !important;
-    font-size:9px !important;
-    font-weight:850 !important;
-    transform:none !important;
+    display:none !important;
   }
-  body.is-mobile-app .hero-cast .hero-sticker--bella { transform:rotate(-3deg) !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--diana { transform:translateY(-5px) !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--eileen { transform:rotate(3deg) !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--bella {
+    background:radial-gradient(circle at 52% 68%,rgba(219,125,116,.14) 0 34%,transparent 35%) !important;
+    transform:rotate(-3deg) translateY(3px) !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker--diana {
+    background:radial-gradient(circle at 50% 66%,rgba(231,153,176,.17) 0 35%,transparent 36%) !important;
+    transform:translateY(-8px) !important;
+  }
+  body.is-mobile-app .hero-cast .hero-sticker--eileen {
+    background:radial-gradient(circle at 48% 68%,rgba(87,102,144,.14) 0 34%,transparent 35%) !important;
+    transform:rotate(3deg) translateY(3px) !important;
+  }
 
   body.is-mobile-app .home-joke-card {
     margin:0 !important;
     padding:14px !important;
-    border-color:rgba(219,125,116,.13) !important;
-    border-radius:19px !important;
-    background:linear-gradient(135deg,#fff8f8,#faf9ff) !important;
-    box-shadow:0 8px 22px rgba(87,102,144,.055) !important;
+    overflow:hidden !important;
+    border-color:rgba(87,102,144,.11) !important;
+    border-radius:18px !important;
+    background:rgba(255,255,255,.78) !important;
+    box-shadow:0 8px 22px rgba(87,102,144,.045) !important;
+  }
+  body.is-mobile-app .home-joke-card::before {
+    position:absolute !important;
+    top:0 !important;
+    right:0 !important;
+    left:0 !important;
+    display:block !important;
+    height:3px !important;
+    background:linear-gradient(90deg,#e799b0 0 34%,#db7d74 34% 66%,#576690 66%) !important;
+    content:"" !important;
   }
   body.is-mobile-app .joke-card-head { align-items:center !important; }
   body.is-mobile-app .joke-card-head strong { font-size:11px !important; }
@@ -159,17 +264,24 @@
     min-height:36px !important;
     padding:0 13px !important;
     border-radius:11px !important;
+    background:#576690 !important;
+    box-shadow:0 7px 16px rgba(87,102,144,.17) !important;
   }
 }
 
 @media (max-width:390px) {
-  body.is-mobile-app .site-header { padding-inline:13px !important; }
-  body.is-mobile-app .brand>.brand-asoul-logo { width:82px !important; }
+  body.is-mobile-app .site-header { padding-inline:10px !important; }
+  body.is-mobile-app .brand { gap:6px !important; }
+  body.is-mobile-app .brand>.brand-asoul-logo { width:76px !important; }
+  body.is-mobile-app .brand>.brand-app-mark { width:29px !important; height:29px !important; }
+  body.is-mobile-app .header-tools>#exportButton,
+  body.is-mobile-app .header-tools>#importButton,
+  body.is-mobile-app .header-tools>#installAppButton,
+  body.is-mobile-app .header-tools>#updateAppButton { min-width:30px !important; padding-inline:4px !important; font-size:9px !important; }
   body.is-mobile-app .hero-paper { padding-inline:13px !important; }
   body.is-mobile-app .hero-copy h1 { font-size:35px !important; }
-  body.is-mobile-app .hero-paper { grid-template-rows:auto 250px auto !important; }
+  body.is-mobile-app .hero-paper { grid-template-rows:auto 218px auto !important; }
   body.is-mobile-app .hero-cast { padding-inline:7px !important; gap:2px !important; }
-  body.is-mobile-app .hero-cast .hero-sticker span { padding-inline:6px !important; font-size:8px !important; }
 }
 [data-app-view][hidden], .space-switcher-mobile { display:none !important; }
 .week-item-state { position:relative; }
