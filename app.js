@@ -1080,6 +1080,7 @@
     $$('[data-select-goal]', goalList).forEach((button) => {
       button.addEventListener("click", () => {
         selectGoalWithoutRerender(button.dataset.selectGoal);
+        button.blur();
       });
     });
     bindSnapSelection(goalList, "[data-select-goal]", () => selectedGoalId, (id) => {
@@ -1163,6 +1164,7 @@
     $$('[data-select-progress-goal]', progressGoalList).forEach((button) => {
       button.addEventListener("click", () => {
         selectProgressGoalWithoutRerender(button.dataset.selectProgressGoal);
+        button.blur();
       });
     });
     $$('[data-add-progress]', progressGoalList).forEach((form) => {
@@ -1536,7 +1538,7 @@
         </div>`;
     };
     spaceSwitcher.innerHTML = state.spaces.length ? `
-      <div class="space-switcher-mobile" data-space-rail aria-label="左右滑动切换日程空间">
+      <div class="space-switcher-mobile" data-count="${state.spaces.length}" data-space-rail aria-label="左右滑动切换日程空间">
         ${state.spaces.map((space) => renderSpaceButton(space, space.id === activeSpaceId ? " is-mobile-current" : "")).join("")}
       </div>
       <div class="space-switcher-desktop">${state.spaces.map((space) => renderSpaceButton(space)).join("")}</div>
@@ -1551,7 +1553,7 @@
     window.requestAnimationFrame(() => {
       const rail = $(".space-switcher-mobile", spaceSwitcher);
       const current = $(".is-mobile-current", rail);
-      if (rail && current) rail.scrollTo({ left: Math.max(0, current.offsetLeft - (rail.clientWidth - current.clientWidth) / 2), behavior: "smooth" });
+      if (rail && current) rail.scrollTo({ left: Math.max(0, current.offsetLeft - (rail.clientWidth - current.clientWidth) / 2), behavior: "auto" });
     });
     const chartSpaceSwitcher = $("#chartSpaceSwitcher");
     if (chartSpaceSwitcher) {
@@ -3110,7 +3112,7 @@
   }
 
   function drawCanvasAppIcon(context, x, y, size) {
-    const image = canvasImageCache.get("icons/icon-yigehun-app.png");
+    const image = canvasImageCache.get("icons/1.png");
     if (!image?.complete || !image.naturalWidth) {
       drawCanvasSoulMark(context, x, y, size);
       return;
@@ -3465,15 +3467,7 @@
       button.addEventListener("click", () => openNodeDialog(button.dataset.chartId, button.dataset.editSelectedNode));
     });
     $$(".chart-action-menu", chartsGrid).forEach((menu) => {
-      const summary = $("summary", menu);
       const panel = $(":scope > div", menu);
-      summary?.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const shouldOpen = !menu.hasAttribute("open");
-        $$(".chart-action-menu[open]", chartsGrid).forEach((other) => other.removeAttribute("open"));
-        if (shouldOpen) menu.setAttribute("open", "");
-      });
       panel?.addEventListener("click", (event) => event.stopPropagation());
     });
     $$("[data-node-id]", chartsGrid).forEach((point) => {
@@ -3872,9 +3866,6 @@
         </g>`;
     }).join("");
 
-    const rangeSummary = seriesData.map((item) => `
-      <span><i style="--series-color:${item.color}"></i>${escapeHtml(item.name)}：${item.hasData ? `${formatSeriesValue(item, item.min)}—${formatSeriesValue(item, item.max)}` : "暂无数据"}${(item.axisMin !== null && item.axisMin !== undefined) || (item.axisMax !== null && item.axisMax !== undefined) ? " · 自定纵轴" : ""}</span>
-    `).join("");
     const axisSeriesNames = seriesData.map((item, index) => `
       ${index ? '<tspan class="chart-axis-separator" dx="10">·</tspan>' : ""}<tspan class="chart-axis-series-name" style="fill:${item.color}"${index ? ' dx="10"' : ""}>● ${escapeXml(item.name)}</tspan>
     `).join("");
@@ -3887,19 +3878,23 @@
         .join("<i>/</i>");
       return `<span style="top:${top.toFixed(3)}%">${labels}</span>`;
     }).join("") : "";
+    const fixedYAxisUnits = compactChart ? seriesData
+      .filter((item) => item.hasData)
+      .map((item) => {
+        const parts = String(item.name || "").split("/");
+        const unit = parts.length > 1 ? parts.at(-1).trim() : item.name;
+        return `<b style="color:${item.color}">${escapeHtml(unit)}</b>`;
+      })
+      .join("<i>·</i>") : "";
 
     return `
-      <div class="chart-range-summary">
-        ${rangeSummary}
-        ${chart.series.length > 1 ? `<small>纵轴数值按曲线颜色对应，各项指标使用独立刻度</small>` : ""}
-      </div>
       <div class="chart-zoom-bar" aria-label="曲线图缩放">
         <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
         <strong>${zoom}×</strong>
         <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
       </div>
       <div class="chart-plot-shell">
-      ${compactChart ? `<div class="chart-y-axis-fixed" aria-hidden="true">${fixedYAxis}</div>` : ""}
+      ${compactChart ? `<div class="chart-y-axis-fixed" aria-hidden="true"><em class="chart-y-axis-unit">${fixedYAxisUnits}</em>${fixedYAxis}</div>` : ""}
       <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
       <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height};--chart-visual-scale:${visualScale}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
         <defs>
@@ -4824,7 +4819,7 @@
   }
 
   function preloadCanvasAssets() {
-    preloadCanvasAsset("icons/icon-yigehun-app.png", true);
+    preloadCanvasAsset("icons/1.png", true);
     preloadCanvasAsset(state.profile.avatar);
     state.goals.forEach((goal) => preloadCanvasAsset(goal.sticker));
     state.progressGoals.forEach((goal) => preloadCanvasAsset(goal.sticker));

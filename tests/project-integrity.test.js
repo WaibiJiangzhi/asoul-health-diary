@@ -91,8 +91,8 @@ assert.doesNotMatch(html, /本周便签/, "the PWA should replace the old mobile
 assert.match(app, /data-shift-current-day/);
 assert.match(html, /class="hero-jump" href="#goalSectionStart"[^>]*>点击开始/, "hero action must open countdowns");
 assert.doesNotMatch(html, /AI 规划本月/);
-assert.match(html, /href="icons\/icon-192\.png\?v=0821"/);
-assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-yigehun-app.png")), "missing polished yigehun icon master");
+assert.match(html, /href="icons\/1\.png\?v=0825"/);
+assert.ok(fs.existsSync(path.join(projectRoot, "icons", "1.png")), "missing current yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
 assert.match(html, /class="header-tools"[\s\S]*id="installAppButton"/, "PWA installation must be discoverable in the mobile header");
 assert.match(html, /href="https:\/\/www\.doubao\.com\/chat\/"/, "AI planning should offer an optional Doubao jump link");

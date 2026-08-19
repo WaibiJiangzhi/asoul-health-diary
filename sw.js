@@ -1,4 +1,4 @@
-const VERSION = "asoul-life-v23-0824c";
+const VERSION = "asoul-life-v24-0825";
 const SHELL_CACHE = `${VERSION}-shell`;
 const IMAGE_CACHE = `${VERSION}-images`;
 const SHELL = [
@@ -8,16 +8,15 @@ const SHELL = [
   "./weekly-planner.css?v=0821",
   "./weekly-polish.css?v=0821",
   "./complete-polish.css?v=0821",
-  "./mobile-app.css?v=0824c",
+  "./mobile-app.css?v=0825",
   "./data-model.js?v=0821",
   "./stickers.js?v=0821",
   "./冷笑话.js?v=0821",
-  "./app.js?v=0824",
+  "./app.js?v=0825",
   "./favicon.svg",
-  "./manifest.webmanifest?v=0821",
-  "./icons/icon-192.png?v=0821",
+  "./manifest.webmanifest?v=0825",
+  "./icons/1.png?v=0825",
   "./icons/icon-yigehun.png?v=0821",
-  "./icons/icon-yigehun-app.png?v=0824",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./图片/其他图片/Asoul-高清.png",
