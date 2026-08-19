@@ -508,7 +508,8 @@
   .goal-list::-webkit-scrollbar,.progress-goal-list::-webkit-scrollbar { display:none; }
   .goal-card,.progress-goal-card { width:min(88vw,380px) !important; min-width:min(88vw,380px) !important; flex:0 0 min(88vw,380px) !important; scroll-snap-align:center; border-radius:22px !important; box-shadow:0 12px 30px rgba(76,61,83,.08) !important; }
   .goal-card { display:grid; min-height:188px; padding:18px !important; grid-template-columns:70px minmax(0,1fr) 64px; grid-template-areas:"date date count" "sticker copy count"; align-items:center; gap:8px 12px; text-align:left; }
-  .goal-card.is-selected,.progress-goal-card.is-selected { outline:2px solid color-mix(in srgb,var(--card-color,var(--soul-violet)) 55%,transparent); outline-offset:-1px; }
+  .goal-card.is-selected { outline:2px solid color-mix(in srgb,var(--goal-color) 55%,transparent); outline-offset:-1px; }
+  .progress-goal-card.is-selected { outline:2px solid color-mix(in srgb,var(--progress-color) 55%,transparent); outline-offset:-1px; }
   .goal-card-date { grid-area:date; color:var(--card-color,var(--soul-violet)); font-size:11px; font-weight:850; }
   .goal-card-sticker { grid-area:sticker; display:grid; width:68px; height:68px; place-items:center; overflow:hidden; border-radius:18px; background:#fff; }
   .goal-card-sticker img { width:100%; height:100%; object-fit:contain; }
@@ -1547,12 +1548,14 @@
   }
   .progress-goal-card.is-selected { border-color:color-mix(in srgb,var(--progress-color) 50%,white) !important; }
   .progress-goal-list--single {
+    display:grid !important;
     width:100% !important;
-    margin-inline:0 !important;
-    padding-inline:0 !important;
-    justify-content:center !important;
+    margin:15px auto 0 !important;
+    padding:0 0 6px !important;
+    overflow:visible !important;
+    scroll-snap-type:none !important;
   }
-  .progress-goal-list--single>.progress-goal-card { width:100% !important; max-width:100% !important; margin-inline:auto !important; }
+  .progress-goal-list--single>.progress-goal-card { width:100% !important; min-width:0 !important; max-width:100% !important; margin-inline:auto !important; flex:none !important; justify-self:center !important; }
 
   .space-section-copy { margin-bottom:3px !important; }
   .space-switcher-mobile {
