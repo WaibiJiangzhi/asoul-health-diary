@@ -349,3 +349,137 @@
   .week-day-statuses button { font-size:8px; }
   .chart-card-head h3 { font-size:21px; }
 }
+
+/* Blank sticker state should read as optional, not as another decorative icon. */
+.space-icon-preview {
+  color:#8a838d !important;
+  background:#f7f4f2 !important;
+  border-color:rgba(48,43,54,.1) !important;
+  box-shadow:none !important;
+}
+.space-icon-preview:has(img) { background:#fff !important; }
+
+/* 0822 — 产品级收束：更清爽的枝江日记，而不是堆叠的功能面板 */
+@media (max-width:900px) {
+  body { --soul-shadow:0 14px 38px rgba(69,54,75,.075); color:#302c38; background:radial-gradient(circle at -8% 30%,rgba(231,143,169,.075),transparent 25rem),radial-gradient(circle at 108% 76%,rgba(76,167,140,.055),transparent 28rem),#fffbf6; }
+  .site-header { min-height:62px; padding-block:8px; background:rgba(255,253,249,.96); box-shadow:0 5px 20px rgba(63,50,68,.035); }
+  .brand { gap:7px; }
+  .brand>.brand-app-mark { width:30px; height:30px; border:0; border-radius:9px; background:transparent; box-shadow:none; }
+  .brand>.brand-app-mark img { width:29px; height:29px; border-radius:8px; filter:none; }
+  .header-tools { padding:0 !important; gap:12px; border:0 !important; background:transparent !important; box-shadow:none !important; }
+  .header-tools>#exportButton,.header-tools>#importButton,.header-tools>#updateAppButton { min-height:34px; }
+
+  .welcome-section { min-height:0 !important; align-content:start; }
+  .hero-paper { padding:20px 17px 16px; grid-template-columns:minmax(0,1fr) 112px; gap:10px 6px; border-color:rgba(89,72,85,.07); background:rgba(255,254,250,.94); }
+  .hero-kicker { padding:5px 8px; color:#745f9b; background:#f4f0fa; }
+  .hero-copy h1 { margin:13px 0 0; font-size:clamp(36px,10vw,45px); line-height:.98; }
+  .hero-copy h1 em { color:#705bc2; }
+  .hero-jump { min-height:38px; margin-top:15px; padding-inline:17px; background:#df7897; box-shadow:0 8px 17px rgba(200,94,132,.16); }
+  .hero-cast { height:142px; }
+  .hero-sticker { width:72px !important; height:78px !important; }
+  .hero-sticker--bella { top:58px !important; left:2px !important; }
+  .hero-sticker--diana { top:0 !important; right:-2px !important; }
+  .hero-sticker--eileen { top:68px !important; right:-5px !important; }
+  .home-joke-card { padding:12px 13px; border-color:rgba(220,121,111,.11); background:#fff8f7; }
+  .home-joke-card .eyebrow { color:#c96878; }
+  .home-joke-card>p { margin:8px 0 7px; font-size:14px; }
+  .joke-card-actions button { color:#a35f72; background:rgba(255,255,255,.8); }
+  .joke-reveal { min-height:31px; background:#d8708d; }
+
+  .goal-section,.space-section,.charts-section,.personal-section,.data-vault { border-color:rgba(71,60,79,.065); box-shadow:0 13px 34px rgba(70,55,77,.065); }
+  .section-add-button,.section-action-menu>summary,.week-action-menu>summary,.chart-action-menu>summary { width:34px; min-width:34px; height:34px; }
+  .section-action-menu[open]>div,.week-action-menu[open]>div,.chart-action-menu[open]>div { padding-top:16px; }
+  .goal-card,.progress-goal-card { box-shadow:0 10px 24px rgba(76,61,83,.065) !important; }
+  .progress-goal-main { min-height:248px; }
+
+  .space-switcher-mobile { scroll-padding-inline:16px; }
+  .space-switcher-item { flex-basis:88%; }
+  .space-switcher-button { min-height:104px; padding:15px; border-color:rgba(69,61,75,.08); box-shadow:0 8px 20px rgba(73,58,80,.045); }
+  .space-switcher-button.is-active { border-color:rgba(76,167,140,.24); background:#f7fcfa; }
+  .space-switcher-icon { width:58px; height:58px; border-radius:16px; }
+  .space-switcher-button strong { font-size:20px; }
+
+  .weekly-heading { padding-inline:0; }
+  .week-timeline-panel { padding:11px; border-color:rgba(71,60,79,.07); box-shadow:0 10px 28px rgba(70,55,77,.055); }
+  .week-board { padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
+  .week-inline-day { padding:14px 3px 7px; background:transparent; }
+  .week-day-stepper { width:min(230px,78%); margin-bottom:5px; }
+  .week-day-stepper button { font-size:23px; }
+  .week-day-statuses button { border-color:rgba(70,62,75,.09); background:#fff; }
+  .week-day-statuses .week-day-status--pending.is-active { color:#665f69; background:#eee9ed; }
+  .week-day-statuses .week-day-status--missed.is-active { color:#fff; background:#cf6f77; }
+  .week-day-statuses .week-day-status--okay.is-active { color:#fff; background:#df8ca5; }
+  .week-day-statuses .week-day-status--great.is-active { color:#fff; background:#4ca78c; }
+  .week-item-table { padding:3px 0 0; border:0; border-radius:0; background:transparent; }
+  .week-item-table-head { padding:0 1px 8px; }
+  .week-item-rows { gap:7px; }
+  .week-item-row { grid-template-columns:43px minmax(0,1fr) 32px; gap:5px; }
+  .week-item-state-current,.week-item-text { border-color:rgba(70,62,75,.09); background:#fff; }
+  .week-item-text { padding-inline:10px; font-size:12px; }
+  .week-item-remove { width:32px; background:#fff2f3; }
+  .week-add-item { color:#6b5aad; border-color:rgba(125,107,210,.16); background:#fbfaff; }
+  .week-focus-field input { border-color:rgba(215,155,63,.14); background:#fffdfa; }
+  .week-inline-note textarea { border-left-width:3px; }
+
+  .chart-space-context { order:-1; margin:0 -12px 8px; padding-top:0; }
+  .charts-section>.section-heading { margin-top:4px; }
+  #addChartButton { width:38px; min-width:38px; height:38px; aspect-ratio:1; background:#dc796f; box-shadow:0 6px 15px rgba(220,121,111,.17); }
+  .chart-card { border-color:rgba(71,60,79,.07); box-shadow:0 10px 28px rgba(70,55,77,.055); }
+  .chart-card-head { padding:15px 13px 11px; }
+  .chart-card-head h3 { font-size:22px; }
+  .chart-range-summary { padding:10px 13px; border-top-color:rgba(71,60,79,.07); }
+  .chart-zoom-bar { margin:8px 13px 7px; grid-template-columns:1fr 38px 1fr; gap:7px; }
+  .chart-zoom-bar button { min-height:38px; border-color:rgba(95,125,172,.12); color:#536d97; }
+  .chart-zoom-bar strong { min-width:38px; font-size:11px; }
+  .chart-scroll { min-height:320px; background:linear-gradient(180deg,#fff,#fffdfc); }
+  .chart-svg { min-height:320px; }
+  .chart-card-actions>button { min-height:36px; }
+
+  #progressGoalForm .dialog-fields { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:9px; }
+  #progressGoalForm .dialog-fields>.field--wide { grid-column:1/-1; }
+  #spaceForm .space-template-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  #spaceForm .space-template-options legend { grid-column:1/-1; margin-bottom:0; }
+  #spaceForm .space-template-options label>span { min-height:58px; padding:10px 11px; align-content:center; }
+  #spaceForm .dialog-fields { margin-top:11px; }
+  #spaceForm .space-icon-picker { margin-top:10px; }
+
+  #weekImportDialog .dialog-card { max-height:min(90dvh,760px); }
+  .ai-simple-guide { display:grid; min-height:0; padding:13px 13px 13px 54px; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; }
+  .ai-simple-guide::before { top:13px; left:13px; width:31px; height:31px; }
+  .ai-simple-guide strong { font-size:12px; line-height:1.45; }
+  .ai-provider-link { min-height:34px; padding-inline:9px; }
+  .ai-copy-stack { gap:8px; }
+  .ai-copy-row { min-height:0; padding:10px; grid-template-columns:31px minmax(0,1fr) 58px; gap:8px; }
+  .ai-copy-number { width:29px; height:29px; }
+  .ai-copy-row strong { font-size:12px; }
+  .ai-copy-row small { font-size:9px; }
+  .ai-copy-row button { min-width:0; min-height:36px; padding:0 8px; font-size:10px; }
+  .ai-import-final { margin-top:9px; padding:11px; }
+  .ai-import-final>div { margin-bottom:7px; }
+  .ai-import-final strong { font-size:12px; }
+  .ai-import-final small { font-size:9px; }
+  .week-import-paste textarea { min-height:118px; }
+
+  .weekly-report-goals { padding-top:9px; }
+  .weekly-report-milestone-groups,.weekly-report-milestone-group { display:block; }
+  .weekly-report-goal-list { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .weekly-report-dialog-card>.dialog-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .weekly-report-dialog-card>.dialog-actions .dialog-spacer { display:none; }
+  .weekly-report-dialog-card>.dialog-actions .text-button { display:none; }
+  .weekly-report-dialog-card>.dialog-actions button { min-width:0; padding-inline:8px; font-size:10px; }
+  .weekly-report-dialog-card>.dialog-actions .primary-button { grid-column:1/-1; }
+  .weekly-report-utility>.icon-button { display:none !important; }
+
+  .personal-preferences--install { min-height:64px; }
+  .personal-preference-icon--app { width:34px; height:34px; border-radius:10px; background:transparent; }
+  .personal-preference-icon--app img { width:32px; height:32px; }
+  .install-app-button img { display:none; }
+  .install-app-button { min-height:38px; padding-inline:11px; }
+}
+
+@media (max-width:390px) {
+  .hero-paper { grid-template-columns:minmax(0,1fr) 98px; }
+  .hero-copy h1 { font-size:35px; }
+  .home-joke-card { padding-inline:12px; }
+  .weekly-report-goal-list { grid-template-columns:1fr; }
+}

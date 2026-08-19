@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="weekly-planner.css?v=0821" />
     <link rel="stylesheet" href="weekly-polish.css?v=0821" />
     <link rel="stylesheet" href="complete-polish.css?v=0821" />
-    <link rel="stylesheet" href="mobile-app.css?v=0821c" />
+    <link rel="stylesheet" href="mobile-app.css?v=0822a" />
   </head>
   <body>
     <div class="page-glow page-glow--one" aria-hidden="true"></div>
@@ -65,7 +65,6 @@
             <span class="hero-kicker">枝江生活记录处 · FOR 一个魂</span>
             <img class="hero-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
             <h1 id="profileTitle">今天过得<br /><em>怎么样呀~</em></h1>
-            <p>给生活里的目标留个坐标。每一次开始、坚持和改变，都值得<br />被认真看见。</p>
             <a class="hero-jump" href="#goalSectionStart" data-nav-section="goalSectionStart">点击开始</a>
           </div>
 
@@ -308,6 +307,8 @@
       </section>
 
       <section class="charts-section" id="chartsSection" data-app-view="chartsSection" aria-labelledby="chartsTitle">
+        <div class="chart-space-context" id="chartSpaceSwitcher" aria-label="曲线所属空间"></div>
+
         <div class="section-heading" id="chartsTrackStart">
           <div>
             <span class="eyebrow" id="chartsEyebrow">一个魂的状态轨迹</span>
@@ -317,8 +318,6 @@
             <span aria-hidden="true">＋</span> 添加曲线图
           </button>
         </div>
-
-        <div class="chart-space-context" id="chartSpaceSwitcher" aria-label="曲线所属空间"></div>
 
         <div class="charts-grid" id="chartsGrid"></div>
 
@@ -627,8 +626,7 @@
           <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
         </div>
         <aside class="ai-simple-guide">
-          <strong>把模板交给 AI，再把生成的计划粘贴回来</strong>
-          <small>依次复制下面两段文字，发到同一个 AI 对话。</small>
+          <strong>把下面两段内容发给 AI，再把生成的计划粘贴到最下方。</strong>
           <a class="ai-provider-link" href="https://www.doubao.com/chat/" target="_blank" rel="noopener noreferrer">打开豆包 <span aria-hidden="true">↗</span></a>
         </aside>
         <input type="hidden" name="profile" />
@@ -636,27 +634,27 @@
           <section class="ai-copy-row">
             <span class="ai-copy-number">1</span>
             <div>
-              <strong>复制上周情况</strong>
-              <small id="aiPreviousWeekSummary">网页会读取当前空间更早一周的真实打卡状态。</small>
+              <strong>上周记录</strong>
+              <small id="aiPreviousWeekSummary">读取当前空间上一周的打卡。</small>
             </div>
-            <button class="secondary-button" id="copyPreviousWeekButton" type="button">复制上周情况</button>
+            <button class="secondary-button" id="copyPreviousWeekButton" type="button">复制</button>
           </section>
           <section class="ai-copy-row">
             <span class="ai-copy-number">2</span>
             <div>
-              <strong>复制网页需要的计划模板</strong>
-              <small>包含日期、Day1—Day7 和网页识别格式。</small>
+              <strong>本周格式</strong>
+              <small>含日期、Day1—Day7 和导入格式。</small>
             </div>
-            <button class="primary-button" id="copyAiPromptButton" type="button">复制计划模板</button>
+            <button class="primary-button" id="copyAiPromptButton" type="button">复制</button>
           </section>
         </div>
         <section class="ai-import-final">
           <div>
-            <strong>最后，粘贴 AI 返回的完整文本</strong>
-            <small>只会更新计划与重点，不会覆盖打卡状态、表情或当天小记。</small>
+            <strong>粘贴 AI 返回的计划</strong>
+            <small>已有打卡、表情和当天小记不会被覆盖。</small>
           </div>
           <label class="field field--wide week-import-paste">
-            <textarea name="payload" rows="13" placeholder="把 AI 返回的完整计划粘贴到这里……"></textarea>
+            <textarea name="payload" rows="7" placeholder="把 AI 返回的完整计划粘贴到这里……"></textarea>
           </label>
         </section>
         <div class="dialog-actions">
@@ -740,6 +738,6 @@
     <script src="data-model.js?v=0821"></script>
     <script src="stickers.js?v=0821"></script>
     <script src="冷笑话.js?v=0821"></script>
-    <script src="app.js?v=0821"></script>
+    <script src="app.js?v=0822a"></script>
   </body>
 </html>

@@ -1306,7 +1306,7 @@
     const preview = $("#progressGoalStickerPreview");
     preview.innerHTML = pendingProgressGoalSticker
       ? `<img src="${escapeAttr(assetUrl(pendingProgressGoalSticker))}" alt="选中的进度目标表情" />`
-      : "<span>↗</span>";
+      : "<span>—</span>";
     if (!$("#progressGoalStickerPicker").open) {
       progressGoalStickerTabs.innerHTML = "";
       progressGoalStickerGrid.innerHTML = "";
@@ -1323,7 +1323,7 @@
     });
     const stickers = STICKER_PACKS[activeProgressGoalStickerPack] || [];
     progressGoalStickerGrid.innerHTML = `
-      <button class="sticker-item sticker-item--blank${pendingProgressGoalSticker ? "" : " is-selected"}" type="button" data-progress-goal-sticker="" aria-label="不使用表情"><span>留空</span></button>
+      <button class="sticker-item sticker-item--blank${pendingProgressGoalSticker ? "" : " is-selected"}" type="button" data-progress-goal-sticker="" aria-label="留空"><span>留空</span></button>
     ` + stickers.map((path, index) => `
       <button class="sticker-item${pendingProgressGoalSticker === path ? " is-selected" : ""}" type="button" data-progress-goal-sticker="${escapeAttr(path)}" aria-label="选择${activeProgressGoalStickerPack}进度目标表情 ${index + 1}">
         <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
@@ -1460,7 +1460,7 @@
     const preview = $("#goalStickerPreview");
     preview.innerHTML = pendingGoalSticker
       ? `<img src="${escapeAttr(assetUrl(pendingGoalSticker))}" alt="选中的倒计时表情" />`
-      : "<span>◎</span>";
+      : "<span>—</span>";
     if (!$("#goalStickerPicker").open) {
       goalStickerTabs.innerHTML = "";
       goalStickerGrid.innerHTML = "";
@@ -1477,7 +1477,7 @@
     });
     const stickers = STICKER_PACKS[activeGoalStickerPack] || [];
     goalStickerGrid.innerHTML = `
-      <button class="sticker-item sticker-item--blank${pendingGoalSticker ? "" : " is-selected"}" type="button" data-goal-sticker="" aria-label="不使用表情"><span>留空</span></button>
+      <button class="sticker-item sticker-item--blank${pendingGoalSticker ? "" : " is-selected"}" type="button" data-goal-sticker="" aria-label="留空"><span>留空</span></button>
     ` + stickers.map((path, index) => `
       <button class="sticker-item${pendingGoalSticker === path ? " is-selected" : ""}" type="button" data-goal-sticker="${escapeAttr(path)}" aria-label="选择${activeGoalStickerPack}倒计时表情 ${index + 1}">
         <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
@@ -1702,7 +1702,7 @@
     });
     const stickers = STICKER_PACKS[activeSpaceIconPack] || [];
     spaceIconStickerGrid.innerHTML = `
-      <button class="sticker-item sticker-item--blank${pendingSpaceIconSticker ? "" : " is-selected"}" type="button" data-space-icon-sticker="" aria-label="使用空间符号"><span>留空</span></button>
+      <button class="sticker-item sticker-item--blank${pendingSpaceIconSticker ? "" : " is-selected"}" type="button" data-space-icon-sticker="" aria-label="留空，使用空间符号"><span>留空</span></button>
     ` + stickers.map((path, index) => `
       <button class="sticker-item${pendingSpaceIconSticker === path ? " is-selected" : ""}" type="button" data-space-icon-sticker="${escapeAttr(path)}" aria-label="选择${activeSpaceIconPack}表情 ${index + 1}">
         <img src="${escapeAttr(assetUrl(path))}" alt="" loading="lazy" />
@@ -2156,7 +2156,10 @@
       ["这期拉了", "这期拉了"],
       ["还不错", "还不错"],
       ["好好好", "好好好"],
-    ].map(([value, label]) => `<button type="button" data-set-day-status="${value}" aria-pressed="${day.status === value}" class="${day.status === value ? "is-active" : ""}">${label}</button>`).join("");
+    ].map(([value, label]) => {
+      const tone = value === "这期拉了" ? "missed" : value === "还不错" ? "okay" : value === "好好好" ? "great" : "pending";
+      return `<button type="button" data-set-day-status="${value}" aria-pressed="${day.status === value}" class="week-day-status--${tone}${day.status === value ? " is-active" : ""}">${label}</button>`;
+    }).join("");
 
     return `
       <section class="week-inline-day week-inline-day--${statusClass}" data-inline-week="${week.id}" data-inline-day="${day.id}">
@@ -2627,14 +2630,9 @@
     if (!goals.length && !progressGoals.length) return "";
     return `
       <section class="weekly-report-goals weekly-report-milestones" aria-label="倒计时与进度目标">
-        <div class="weekly-report-goals-title">
-          <span>WEEKLY MILESTONES</span>
-          <small>本空间的倒计时与进度目标</small>
-        </div>
         <div class="weekly-report-milestone-groups">
           ${goals.length ? `
             <div class="weekly-report-milestone-group">
-              <div class="weekly-report-milestone-label"><b>倒计时</b><small>截至本周日 ${escapeHtml(formatGoalDate(reportDate))}</small></div>
               <div class="weekly-report-goal-list">
                 ${goals.map((goal, index) => {
                   const countdown = getGoalCountdown(goal.targetDate, reportDate);
@@ -2650,7 +2648,6 @@
             </div>` : ""}
           ${progressGoals.length ? `
             <div class="weekly-report-milestone-group">
-              <div class="weekly-report-milestone-label"><b>进度目标</b><small>打开周报时的当前累计</small></div>
               <div class="weekly-report-goal-list">
                 ${progressGoals.map((goal, index) => {
                   const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
@@ -3749,12 +3746,21 @@
 
   function renderChartSvg(chart) {
     const zoom = chartZoomById.get(chart.id) || 1;
-    const zoomIndex = CHART_ZOOM_LEVELS.indexOf(zoom);
+    const zoomIndex = Math.max(0, CHART_ZOOM_LEVELS.indexOf(zoom));
     const canZoom = chart.nodes.length > 1;
     const compactChart = window.matchMedia("(max-width: 900px)").matches;
-    const width = compactChart ? 720 : 920;
-    const height = compactChart ? 500 : 370;
-    const margin = { top: compactChart ? 76 : 58, right: 34, bottom: compactChart ? 72 : 62, left: chart.series.length > 1 ? (compactChart ? 98 : 112) : 76 };
+    const visualScale = 1 + zoomIndex * (compactChart ? 0.18 : 0.1);
+    const baseWidth = compactChart ? 360 : 920;
+    const width = Math.round(baseWidth * zoom);
+    const height = Math.round((compactChart ? 360 : 370) * (1 + zoomIndex * 0.08));
+    const margin = {
+      top: Math.round((compactChart ? 54 : 58) * visualScale),
+      right: Math.round((compactChart ? 18 : 34) * visualScale),
+      bottom: Math.round((compactChart ? 51 : 62) * visualScale),
+      left: Math.round((chart.series.length > 1 ? (compactChart ? 66 : 112) : (compactChart ? 48 : 76)) * visualScale),
+    };
+    const axisFontSize = (compactChart ? 10 : 11) * visualScale;
+    const axisNameSize = (compactChart ? 10.5 : 12) * visualScale;
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const xAt = (index) => chart.nodes.length === 1
@@ -3817,7 +3823,7 @@
         .join("");
       return `
         <line class="chart-grid-line" x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" />
-        <text class="chart-axis-text${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" x="${margin.left - 13}" y="${y + 4}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
+        <text class="chart-axis-text${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" style="font-size:${axisFontSize.toFixed(2)}px" x="${margin.left - 9 * visualScale}" y="${y + 4 * visualScale}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
     }).join("");
 
     const nodeSpacing = plotWidth / Math.max(chart.nodes.length - 1, 1);
@@ -3829,12 +3835,13 @@
       const previousDate = parsedNodeDates[index - 1];
       const yearChanged = Boolean(date?.year && previousDate?.year && date.year !== previousDate.year);
       if (index !== 0 && index !== chart.nodes.length - 1 && index % labelEvery !== 0 && !yearChanged) return "";
-      return `<text class="chart-axis-text" x="${xAt(index)}" y="${height - 34}" text-anchor="middle">${escapeXml(formatChartAxisLabel(node.x, index === 0 || yearChanged))}</text>`;
+      return `<text class="chart-axis-text" style="font-size:${axisFontSize.toFixed(2)}px" x="${xAt(index)}" y="${height - 21 * visualScale}" text-anchor="middle">${escapeXml(formatChartAxisLabel(node.x, index === 0 || yearChanged))}</text>`;
     }).join("");
 
     const lineMarkup = seriesData.map((item) => {
       const path = smoothPath(item.points);
-      return `<path class="chart-line" style="--chart-color:${item.color}" d="${path}" />`;
+      const lineWidth = (compactChart ? 2.8 : 3) * visualScale;
+      return `<path class="chart-line" style="--chart-color:${item.color};stroke-width:${lineWidth.toFixed(2)}" d="${path}" />`;
     }).join("");
 
     const pointMarkup = chart.nodes.map((node, nodeIndex) => {
@@ -3845,12 +3852,13 @@
       const label = `${node.x}：${pointValues.map(({ series, point }) => `${series.name} ${formatSeriesValue(series, point.value)}`).join("；")}`;
       const isSelected = selectedNodeByChart.get(chart.id) === node.id;
       const showPointMarker = isSelected || nodeSpacing >= 14 || nodeIndex % labelEvery === 0 || nodeIndex === chart.nodes.length - 1;
-      const stickerSize = Math.max(20, Math.min(seriesData.length > 1 ? 30 : 38, nodeSpacing - 8));
+      const desiredStickerSize = (seriesData.length > 1 ? 29 : 38) * visualScale;
+      const stickerSize = Math.max(20 * visualScale, Math.min(desiredStickerSize, nodeSpacing * .86));
       const stickerMarkup = pointValues.map(({ series, point }, pointIndex) => {
         const sticker = safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""));
         if (!sticker) return "";
         const centerX = point.px + (pointIndex - (pointValues.length - 1) / 2) * (stickerSize + 4);
-        const centerY = point.py - stickerSize / 2 - 15;
+        const centerY = point.py - stickerSize / 2 - 12 * visualScale;
         const clipRadius = stickerSize / 2;
         const clipId = `clip-${chart.id}-${node.id}-${series.id}`;
         return `<circle class="point-sticker-bg" cx="${centerX}" cy="${centerY}" r="${clipRadius + 3}" />
@@ -3858,10 +3866,10 @@
           <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - clipRadius}" y="${centerY - clipRadius}" width="${stickerSize}" height="${stickerSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
       }).join("");
       const cores = showPointMarker ? pointValues.map(({ series, point }) => `
-        <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="10" />
-        <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="6" />
+        <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(10 * visualScale).toFixed(2)}" />
+        <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(6 * visualScale).toFixed(2)}" />
       `).join("") : "";
-      const hitWidth = Math.max(6, Math.min(36, plotWidth / Math.max(chart.nodes.length, 1)));
+      const hitWidth = Math.max(10 * visualScale, Math.min(42 * visualScale, plotWidth / Math.max(chart.nodes.length, 1)));
       return `
         <g class="chart-point${isSelected ? " is-selected" : ""}" role="button" tabindex="0" aria-pressed="${isSelected}" aria-label="${escapeAttr(label)}，点击查看" data-chart-id="${chart.id}" data-node-id="${node.id}">
           <title>${escapeXml(label)}，点击查看当天记录</title>
@@ -3889,7 +3897,7 @@
         <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
       </div>
       <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
-      <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
+      <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height};--chart-visual-scale:${visualScale}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
         <defs>
           <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="${primary.color}" stop-opacity="0.24" />
@@ -3897,8 +3905,8 @@
           </linearGradient>
         </defs>
         ${grid}
-        <text class="chart-axis-name chart-axis-name--series" x="${margin.left}" y="28">${axisSeriesNames}</text>
-        <text class="chart-axis-name" x="${width - margin.right}" y="${height - 10}" text-anchor="end">${escapeXml(chart.xLabel)}</text>
+        <text class="chart-axis-name chart-axis-name--series" style="font-size:${axisNameSize.toFixed(2)}px" x="${margin.left}" y="${22 * visualScale}">${axisSeriesNames}</text>
+        <text class="chart-axis-name" style="font-size:${axisNameSize.toFixed(2)}px" x="${width - margin.right}" y="${height - 6 * visualScale}" text-anchor="end">${escapeXml(chart.xLabel)}</text>
         ${areaPath ? `<path class="chart-area" d="${areaPath}" fill="url(#${gradientId})" />` : ""}
         ${lineMarkup}
         ${xLabels}

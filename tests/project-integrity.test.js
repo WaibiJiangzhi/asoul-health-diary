@@ -85,7 +85,7 @@ for (const [packName, expectedFirstFolder] of [["贝拉", "5-"], ["嘉然", "5-"
 }
 
 assert.match(html, /AI 规划本周/);
-assert.match(html, /把模板交给 AI，再把生成的计划粘贴回来/, "AI planning should lead with the simple outcome");
+assert.match(html, /把下面两段内容发给 AI，再把生成的计划粘贴到最下方/, "AI planning should lead with the simple outcome");
 assert.match(app, /function copyPreviousWeekContext\(/, "AI planning should copy the previous week separately");
 assert.doesNotMatch(html, /id="aiPromptOutput"/, "AI planning should not expose a large generated-prompt preview");
 assert.doesNotMatch(html, /本周便签/, "the PWA should replace the old mobile-note export");
