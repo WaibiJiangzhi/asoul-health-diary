@@ -1547,26 +1547,6 @@
     background:var(--progress-color) !important;
   }
   .progress-goal-card.is-selected { border-color:color-mix(in srgb,var(--progress-color) 50%,white) !important; }
-  .progress-goal-list {
-    width:100% !important;
-    margin:15px auto 0 !important;
-    padding:0 0 6px !important;
-    scroll-padding-inline:0 !important;
-  }
-  .progress-goal-list>.progress-goal-card {
-    width:100% !important;
-    min-width:100% !important;
-    max-width:100% !important;
-    margin-inline:0 !important;
-    flex:0 0 100% !important;
-    scroll-snap-align:start !important;
-  }
-  .progress-goal-list--single {
-    display:grid !important;
-    overflow:visible !important;
-    scroll-snap-type:none !important;
-  }
-  .progress-goal-list--single>.progress-goal-card { width:100% !important; min-width:0 !important; max-width:100% !important; margin-inline:auto !important; flex:none !important; justify-self:center !important; }
 
   .space-section-copy { margin-bottom:3px !important; }
   .space-switcher-mobile {
