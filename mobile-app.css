@@ -65,7 +65,7 @@
     min-height:0 !important;
     padding:20px 16px 15px !important;
     grid-template-columns:minmax(0,1fr) !important;
-    grid-template-rows:auto 300px auto !important;
+    grid-template-rows:auto 240px auto !important;
     grid-template-areas:"copy" "cast" "joke" !important;
     gap:13px !important;
     align-content:stretch !important;
@@ -130,11 +130,11 @@
   body.is-mobile-app .hero-cast::before {
     position:absolute !important;
     z-index:0 !important;
-    top:34px !important;
+    top:8px !important;
     left:50% !important;
     display:block !important;
-    width:232px !important;
-    height:232px !important;
+    width:218px !important;
+    height:218px !important;
     border:0 !important;
     border-radius:50% !important;
     background:radial-gradient(circle at 44% 43%,rgba(255,255,255,.76) 0 10%,rgba(231,153,176,.31) 30%,rgba(219,125,116,.16) 47%,rgba(87,102,144,.13) 63%,transparent 79%) !important;
@@ -149,7 +149,7 @@
     top:69px !important;
     right:auto !important;
     left:50% !important;
-    display:block !important;
+    display:none !important;
     width:246px !important;
     height:154px !important;
     border:1px dashed rgba(87,102,144,.13) !important;
@@ -191,12 +191,12 @@
   }
   body.is-mobile-app .hero-cast .hero-sticker--bella {
     z-index:2 !important;
-    top:10px !important;
-    right:22px !important;
+    top:-46px !important;
+    right:16px !important;
     bottom:auto !important;
     left:auto !important;
-    width:124px !important;
-    height:124px !important;
+    width:122px !important;
+    height:122px !important;
     background:transparent !important;
     transform:rotate(4deg) !important;
   }
@@ -211,12 +211,12 @@
   }
   body.is-mobile-app .hero-cast .hero-sticker--diana {
     z-index:3 !important;
-    top:105px !important;
+    top:58px !important;
     right:auto !important;
     bottom:auto !important;
-    left:14px !important;
-    width:120px !important;
-    height:120px !important;
+    left:18px !important;
+    width:116px !important;
+    height:116px !important;
     background:transparent !important;
     transform:rotate(-5deg) !important;
   }
@@ -232,11 +232,11 @@
   body.is-mobile-app .hero-cast .hero-sticker--eileen {
     z-index:4 !important;
     top:auto !important;
-    right:28px !important;
+    right:20px !important;
     bottom:0 !important;
     left:auto !important;
-    width:132px !important;
-    height:132px !important;
+    width:130px !important;
+    height:130px !important;
     background:transparent !important;
     transform:rotate(3deg) !important;
   }
@@ -253,17 +253,17 @@
     position:absolute !important;
     z-index:5 !important;
     display:grid !important;
-    width:36px !important;
-    height:36px !important;
+    width:34px !important;
+    height:34px !important;
     place-items:center !important;
     border:2px solid rgba(255,255,255,.97) !important;
     border-radius:13px !important;
     background:#fff !important;
-    box-shadow:0 7px 16px rgba(67,45,66,.11) !important;
+    box-shadow:0 5px 12px rgba(67,45,66,.085) !important;
   }
   body.is-mobile-app .hero-fan-symbol svg {
-    width:24px !important;
-    height:24px !important;
+    width:22px !important;
+    height:22px !important;
     overflow:visible !important;
     fill:none !important;
     stroke:currentColor !important;
@@ -296,13 +296,13 @@
     position:absolute !important;
     z-index:1 !important;
     right:auto !important;
-    bottom:9px !important;
-    left:22px !important;
+    bottom:5px !important;
+    left:20px !important;
     display:block !important;
-    width:130px !important;
+    width:124px !important;
     height:60px !important;
     border:0 !important;
-    opacity:.62 !important;
+    opacity:.52 !important;
   }
   body.is-mobile-app .hero-line::before {
     position:absolute !important;
@@ -328,8 +328,8 @@
   body.is-mobile-app .hero-line i:nth-child(4) { left:67% !important; top:8px !important; background:#f2bf55 !important; }
   body.is-mobile-app .hero-line i:nth-child(5) { right:-3px !important; top:16px !important; background:#576690 !important; }
   body.is-mobile-app .hero-spark--one {
-    top:302px !important;
-    left:32px !important;
+    top:286px !important;
+    left:30px !important;
     color:#f1bb3d !important;
     font-size:23px !important;
     transform:rotate(-12deg) !important;
@@ -403,13 +403,13 @@
   body.is-mobile-app .header-tools>#updateAppButton { min-width:30px !important; padding-inline:4px !important; font-size:9px !important; }
   body.is-mobile-app .hero-paper { padding-inline:13px !important; }
   body.is-mobile-app .hero-copy h1 { font-size:35px !important; }
-  body.is-mobile-app .hero-paper { grid-template-rows:auto 284px auto !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--bella { top:8px !important; right:8px !important; width:116px !important; height:116px !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--diana { top:101px !important; left:3px !important; width:114px !important; height:114px !important; }
-  body.is-mobile-app .hero-cast .hero-sticker--eileen { right:14px !important; width:124px !important; height:124px !important; }
-  body.is-mobile-app .hero-fan-symbol { width:33px !important; height:33px !important; border-radius:12px !important; }
-  body.is-mobile-app .hero-fan-symbol svg { width:22px !important; height:22px !important; }
-  body.is-mobile-app .hero-line { left:15px !important; width:118px !important; }
+  body.is-mobile-app .hero-paper { grid-template-rows:auto 228px auto !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--bella { top:-44px !important; right:6px !important; width:114px !important; height:114px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--diana { top:55px !important; left:4px !important; width:110px !important; height:110px !important; }
+  body.is-mobile-app .hero-cast .hero-sticker--eileen { right:12px !important; width:122px !important; height:122px !important; }
+  body.is-mobile-app .hero-fan-symbol { width:31px !important; height:31px !important; border-radius:11px !important; }
+  body.is-mobile-app .hero-fan-symbol svg { width:20px !important; height:20px !important; }
+  body.is-mobile-app .hero-line { left:14px !important; width:112px !important; }
 }
 [data-app-view][hidden], .space-switcher-mobile { display:none !important; }
 .week-item-state { position:relative; }
