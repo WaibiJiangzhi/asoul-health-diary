@@ -1190,10 +1190,15 @@
   function revealSelectedCard(container, selector) {
     if (!window.matchMedia("(max-width: 900px)").matches || !selector) return;
     window.requestAnimationFrame(() => {
-      const card = container.querySelector(selector);
+      const control = container.querySelector(selector);
+      const card = control?.closest(".goal-card, .progress-goal-card") || control;
       if (!card || container.clientWidth <= 0) return;
-      const left = card.offsetLeft - (container.clientWidth - card.offsetWidth) / 2;
-      container.scrollTo({ left: Math.max(0, left), behavior: "auto" });
+      const containerRect = container.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const left = container.scrollLeft + cardRect.left - containerRect.left
+        - (container.clientWidth - cardRect.width) / 2;
+      const maxLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+      container.scrollTo({ left: Math.max(0, Math.min(maxLeft, left)), behavior: "auto" });
     });
   }
 
