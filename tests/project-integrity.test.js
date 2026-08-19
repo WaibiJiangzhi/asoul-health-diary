@@ -91,10 +91,10 @@ assert.match(html, /本周便签/);
 assert.match(html, /从 Day1 起顺延一天/);
 assert.match(html, /class="hero-jump" href="#goalSectionStart"[^>]*>点击开始/, "hero action must open countdowns");
 assert.doesNotMatch(html, /AI 规划本月/);
-assert.match(html, /href="icons\/icon-192\.png\?v=0819a"/);
+assert.match(html, /href="icons\/icon-192\.png\?v=0820a"/);
 assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-yigehun-app.png")), "missing polished yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
-assert.match(html, /id="installAppButton"/, "PWA installation must live in the header");
+assert.match(html, /class="personal-preferences personal-preferences--install"[\s\S]*id="installAppButton"/, "PWA installation must live in the personal view");
 assert.match(html, /href="https:\/\/www\.doubao\.com\/chat\/"/, "AI planning should offer an optional Doubao jump link");
 assert.doesNotMatch(html, /class="pwa-prompt"/, "PWA installation must not interrupt users with an automatic popup");
 assert.ok(fs.existsSync(path.join(projectRoot, "sw.js")), "missing service worker");
@@ -135,8 +135,8 @@ assert.match(app, /data-record-today/, "the day editor must expose a direct reco
 assert.match(app, /day\.items = plannedDay\.items\.map/, "AI import must use the unified weekly item model");
 assert.doesNotMatch(app, /data-pair-field=|data-set-pair-done|完成与记录/, "the legacy two-column plan/actual editor must be removed");
 assert.doesNotMatch(html, /目标独立于空间保存|背单词、读书或工作项目|用模板或从空白开始|曲线图日记/, "redundant section explanations must be removed");
-assert.match(html, /id="weekSoundToggle"[^>]*aria-pressed="true"/, "sound preference must live in the data view and default on");
-assert.match(html, /id="footerResetDataButton"/, "mobile data view must provide record clearing without the header");
+assert.match(html, /class="personal-preferences"[\s\S]*id="weekSoundToggle"[^>]*aria-pressed="true"/, "sound preference must live in the personal view and default on");
+assert.match(html, /id="footerResetDataButton"/, "mobile personal view must provide record clearing without the header");
 assert.match(weeklyCss, /week-node-head/, "week overview cards must be styled");
 assert.doesNotMatch(weeklyCss, /week-node-dot/, "legacy circular week nodes must be removed");
 assert.match(weeklyCss, /grid-auto-rows:\s*96px/, "photo sticker rows must not be compressed");
@@ -192,12 +192,12 @@ const missingFullDemoStickers = [...new Set(fullDemoStickerRefs)].filter((refere
 assert.deepEqual(missingFullDemoStickers, [], `full demo data references missing stickers: ${missingFullDemoStickers.join(", ")}`);
 
 const weekActionOrder = [
-  "addWeekButton",
-  "deleteSelectedPeriodButton",
   "importWeekButton",
-  "shiftWeekButton",
   "exportSelectedWeekButton",
   "showSelectedWeekReportButton",
+  "addWeekButton",
+  "deleteSelectedPeriodButton",
+  "shiftWeekButton",
 ];
 for (let index = 1; index < weekActionOrder.length; index += 1) {
   assert.ok(html.indexOf(`id="${weekActionOrder[index - 1]}"`) < html.indexOf(`id="${weekActionOrder[index]}"`), "weekly action buttons are out of order");

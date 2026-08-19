@@ -382,6 +382,8 @@
       weekMonthFilter = event.currentTarget.value;
       renderWeeks();
     });
+    $("#previousPeriodButton").addEventListener("click", () => selectAdjacentPeriod(-1));
+    $("#nextPeriodButton").addEventListener("click", () => selectAdjacentPeriod(1));
     $("#weekSoundToggle").addEventListener("click", toggleWeekSound);
     $("#showSelectedWeekReportButton").addEventListener("click", () => selectedWeekId && openWeeklyReport(selectedWeekId));
     $("#copySelectedWeekReportButton").addEventListener("click", () => selectedWeekId && copyWeekReportText(selectedWeekId));
@@ -542,7 +544,7 @@
     const button = $("#weekSoundToggle");
     if (!button) return;
     button.setAttribute("aria-pressed", String(weekSoundEnabled));
-    $("#weekSoundLabel").textContent = weekSoundEnabled ? "完成提示音：开" : "完成提示音：关";
+    $("#weekSoundLabel").textContent = weekSoundEnabled ? "已开启" : "已关闭";
   }
 
   function playWeekFeedback(done) {
@@ -1081,6 +1083,11 @@
         renderGoals();
       });
     });
+    bindSnapSelection(goalList, "[data-select-goal]", () => selectedGoalId, (id) => {
+      selectedGoalId = id;
+      renderGoals();
+    });
+    revealSelectedCard(goalList, `[data-select-goal="${escapeSelectorValue(selectedGoalId)}"]`);
   }
 
   function renderGoalSpaceOptions(selectedSpaceIds) {
@@ -1149,6 +1156,47 @@
     $$('[data-add-progress]', progressGoalList).forEach((form) => {
       form.addEventListener("submit", addProgressFromCard);
     });
+    bindSnapSelection(progressGoalList, "[data-select-progress-goal]", () => selectedProgressGoalId, (id) => {
+      selectedProgressGoalId = id;
+      renderProgressGoals();
+    });
+    revealSelectedCard(progressGoalList, `[data-select-progress-goal="${escapeSelectorValue(selectedProgressGoalId)}"]`);
+  }
+
+  function escapeSelectorValue(value) {
+    return globalThis.CSS?.escape ? CSS.escape(String(value || "")) : String(value || "").replaceAll('"', '\\"');
+  }
+
+  function revealSelectedCard(container, selector) {
+    if (!window.matchMedia("(max-width: 900px)").matches || !selector) return;
+    window.requestAnimationFrame(() => {
+      const card = container.querySelector(selector);
+      if (!card || container.clientWidth <= 0) return;
+      const left = card.offsetLeft - (container.clientWidth - card.offsetWidth) / 2;
+      container.scrollTo({ left: Math.max(0, left), behavior: "auto" });
+    });
+  }
+
+  function bindSnapSelection(container, selector, getSelectedId, selectId) {
+    if (!window.matchMedia("(max-width: 900px)").matches || container.dataset.snapSelectionBound === "true") return;
+    container.dataset.snapSelectionBound = "true";
+    let timer = null;
+    const syncSelection = () => {
+      const cards = $$(selector, container);
+      if (cards.length < 2) return;
+      const center = container.getBoundingClientRect().left + container.clientWidth / 2;
+      const nearest = cards.reduce((best, card) => {
+        const rect = card.getBoundingClientRect();
+        const distance = Math.abs(rect.left + rect.width / 2 - center);
+        return !best || distance < best.distance ? { card, distance } : best;
+      }, null)?.card;
+      const id = nearest?.dataset.selectGoal || nearest?.dataset.selectProgressGoal;
+      if (id && id !== getSelectedId()) selectId(id);
+    };
+    container.addEventListener("scroll", () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(syncSelection, 120);
+    }, { passive: true });
   }
 
   function renderProgressGoalSpaceOptions(selectedSpaceIds) {
@@ -1442,7 +1490,9 @@
 
   function renderSpaceSwitcher() {
     if (!spaceSwitcher) return;
-    spaceSwitcher.innerHTML = state.spaces.length ? state.spaces.map((space) => {
+    const activeIndex = Math.max(0, state.spaces.findIndex((space) => space.id === activeSpaceId));
+    const activeSpace = state.spaces[activeIndex];
+    const renderSpaceButton = (space, extraClass = "") => {
       const template = getSpaceTemplate(space.id);
       const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
       const isActive = space.id === activeSpaceId;
@@ -1450,13 +1500,22 @@
         ? `<img src="${escapeAttr(assetUrl(template.iconSticker))}" alt="" />`
         : escapeHtml(template.icon);
       return `
-        <div class="space-switcher-item">
+        <div class="space-switcher-item${extraClass}">
           <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}">
             <span class="space-switcher-icon${template.iconSticker ? " has-sticker" : ""}" aria-hidden="true">${icon}</span>
             <span><strong>${escapeHtml(template.name)}</strong><small>${periodCount ? `${periodCount} 个月份` : "从这里开始"}</small></span>
           </button>
         </div>`;
-    }).join("") : `
+    };
+    spaceSwitcher.innerHTML = state.spaces.length ? `
+      <div class="space-switcher-mobile" data-space-swipe aria-label="左右切换空间">
+        <button class="space-switcher-arrow" type="button" data-space-step="-1" aria-label="上一个空间"${activeIndex === 0 ? " disabled" : ""}>←</button>
+        ${renderSpaceButton(activeSpace, " is-mobile-current")}
+        <button class="space-switcher-arrow" type="button" data-space-step="1" aria-label="下一个空间"${activeIndex === state.spaces.length - 1 ? " disabled" : ""}>→</button>
+        <div class="space-switcher-dots" aria-hidden="true">${state.spaces.map((space) => `<i class="${space.id === activeSpaceId ? "is-active" : ""}"></i>`).join("")}</div>
+      </div>
+      <div class="space-switcher-desktop">${state.spaces.map((space) => renderSpaceButton(space)).join("")}</div>
+    ` : `
       <div class="space-switcher-empty">
         <span aria-hidden="true">＋</span>
         <div><strong>现在没有空间</strong><small>首页倒计时和进度目标仍可单独使用；需要日程和周报时再新建空间。</small></div>
@@ -1464,11 +1523,43 @@
     $$('[data-space-id]', spaceSwitcher).forEach((button) => {
       button.addEventListener("click", () => selectSpace(button.dataset.spaceId));
     });
+    $$('[data-space-step]', spaceSwitcher).forEach((button) => {
+      button.addEventListener("click", () => selectAdjacentSpace(Number(button.dataset.spaceStep)));
+    });
+    bindSpaceSwipe();
     $("#spaceLimitText").textContent = `${state.spaces.length} / ${MAX_SPACES} 个空间`;
     $("#addSpaceButton").disabled = state.spaces.length >= MAX_SPACES;
     $("#editSpaceButton").disabled = !getSpace();
     $("#deleteSpaceButton").disabled = !getSpace();
     syncSpaceCopy();
+  }
+
+  function selectAdjacentSpace(direction) {
+    const currentIndex = state.spaces.findIndex((space) => space.id === activeSpaceId);
+    const nextIndex = Math.max(0, Math.min(state.spaces.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex || !state.spaces[nextIndex]) return;
+    selectSpace(state.spaces[nextIndex].id);
+  }
+
+  function bindSpaceSwipe() {
+    const surface = $("[data-space-swipe]", spaceSwitcher);
+    if (!surface) return;
+    let startX = null;
+    let startY = null;
+    surface.addEventListener("touchstart", (event) => {
+      startX = event.touches[0]?.clientX ?? null;
+      startY = event.touches[0]?.clientY ?? null;
+    }, { passive: true });
+    surface.addEventListener("touchend", (event) => {
+      if (startX === null || startY === null) return;
+      const touch = event.changedTouches[0];
+      const deltaX = (touch?.clientX ?? startX) - startX;
+      const deltaY = (touch?.clientY ?? startY) - startY;
+      startX = null;
+      startY = null;
+      if (Math.abs(deltaX) < 44 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+      selectAdjacentSpace(deltaX < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   function selectSpace(spaceId) {
@@ -1895,6 +1986,22 @@
     monthSelect.disabled = !getSpace();
     monthSelect.innerHTML = months.map((month) => `<option value="${month}">${Number(month)} 月</option>`).join("");
     monthSelect.value = weekMonthFilter;
+    const orderedPeriods = [...periods].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+    const currentIndex = orderedPeriods.findIndex((period) => period.yearMonth === `${weekYearFilter}-${weekMonthFilter}`);
+    $("#previousPeriodButton").disabled = currentIndex <= 0;
+    $("#nextPeriodButton").disabled = currentIndex < 0 || currentIndex >= orderedPeriods.length - 1;
+  }
+
+  function selectAdjacentPeriod(direction) {
+    const periods = [...getActiveSpacePeriods()].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+    if (!periods.length) return;
+    const currentKey = `${weekYearFilter}-${weekMonthFilter}`;
+    const currentIndex = Math.max(0, periods.findIndex((period) => period.yearMonth === currentKey));
+    const nextIndex = Math.max(0, Math.min(periods.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex) return;
+    [weekYearFilter, weekMonthFilter] = periods[nextIndex].yearMonth.split("-");
+    selectedWeekId = null;
+    renderWeeks();
   }
 
   function hasWeekDayRecord(day) {
@@ -1938,14 +2045,14 @@
     weekDetail.innerHTML = `
       <article class="week-board">
         <div class="week-day-pager" data-week-day-swipe aria-label="左右切换这周的日期">
-          <button class="week-day-pager-arrow" type="button" data-week-day-step="-1" aria-label="查看前一天"${selectedIndex === 0 ? " disabled" : ""}>←</button>
           <div class="week-day-tabs" role="tablist" aria-label="当前查看的日期">
             ${renderWeekDayTab(selectedDay, true)}
           </div>
-          <button class="week-day-pager-arrow" type="button" data-week-day-step="1" aria-label="查看后一天"${selectedIndex === week.days.length - 1 ? " disabled" : ""}>→</button>
         </div>
-        <div class="week-day-dots" role="tablist" aria-label="快速选择日期">
-          ${week.days.map((day) => `<button type="button" data-select-week-day="${day.id}" aria-label="切换到 Day${day.dayNumber}" aria-selected="${day.id === selectedDayId}" class="${day.id === selectedDayId ? "is-active" : ""}">${day.dayNumber}</button>`).join("")}
+        <div class="week-day-stepper" aria-label="切换当天">
+          <button type="button" data-week-day-step="-1"${selectedIndex === 0 ? " disabled" : ""}>← <span>上一天</span></button>
+          <strong>Day ${selectedDay.dayNumber} <small>/ 7</small></strong>
+          <button type="button" data-week-day-step="1"${selectedIndex === week.days.length - 1 ? " disabled" : ""}><span>下一天</span> →</button>
         </div>
         ${renderWeekDayEditor(week, selectedDay)}
       </article>`;
@@ -2039,8 +2146,6 @@
       }[state];
       return `
         <div class="week-item-row week-item-row--${state || "pending"}" data-week-item-index="${index}">
-          <span class="week-item-number">${String(index + 1).padStart(2, "0")}</span>
-          <input class="week-item-text" data-week-item-text maxlength="160" aria-label="第 ${index + 1} 项计划" placeholder="${escapeAttr(template.itemPlaceholder)}：${escapeAttr(template.targetPlaceholder)}" value="${escapeAttr(item.text || "")}" />
           <details class="week-item-state">
             <summary class="week-item-state-current" aria-label="第 ${index + 1} 项当前状态：${stateMeta.label}" title="${stateMeta.label}"><b>${stateMeta.mark}</b><span>${stateMeta.label}</span></summary>
             <div class="week-item-state-choices" aria-label="选择第 ${index + 1} 项状态">
@@ -2048,7 +2153,11 @@
               <button type="button" data-set-week-item-state="" aria-pressed="${state === ""}"><b>○</b><span>清除</span></button>
             </div>
           </details>
-          <button class="week-item-remove" type="button" data-remove-week-item="${index}" aria-label="删除第 ${index + 1} 项">×</button>
+          <input class="week-item-text" data-week-item-text maxlength="160" aria-label="第 ${index + 1} 项计划" placeholder="${escapeAttr(template.itemPlaceholder)}：${escapeAttr(template.targetPlaceholder)}" value="${escapeAttr(item.text || "")}" />
+          <details class="week-item-more">
+            <summary aria-label="管理第 ${index + 1} 项安排">•••</summary>
+            <div><button type="button" data-remove-week-item="${index}">删除这项安排</button></div>
+          </details>
         </div>`;
     }).join("");
 
@@ -3472,14 +3581,15 @@
           <div class="chart-card-actions">
             <button class="chart-action chart-action--add" type="button" data-add-node="${chart.id}">＋ 新节点</button>
             <button class="chart-action chart-action--download" type="button" data-download-chart="${chart.id}">↓ 下载曲线图</button>
-            <span class="chart-order" aria-label="调整图表排序">
-              <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="-1" aria-label="曲线图上移"${chartIndex === 0 ? " disabled" : ""}>↑ 曲线图上移</button>
-              <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === chartCount - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
-            </span>
-            <span class="chart-manage" aria-label="图表管理">
-              <button class="chart-action chart-action--settings" type="button" data-edit-chart="${chart.id}"><span aria-hidden="true">⚙</span> 图表设置</button>
-              <button class="chart-action chart-action--danger" type="button" data-delete-chart="${chart.id}"><span aria-hidden="true">×</span> 删除图表</button>
-            </span>
+            <details class="chart-action-menu">
+              <summary aria-label="管理曲线图">••• 管理</summary>
+              <div>
+                <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="-1" aria-label="曲线图上移"${chartIndex === 0 ? " disabled" : ""}>↑ 曲线图上移</button>
+                <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === chartCount - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
+                <button class="chart-action chart-action--settings" type="button" data-edit-chart="${chart.id}"><span aria-hidden="true">⚙</span> 图表设置</button>
+                <button class="chart-action chart-action--danger" type="button" data-delete-chart="${chart.id}"><span aria-hidden="true">×</span> 删除图表</button>
+              </div>
+            </details>
           </div>
         </div>
         <div class="chart-wrap">${chartBody}</div>
@@ -4604,6 +4714,8 @@
 
     const resolveHashView = () => {
       const id = location.hash.slice(1);
+      if (id === "weeklySection") return "spaceSectionStart";
+      if (id === "dataVaultStart") return "personalSectionStart";
       return views.some((view) => view.dataset.appView === id) ? id : "home";
     };
     const showMobileView = (id, { updateHistory = false, scroll = true } = {}) => {
@@ -4612,7 +4724,7 @@
       document.body.classList.add("is-mobile-app");
       document.body.dataset.activeView = nextId;
       setActive(nextId);
-      if (nextId === "weeklySection") renderWeeks();
+      if (nextId === "spaceSectionStart") renderWeeks();
       if (nextId === "chartsSection") renderCharts();
       if (updateHistory) history.pushState({ appView: nextId }, "", nextId === "home" ? "#top" : `#${nextId}`);
       if (scroll) window.scrollTo({ top: 0, behavior: "auto" });
@@ -4632,7 +4744,21 @@
       link.addEventListener("click", (event) => {
         if (!mobileQuery.matches) return;
         event.preventDefault();
-        showMobileView(link.dataset.navSection, { updateHistory: true });
+        const nextId = link.dataset.navSection;
+        const isCurrentMobileTab = link.closest(".mobile-bottom-nav") && document.body.dataset.activeView === nextId;
+        if (isCurrentMobileTab && nextId === "goalSectionStart") {
+          const progressSection = $(".progress-goal-section");
+          const progressTop = progressSection?.getBoundingClientRect().top ?? 0;
+          const nearProgress = progressTop < Math.max(150, window.innerHeight * .34);
+          (nearProgress ? $("#goalSectionStart") : progressSection)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          showToast(nearProgress ? "回到倒计时" : "已切换到进度目标");
+          return;
+        }
+        if (isCurrentMobileTab) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        showMobileView(nextId, { updateHistory: true });
       });
     });
     $$('[data-nav-home]').forEach((link) => {
