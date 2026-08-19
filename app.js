@@ -43,10 +43,10 @@
       name: "健康",
       icon: "♡",
       eyebrow: "一个魂的健康日程",
-      heading: "这一周，照顾好身体和心情",
+      heading: "这一周，按自己的节奏来",
       activeDayLabel: "训练日",
-      firstFieldLabel: "健康重点",
-      firstFieldPlaceholder: "今天最需要注意的健康事项是什么？",
+      firstFieldLabel: "今日重点",
+      firstFieldPlaceholder: "今天最想推进的一件事",
       itemPlaceholder: "项目，例如：早餐、跑步或早睡",
       targetPlaceholder: "目标，例如：清淡饮食 / 5 km / 23:30 前睡",
       showWeight: true,
@@ -61,10 +61,10 @@
       name: "考研",
       icon: "✎",
       eyebrow: "一个魂的考研打卡",
-      heading: "这一周，把目标拆成能完成的小步",
+      heading: "这一周，按自己的节奏来",
       activeDayLabel: "学习日",
-      firstFieldLabel: "学习重点",
-      firstFieldPlaceholder: "今天最重要的学习目标是什么？",
+      firstFieldLabel: "今日重点",
+      firstFieldPlaceholder: "今天最想推进的一件事",
       itemPlaceholder: "科目，例如：英语阅读",
       targetPlaceholder: "目标，例如：精读 2 篇",
       showWeight: false,
@@ -79,10 +79,10 @@
       name: "工作",
       icon: "▣",
       eyebrow: "一个魂的工作日程",
-      heading: "这一周，让重要的事清楚落地",
+      heading: "这一周，按自己的节奏来",
       activeDayLabel: "工作日",
-      firstFieldLabel: "工作重点",
-      firstFieldPlaceholder: "今天最需要推进的事情是什么？",
+      firstFieldLabel: "今日重点",
+      firstFieldPlaceholder: "今天最想推进的一件事",
       itemPlaceholder: "事项，例如：项目方案",
       targetPlaceholder: "目标，例如：完成初稿",
       showWeight: false,
@@ -97,10 +97,10 @@
       name: "自定义",
       icon: "✦",
       eyebrow: "一个魂的每周打卡",
-      heading: "这一周，把想做的事一点点推进",
+      heading: "这一周，按自己的节奏来",
       activeDayLabel: "行动日",
       firstFieldLabel: "今日重点",
-      firstFieldPlaceholder: "今天最重要的目标是什么？",
+      firstFieldPlaceholder: "今天最想推进的一件事",
       itemPlaceholder: "事项，例如：阅读、练琴或整理房间",
       targetPlaceholder: "目标，例如：完成 30 分钟",
       showWeight: false,
@@ -298,7 +298,6 @@
   const weekStickerGrid = $("#weekStickerGrid");
   const weekImportDialog = $("#weekImportDialog");
   const weekImportForm = $("#weekImportForm");
-  const weekPlanTextDialog = $("#weekPlanTextDialog");
   const weeklyReportDialog = $("#weeklyReportDialog");
   const weeklyReportContent = $("#weeklyReportContent");
   const chartsGrid = $("#chartsGrid");
@@ -368,11 +367,9 @@
     $("#addWeekButton").addEventListener("click", openPeriodDialog);
     $("#emptyAddWeekButton").addEventListener("click", openPeriodDialog);
     $("#importWeekButton").addEventListener("click", openWeekImportDialog);
-    $("#exportSelectedWeekButton").addEventListener("click", () => selectedWeekId && exportWeekPlan(selectedWeekId));
     $("#shiftWeekButton").addEventListener("click", () => selectedWeekId && shiftWeekScheduleByOneDay(selectedWeekId));
     $("#copyPreviousWeekButton").addEventListener("click", copyPreviousWeekContext);
     $("#copyAiPromptButton").addEventListener("click", copyAiPlanningPrompt);
-    $("#copyWeekPlanTextButton").addEventListener("click", copyWeekPlanText);
     $("#weekYearSelect").addEventListener("change", (event) => {
       weekYearFilter = event.currentTarget.value;
       weekMonthFilter = "";
@@ -453,11 +450,26 @@
       button.addEventListener("click", () => button.closest("dialog").close());
     });
 
+    document.addEventListener("click", (event) => {
+      const explicitClose = event.target.closest("[data-close-menu]");
+      if (explicitClose) {
+        explicitClose.closest("details")?.removeAttribute("open");
+        return;
+      }
+      $$(".section-action-menu[open], .week-action-menu[open], .chart-action-menu[open], .week-item-state[open]").forEach((menu) => {
+        if (!menu.contains(event.target)) menu.removeAttribute("open");
+      });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      $$(".section-action-menu[open], .week-action-menu[open], .chart-action-menu[open], .week-item-state[open]").forEach((menu) => menu.removeAttribute("open"));
+    });
+
     $$("[data-preset]").forEach((button) => {
       button.addEventListener("click", () => applyPreset(button.dataset.preset));
     });
 
-    [goalDialog, progressGoalDialog, spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weekPlanTextDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
+    [goalDialog, progressGoalDialog, spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weeklyReportDialog, avatarDialog, jokeEditorDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
       });
@@ -1079,15 +1091,28 @@
     }).join("");
     $$('[data-select-goal]', goalList).forEach((button) => {
       button.addEventListener("click", () => {
-        selectedGoalId = button.dataset.selectGoal;
-        renderGoals();
+        selectGoalWithoutRerender(button.dataset.selectGoal);
       });
     });
     bindSnapSelection(goalList, "[data-select-goal]", () => selectedGoalId, (id) => {
-      selectedGoalId = id;
-      renderGoals();
+      selectGoalWithoutRerender(id);
     });
     revealSelectedCard(goalList, `[data-select-goal="${escapeSelectorValue(selectedGoalId)}"]`);
+  }
+
+  function selectGoalWithoutRerender(goalId) {
+    if (!state.goals.some((goal) => goal.id === goalId)) return;
+    selectedGoalId = goalId;
+    $$('[data-select-goal]', goalList).forEach((button) => {
+      const selected = button.dataset.selectGoal === goalId;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    const selectedIndex = state.goals.findIndex((goal) => goal.id === selectedGoalId);
+    $("#editGoalButton").disabled = selectedIndex < 0;
+    $("#deleteGoalButton").disabled = selectedIndex < 0;
+    $("#moveGoalEarlierButton").disabled = selectedIndex <= 0;
+    $("#moveGoalLaterButton").disabled = selectedIndex < 0 || selectedIndex >= state.goals.length - 1;
   }
 
   function renderGoalSpaceOptions(selectedSpaceIds) {
@@ -1149,18 +1174,31 @@
 
     $$('[data-select-progress-goal]', progressGoalList).forEach((button) => {
       button.addEventListener("click", () => {
-        selectedProgressGoalId = button.dataset.selectProgressGoal;
-        renderProgressGoals();
+        selectProgressGoalWithoutRerender(button.dataset.selectProgressGoal);
       });
     });
     $$('[data-add-progress]', progressGoalList).forEach((form) => {
       form.addEventListener("submit", addProgressFromCard);
     });
     bindSnapSelection(progressGoalList, "[data-select-progress-goal]", () => selectedProgressGoalId, (id) => {
-      selectedProgressGoalId = id;
-      renderProgressGoals();
+      selectProgressGoalWithoutRerender(id);
     });
     revealSelectedCard(progressGoalList, `[data-select-progress-goal="${escapeSelectorValue(selectedProgressGoalId)}"]`);
+  }
+
+  function selectProgressGoalWithoutRerender(goalId) {
+    if (!state.progressGoals.some((goal) => goal.id === goalId)) return;
+    selectedProgressGoalId = goalId;
+    $$('[data-select-progress-goal]', progressGoalList).forEach((button) => {
+      const selected = button.dataset.selectProgressGoal === goalId;
+      button.setAttribute("aria-pressed", String(selected));
+      button.closest(".progress-goal-card")?.classList.toggle("is-selected", selected);
+    });
+    const selectedIndex = state.progressGoals.findIndex((goal) => goal.id === selectedProgressGoalId);
+    $("#editProgressGoalButton").disabled = selectedIndex < 0;
+    $("#deleteProgressGoalButton").disabled = selectedIndex < 0;
+    $("#moveProgressGoalEarlierButton").disabled = selectedIndex <= 0;
+    $("#moveProgressGoalLaterButton").disabled = selectedIndex < 0 || selectedIndex >= state.progressGoals.length - 1;
   }
 
   function escapeSelectorValue(value) {
@@ -1582,8 +1620,8 @@
   function syncSpaceCopy() {
     const hasSpace = Boolean(getSpace());
     const template = getSpaceTemplate();
-    $("#weeklyEyebrow").textContent = hasSpace ? template.eyebrow : "一个魂的每周日程安排";
-    $("#weeklyTitle").textContent = hasSpace ? template.heading : "建立空间后，再开始安排日程";
+    $("#weeklyEyebrow").textContent = hasSpace ? `一个魂的${getSpace().name}打卡` : "一个魂的每周日程安排";
+    $("#weeklyTitle").textContent = hasSpace ? "这一周，按自己的节奏来" : "建立空间后，再开始安排日程";
     $("#chartsEyebrow").textContent = hasSpace ? template.chartEyebrow : "一个魂的状态轨迹";
     $("#chartsTitle").textContent = hasSpace ? template.chartHeading : "建立空间后，再记录一条轨迹";
     $(".week-empty h3").textContent = hasSpace ? "先建立一个年月吧" : "先建立一个空间吧";
@@ -1615,14 +1653,12 @@
       if (matchingPack) activeSpaceIconPack = matchingPack[0];
       $("#spaceDialogEyebrow").textContent = "EDIT LIFE SPACE";
       $("#spaceDialogTitle").textContent = `编辑“${editingSpace.name}”`;
-      $("#spaceDialogCopy").textContent = "名称、模板和图标都可以修改；已有日程、周报和图表会原样保留。";
       $("#saveSpaceButton").textContent = "保存修改";
     } else {
       spaceForm.elements.templateId.value = "custom";
       pendingSpaceIconSticker = "";
       $("#spaceDialogEyebrow").textContent = "NEW LIFE SPACE";
       $("#spaceDialogTitle").textContent = "新建一个空间";
-      $("#spaceDialogCopy").textContent = `选择一个接近的模板，再改成属于你的名字。最多可以保留 ${MAX_SPACES} 个空间。`;
       $("#saveSpaceButton").textContent = "建立空间";
       syncSpaceFormTemplate();
     }
@@ -1828,36 +1864,12 @@
     showToast(`${label} 已删除`);
   }
 
-  function exportWeekPlan(weekId) {
-    const week = findWeek(weekId);
-    if (!week) return;
-    $("#weekPlanTextTitle").textContent = `本周便签 · ${getSpace(week.spaceId).name} · ${formatDateRange(week.startDate)}`;
-    $("#weekPlanTextOutput").value = buildWeekPlanText(week);
-    weekPlanTextDialog.showModal();
-  }
-
-  function buildWeekPlanText(week) {
-    const template = getSpaceTemplate(week.spaceId);
-    const weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
-    const lines = [`${getSpace(week.spaceId).name}本周便签`, `时间：${formatFriendlyDate(week.startDate)}到${formatFriendlyDate(addDaysIso(week.startDate, 6))}`];
-    week.days.forEach((day, dayIndex) => {
-      lines.push("", `${weekdays[dayIndex]}  ${formatFriendlyDate(day.date)}  ${day.title}`);
-      lines.push(`${template.firstFieldLabel}：${day.focus || "暂无"}`);
-      const plans = day.items.filter((item) => item.text);
-      if (!plans.length) lines.push("计划安排：暂无");
-      else {
-        lines.push("计划安排：");
-        plans.forEach((item, index) => lines.push(`${index + 1}．${item.text}`));
-      }
-      if (day.note) lines.push(`当天小记：${day.note}`);
-    });
-    return lines.join("\n");
-  }
-
   function shiftWeekScheduleByOneDay(weekId) {
     const week = findWeek(weekId);
     if (!week) return;
-    const selectedDayId = selectedDayByWeek.get(week.id);
+    const visibleDayId = weekDetail.querySelector("[data-inline-day]")?.dataset.inlineDay;
+    const selectedDayId = visibleDayId || selectedDayByWeek.get(week.id) || week.days[0]?.id;
+    selectedDayByWeek.set(week.id, selectedDayId);
     const startIndex = Math.max(0, week.days.findIndex((day) => day.id === selectedDayId));
     const startDayNumber = startIndex + 1;
     const lastDay = week.days[6];
@@ -1907,7 +1919,7 @@
     weekTimeline.dataset.count = String(filteredWeeks.length);
     $("#addWeekButton").disabled = !hasActiveSpace;
     $("#emptyAddWeekButton").disabled = !hasActiveSpace;
-    ["#exportSelectedWeekButton", "#shiftWeekButton", "#showSelectedWeekReportButton"].forEach((selector) => {
+    ["#shiftWeekButton", "#showSelectedWeekReportButton"].forEach((selector) => {
       $(selector).disabled = filteredWeeks.length === 0;
     });
     if (!filteredWeeks.length) {
@@ -2050,9 +2062,9 @@
           </div>
         </div>
         <div class="week-day-stepper" aria-label="切换当天">
-          <button type="button" data-week-day-step="-1"${selectedIndex === 0 ? " disabled" : ""}>← <span>上一天</span></button>
+          <button type="button" data-week-day-step="-1" aria-label="前一天"${selectedIndex === 0 ? " disabled" : ""}>←</button>
           <strong>Day ${selectedDay.dayNumber} <small>/ 7</small></strong>
-          <button type="button" data-week-day-step="1"${selectedIndex === week.days.length - 1 ? " disabled" : ""}><span>下一天</span> →</button>
+          <button type="button" data-week-day-step="1" aria-label="后一天"${selectedIndex === week.days.length - 1 ? " disabled" : ""}>→</button>
         </div>
         ${renderWeekDayEditor(week, selectedDay)}
       </article>`;
@@ -2062,14 +2074,6 @@
         const dayId = button.dataset.selectWeekDay;
         selectedDayByWeek.set(week.id, dayId);
         renderWeekDetail(week);
-      });
-    });
-    $$('[data-configure-week-day]', weekDetail).forEach((button) => {
-      button.addEventListener("click", () => {
-        const dayId = button.dataset.configureWeekDay;
-        selectedDayByWeek.set(week.id, dayId);
-        renderWeekDetail(week);
-        openWeekStickerPicker(week.id, dayId);
       });
     });
     $$('[data-week-day-step]', weekDetail).forEach((button) => {
@@ -2126,7 +2130,6 @@
             ${day.status || day.recorded ? `<em>${escapeHtml(day.status || "已记录")}</em>` : ""}
           </span>
         </button>
-        <button class="week-day-tab-settings" type="button" data-configure-week-day="${day.id}" aria-label="设置 Day${day.dayNumber}">设置</button>
         <i aria-hidden="true"></i>
       </div>`;
   }
@@ -2153,11 +2156,8 @@
               <button type="button" data-set-week-item-state="" aria-pressed="${state === ""}"><b>○</b><span>清除</span></button>
             </div>
           </details>
-          <input class="week-item-text" data-week-item-text maxlength="160" aria-label="第 ${index + 1} 项计划" placeholder="${escapeAttr(template.itemPlaceholder)}：${escapeAttr(template.targetPlaceholder)}" value="${escapeAttr(item.text || "")}" />
-          <details class="week-item-more">
-            <summary aria-label="管理第 ${index + 1} 项安排">•••</summary>
-            <div><button type="button" data-remove-week-item="${index}">删除这项安排</button></div>
-          </details>
+          <input class="week-item-text" data-week-item-text maxlength="160" aria-label="第 ${index + 1} 项计划" placeholder="写下这项安排" value="${escapeAttr(item.text || "")}" />
+          <button class="week-item-remove" type="button" data-remove-week-item="${index}" aria-label="删除第 ${index + 1} 项安排">×</button>
         </div>`;
     }).join("");
 
@@ -2172,7 +2172,7 @@
         </header>
 
         <div class="week-focus-field">
-          <label><span>${escapeHtml(template.firstFieldLabel)}</span><input data-day-text-field="focus" maxlength="500" placeholder="${escapeAttr(template.firstFieldPlaceholder)}" value="${escapeAttr(day.focus)}" /></label>
+          <label><span>今日重点</span><input data-day-text-field="focus" maxlength="500" placeholder="今天最想推进的一件事" value="${escapeAttr(day.focus)}" /></label>
         </div>
 
         <div class="week-item-table">
@@ -2529,11 +2529,6 @@
     weekImportDialog.close();
     renderWeeks();
     showToast("本周计划已导入，原有状态与当天小记已保留");
-  }
-
-  async function copyWeekPlanText() {
-    await copyText($("#weekPlanTextOutput").value);
-    showToast("本周便签文本已复制");
   }
 
   async function copyText(value) {
@@ -3488,9 +3483,6 @@
     $$("[data-zoom-chart]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => changeChartZoom(button.dataset.zoomChart, button.dataset.zoomAction));
     });
-    $$("[data-fullscreen-chart]", chartsGrid).forEach((button) => {
-      button.addEventListener("click", () => toggleChartFullscreen(button));
-    });
     $$("[data-edit-selected-node]", chartsGrid).forEach((button) => {
       button.addEventListener("click", () => openNodeDialog(button.dataset.chartId, button.dataset.editSelectedNode));
     });
@@ -3507,42 +3499,11 @@
     restoreChartScrollPositions();
   }
 
-  async function toggleChartFullscreen(button) {
-    const card = button.closest(".chart-card");
-    if (!card) return;
-    try {
-      if (card.classList.contains("is-pseudo-fullscreen")) {
-        card.classList.remove("is-pseudo-fullscreen");
-        document.body.classList.remove("has-pseudo-fullscreen-chart");
-        button.textContent = "全屏查看";
-        return;
-      }
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-        return;
-      }
-      if (!card.requestFullscreen) {
-        card.classList.add("is-pseudo-fullscreen");
-        document.body.classList.add("has-pseudo-fullscreen-chart");
-        button.textContent = "退出全屏";
-        card.scrollTop = 0;
-        return;
-      }
-      await card.requestFullscreen({ navigationUI: "hide" });
-      screen.orientation?.lock?.("landscape").catch(() => {});
-    } catch {
-      showToast("全屏没有打开，可将手机横过来查看");
-    }
-  }
-
   function renderChartCard(chart, chartIndex, chartCount) {
     const selectedId = selectedNodeByChart.get(chart.id);
     const selectedNode = chart.nodes.find((node) => node.id === selectedId) || chart.nodes.at(-1) || null;
     if (selectedNode) selectedNodeByChart.set(chart.id, selectedNode.id);
     const primaryColor = chart.series[0]?.color || ALLOWED_COLORS[0];
-    const seriesLegend = chart.series.map((item) => `
-      <span class="series-legend-item"><i style="--series-color:${item.color}"></i>${escapeHtml(item.name)}</span>
-    `).join("");
     const selectedValues = selectedNode
       ? chart.series.map((series) => {
           const raw = selectedNode.values?.[series.id];
@@ -3575,15 +3536,15 @@
                 <span aria-hidden="true">·</span>
                 <span>${chart.nodes.length} 个节点</span>
               </div>
-              <div class="series-legend">${seriesLegend}</div>
             </div>
           </div>
           <div class="chart-card-actions">
             <button class="chart-action chart-action--add" type="button" data-add-node="${chart.id}">＋ 新节点</button>
             <button class="chart-action chart-action--download" type="button" data-download-chart="${chart.id}">↓ 下载曲线图</button>
             <details class="chart-action-menu">
-              <summary aria-label="管理曲线图">••• 管理</summary>
+              <summary aria-label="管理曲线图">•••</summary>
               <div>
+                <button class="menu-close" type="button" data-close-menu aria-label="关闭图表管理">×</button>
                 <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="-1" aria-label="曲线图上移"${chartIndex === 0 ? " disabled" : ""}>↑ 曲线图上移</button>
                 <button class="chart-action chart-action--move" type="button" data-move-chart="${chart.id}" data-direction="1" aria-label="曲线图下移"${chartIndex === chartCount - 1 ? " disabled" : ""}>↓ 曲线图下移</button>
                 <button class="chart-action chart-action--settings" type="button" data-edit-chart="${chart.id}"><span aria-hidden="true">⚙</span> 图表设置</button>
@@ -3790,9 +3751,10 @@
     const zoom = chartZoomById.get(chart.id) || 1;
     const zoomIndex = CHART_ZOOM_LEVELS.indexOf(zoom);
     const canZoom = chart.nodes.length > 1;
-    const width = 920 * zoom;
-    const height = 370;
-    const margin = { top: 58, right: 34, bottom: 62, left: chart.series.length > 1 ? 112 : 76 };
+    const compactChart = window.matchMedia("(max-width: 900px)").matches;
+    const width = (compactChart ? 720 : 920) * zoom;
+    const height = compactChart ? 500 : 370;
+    const margin = { top: compactChart ? 76 : 58, right: 34, bottom: compactChart ? 72 : 62, left: chart.series.length > 1 ? (compactChart ? 98 : 112) : 76 };
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const xAt = (index) => chart.nodes.length === 1
@@ -3875,8 +3837,6 @@
       return `<path class="chart-line" style="--chart-color:${item.color}" d="${path}" />`;
     }).join("");
 
-    const compactChart = window.matchMedia("(max-width: 900px)").matches;
-    const mobileStickerEvery = Math.max(1, Math.ceil(chart.nodes.length / 5));
     const pointMarkup = chart.nodes.map((node, nodeIndex) => {
       const pointValues = seriesData.map((item) => ({
         series: item,
@@ -3886,8 +3846,7 @@
       const isSelected = selectedNodeByChart.get(chart.id) === node.id;
       const showPointMarker = isSelected || nodeSpacing >= 14 || nodeIndex % labelEvery === 0 || nodeIndex === chart.nodes.length - 1;
       const stickerSize = Math.max(20, Math.min(seriesData.length > 1 ? 30 : 38, nodeSpacing - 8));
-      const showStickerAtNode = !compactChart || zoom > 1 || isSelected || nodeIndex === 0 || nodeIndex === chart.nodes.length - 1 || nodeIndex % mobileStickerEvery === 0;
-      const stickerMarkup = showStickerAtNode ? pointValues.map(({ series, point }, pointIndex) => {
+      const stickerMarkup = pointValues.map(({ series, point }, pointIndex) => {
         const sticker = safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""));
         if (!sticker) return "";
         const centerX = point.px + (pointIndex - (pointValues.length - 1) / 2) * (stickerSize + 4);
@@ -3897,7 +3856,7 @@
         return `<circle class="point-sticker-bg" cx="${centerX}" cy="${centerY}" r="${clipRadius + 3}" />
           <clipPath id="${clipId}"><circle cx="${centerX}" cy="${centerY}" r="${clipRadius}" /></clipPath>
           <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - clipRadius}" y="${centerY - clipRadius}" width="${stickerSize}" height="${stickerSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
-      }).join("") : "";
+      }).join("");
       const cores = showPointMarker ? pointValues.map(({ series, point }) => `
         <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="10" />
         <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="6" />
@@ -3928,15 +3887,13 @@
         <div class="chart-view-status">
           <span class="chart-view-icon" aria-hidden="true">${chart.nodes.length === 1 ? "◎" : zoom === 1 ? "⌁" : "↔"}</span>
           <span>
-            <strong>${chart.nodes.length === 1 ? "起点视图" : zoom === 1 ? "全局视图" : `${zoom}× 局部视图`}</strong>
-            <small>${chart.nodes.length === 1 ? "1 个节点 · 第一条轨迹已点亮" : zoom === 1 ? `${chart.nodes.length} 个节点 · 完整趋势` : `${chart.nodes.length} 个节点 · 左右滑动查看`}</small>
+            <strong>${chart.nodes.length === 1 ? "起点" : zoom === 1 ? "趋势预览" : `${zoom}× 放大`}</strong>
+            <small>${chart.nodes.length === 1 ? "第一条轨迹已点亮" : zoom === 1 ? `${chart.nodes.length} 个节点` : "左右滑动查看"}</small>
           </span>
         </div>
         <div>
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
-          <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="reset"${!canZoom || zoom === 1 ? " disabled" : ""}>看全局</button>
-          <button type="button" data-fullscreen-chart="${chart.id}">全屏查看</button>
         </div>
       </div>
       <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
@@ -4790,29 +4747,23 @@
 
   function initPwa() {
     const action = $("#installAppButton");
+    const installRow = $("#installPreferenceRow");
+    const updateAction = $("#updateAppButton");
     if (!action) return;
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-    const setAction = (label, mode, title) => {
+    const setInstallAction = (label, title) => {
       action.querySelector("span").textContent = label;
-      action.dataset.mode = mode;
       action.title = title;
-      action.disabled = mode === "installed";
-      action.classList.toggle("is-ready", mode === "install" || mode === "update");
+      action.classList.add("is-ready");
     };
-    if (isStandalone) {
-      action.hidden = true;
-      action.setAttribute("aria-hidden", "true");
-    }
+    installRow.hidden = true;
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       deferredInstallPrompt = event;
-      setAction("安装应用", "install", "安装到桌面或手机主屏幕");
+      if (!isStandalone) installRow.hidden = false;
+      setInstallAction("安装应用", "安装到桌面或手机主屏幕");
     });
     action.addEventListener("click", async () => {
-      if (action.dataset.mode === "update" && waitingServiceWorker) {
-        waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
-        return;
-      }
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
         await deferredInstallPrompt.userChoice;
@@ -4829,9 +4780,13 @@
     });
     window.addEventListener("appinstalled", () => {
       deferredInstallPrompt = null;
-      action.hidden = true;
-      action.setAttribute("aria-hidden", "true");
+      installRow.hidden = true;
       showToast("一个魂生活日记已经安装到桌面");
+    });
+    updateAction?.addEventListener("click", () => {
+      if (!waitingServiceWorker) return;
+      updateAction.hidden = true;
+      waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
     });
 
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
@@ -4839,9 +4794,9 @@
     navigator.serviceWorker.register("sw.js").then((registration) => {
       const offerUpdate = (worker) => {
         waitingServiceWorker = worker;
-        action.hidden = false;
-        action.removeAttribute("aria-hidden");
-        setAction("更新应用", "update", "点击刷新到刚刚部署的新版本");
+        if (!updateAction) return;
+        updateAction.hidden = false;
+        updateAction.title = "点击刷新到刚刚部署的新版本";
       };
       if (registration.waiting) offerUpdate(registration.waiting);
       registration.addEventListener("updatefound", () => {

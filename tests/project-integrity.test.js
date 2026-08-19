@@ -65,11 +65,12 @@ for (const requiredId of [
   "chartsEyebrow",
   "chartsTitle",
   "emptyChartExample",
-  "weekPlanTextDialog",
   "shiftWeekButton",
   "copyPreviousWeekButton",
   "aiPreviousWeekSummary",
   "installAppButton",
+  "installPreferenceRow",
+  "updateAppButton",
 ]) {
   assert.ok(ids.includes(requiredId), `missing HTML id: ${requiredId}`);
 }
@@ -87,11 +88,11 @@ assert.match(html, /AI 规划本周/);
 assert.match(html, /使用你习惯的 AI，生成符合网页模板格式的本周计划即可/, "AI planning should lead with the simple outcome");
 assert.match(app, /function copyPreviousWeekContext\(/, "AI planning should copy the previous week separately");
 assert.doesNotMatch(html, /id="aiPromptOutput"/, "AI planning should not expose a large generated-prompt preview");
-assert.match(html, /本周便签/);
+assert.doesNotMatch(html, /本周便签/, "the PWA should replace the old mobile-note export");
 assert.match(html, /从 Day1 起顺延一天/);
 assert.match(html, /class="hero-jump" href="#goalSectionStart"[^>]*>点击开始/, "hero action must open countdowns");
 assert.doesNotMatch(html, /AI 规划本月/);
-assert.match(html, /href="icons\/icon-192\.png\?v=0820a"/);
+assert.match(html, /href="icons\/icon-192\.png\?v=0820b"/);
 assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-yigehun-app.png")), "missing polished yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
 assert.match(html, /class="personal-preferences personal-preferences--install"[\s\S]*id="installAppButton"/, "PWA installation must live in the personal view");
@@ -106,7 +107,7 @@ assert.doesNotMatch(html, /name="project"/, "profile must not ask for a project"
 assert.match(html, /name="signature"/);
 assert.match(html, />个性签名</);
 assert.doesNotMatch(html, /写一句现在想送给自己的话/);
-assert.match(html, /id="copyWeekPlanTextButton"[^>]*>复制文本</);
+assert.doesNotMatch(html, /weekPlanTextDialog|copyWeekPlanTextButton|exportSelectedWeekButton/, "legacy weekly-note UI must be removed");
 assert.doesNotMatch(app, /【备注】/, "AI plan format must not ask AI to write daily notes");
 assert.doesNotMatch(app, /day\.note\s*=\s*plannedDay\.note/, "AI import must preserve daily notes");
 assert.match(app, /selectedDayByWeek\.get\(week\.id\)/, "schedule shift must start from the selected day");
@@ -173,7 +174,7 @@ assert.match(html, /class="section-nav"/, "desktop section navigation must exist
 assert.match(html, /class="mobile-bottom-nav"/, "mobile section navigation must exist");
 assert.match(html, /data-app-view="home"/, "the mobile home view must exist");
 assert.match(app, /function initSectionNavigation\(\)[\s\S]*showMobileView/, "mobile navigation must switch real app views");
-assert.match(app, /data-fullscreen-chart/, "mobile curve charts must support fullscreen viewing");
+assert.doesNotMatch(app, /data-fullscreen-chart|toggleChartFullscreen/, "mobile curve charts should be readable inline without a second fullscreen mode");
 assert.ok(fs.existsSync(path.join(projectRoot, "mobile-app.css")), "missing final mobile app stylesheet");
 assert.match(app, /data-series-axis-min/, "each curve must expose an optional y-axis minimum");
 assert.match(app, /data-series-axis-max/, "each curve must expose an optional y-axis maximum");
@@ -193,7 +194,6 @@ assert.deepEqual(missingFullDemoStickers, [], `full demo data references missing
 
 const weekActionOrder = [
   "importWeekButton",
-  "exportSelectedWeekButton",
   "showSelectedWeekReportButton",
   "addWeekButton",
   "deleteSelectedPeriodButton",

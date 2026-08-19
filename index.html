@@ -7,19 +7,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="一个魂日记" />
-    <link rel="icon" type="image/png" href="icons/icon-192.png?v=0820a" />
-    <link rel="apple-touch-icon" href="icons/icon-192.png?v=0820a" />
-    <link rel="manifest" href="manifest.webmanifest?v=0820a" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png?v=0820b" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png?v=0820b" />
+    <link rel="manifest" href="manifest.webmanifest?v=0820b" />
     <meta
       name="description"
       content="Asoul 一个魂生活日记——在本地记录属于你的每一点变化。"
     />
     <title>Asoul 一个魂生活日记</title>
-    <link rel="stylesheet" href="styles.css?v=0820a" />
-    <link rel="stylesheet" href="weekly-planner.css?v=0820a" />
-    <link rel="stylesheet" href="weekly-polish.css?v=0820a" />
-    <link rel="stylesheet" href="complete-polish.css?v=0820a" />
-    <link rel="stylesheet" href="mobile-app.css?v=0820a" />
+    <link rel="stylesheet" href="styles.css?v=0820b" />
+    <link rel="stylesheet" href="weekly-planner.css?v=0820b" />
+    <link rel="stylesheet" href="weekly-polish.css?v=0820b" />
+    <link rel="stylesheet" href="complete-polish.css?v=0820b" />
+    <link rel="stylesheet" href="mobile-app.css?v=0820b" />
   </head>
   <body>
     <div class="page-glow page-glow--one" aria-hidden="true"></div>
@@ -29,7 +29,7 @@
       <a class="brand" href="#top" data-nav-home aria-label="返回首页">
         <img class="brand-asoul-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
         <span class="brand-app-mark" aria-label="一个魂生活日记">
-          <img src="icons/icon-yigehun.png?v=0820a" alt="" />
+          <img src="icons/icon-yigehun.png?v=0820b" alt="" />
         </span>
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
@@ -39,8 +39,9 @@
       </a>
       <div class="header-tools">
         <span class="local-badge" title="自动保存到当前浏览器；只有点击“备份”才会下载 JSON 文件"><i aria-hidden="true"></i> 浏览器内自动保存</span>
-        <button class="text-button header-data-action header-data-action--backup" id="exportButton" type="button"><span aria-hidden="true">↓</span>备份</button>
-        <button class="text-button header-data-action header-data-action--restore" id="importButton" type="button"><span aria-hidden="true">↥</span>恢复</button>
+        <button class="text-button header-data-action header-data-action--backup" id="exportButton" type="button">备份</button>
+        <button class="text-button header-data-action header-data-action--restore" id="importButton" type="button">恢复</button>
+        <button class="text-button header-update-action" id="updateAppButton" type="button" hidden>更新</button>
         <button class="text-button reset-data-button" id="resetDataButton" type="button">清空记录</button>
         <input id="importInput" type="file" accept="application/json" hidden />
       </div>
@@ -159,18 +160,18 @@
         <div class="personal-preferences" aria-label="个人设置">
           <div class="personal-preference-copy">
             <span class="personal-preference-icon" aria-hidden="true">♪</span>
-            <span><strong>完成提示音</strong><small>记录完成时，给今天一个轻轻的回应</small></span>
+            <span><strong>提示音</strong><small>记录完成时，给今天一个轻轻的回应</small></span>
           </div>
           <button class="preference-switch data-sound-toggle" id="weekSoundToggle" type="button" aria-pressed="true"><span id="weekSoundLabel">已开启</span><i aria-hidden="true"></i></button>
         </div>
 
-        <div class="personal-preferences personal-preferences--install" aria-label="应用安装与更新">
+        <div class="personal-preferences personal-preferences--install" id="installPreferenceRow" aria-label="应用安装与更新" hidden>
           <div class="personal-preference-copy">
-            <span class="personal-preference-icon personal-preference-icon--app" aria-hidden="true"><img src="icons/icon-yigehun.png?v=0820a" alt="" /></span>
+            <span class="personal-preference-icon personal-preference-icon--app" aria-hidden="true"><img src="icons/icon-yigehun.png?v=0820b" alt="" /></span>
             <span><strong>一个魂手机应用</strong><small>安装到主屏幕后，可以像 App 一样打开</small></span>
           </div>
           <button class="install-app-button" id="installAppButton" type="button" title="把生活日记安装到桌面或手机主屏幕">
-            <img src="icons/icon-192.png?v=0820a" alt="" />
+            <img src="icons/icon-192.png?v=0820b" alt="" />
             <span>安装应用</span>
           </button>
         </div>
@@ -188,6 +189,7 @@
             <details class="section-action-menu">
               <summary aria-label="管理倒计时" title="管理倒计时">•••</summary>
               <div>
+                <button class="menu-close" type="button" data-close-menu aria-label="关闭管理菜单">×</button>
                 <button class="secondary-button" id="editGoalButton" type="button">编辑当前倒计时</button>
                 <button class="secondary-button danger-button" id="deleteGoalButton" type="button">删除当前倒计时</button>
                 <span class="item-order-actions" aria-label="调整倒计时顺序">
@@ -215,6 +217,7 @@
               <details class="section-action-menu">
                 <summary aria-label="管理进度目标" title="管理进度目标">•••</summary>
                 <div>
+                  <button class="menu-close" type="button" data-close-menu aria-label="关闭管理菜单">×</button>
                   <button class="secondary-button" id="editProgressGoalButton" type="button">编辑当前进度</button>
                   <button class="secondary-button danger-button" id="deleteProgressGoalButton" type="button">删除当前进度</button>
                   <span class="item-order-actions" aria-label="调整进度目标顺序">
@@ -243,6 +246,7 @@
             <details class="section-action-menu">
               <summary aria-label="管理空间" title="管理空间">•••</summary>
               <div>
+                <button class="menu-close" type="button" data-close-menu aria-label="关闭管理菜单">×</button>
                 <button class="secondary-button" id="editSpaceButton" type="button">编辑当前空间</button>
                 <button class="secondary-button danger-button" id="deleteSpaceButton" type="button">删除当前空间</button>
               </div>
@@ -270,19 +274,19 @@
               <div class="week-timeline-controls">
                 <div class="week-month-switcher" aria-label="切换年月">
                   <button id="previousPeriodButton" type="button" aria-label="上一个年月">←</button>
-                  <div>
-                    <label><span>年</span><select id="weekYearSelect" aria-label="按年份筛选周计划"></select></label>
-                    <label><span>月</span><select id="weekMonthSelect" aria-label="按月份筛选周计划"></select></label>
+                  <div class="week-period-fields">
+                    <select id="weekYearSelect" aria-label="按年份筛选周计划"></select>
+                    <select id="weekMonthSelect" aria-label="按月份筛选周计划"></select>
                   </div>
                   <button id="nextPeriodButton" type="button" aria-label="下一个年月">→</button>
                 </div>
                 <span class="week-node-actions" aria-label="当前周操作">
                   <button id="importWeekButton" type="button">✦ AI 规划本周</button>
-                  <button id="exportSelectedWeekButton" type="button">本周便签</button>
                   <button id="showSelectedWeekReportButton" type="button">显示周报</button>
                   <details class="week-action-menu">
                     <summary aria-label="更多周计划操作">•••</summary>
                     <div>
+                      <button class="menu-close" type="button" data-close-menu aria-label="关闭更多操作">×</button>
                       <button id="addWeekButton" type="button"><span aria-hidden="true">＋</span> 新建年月</button>
                       <button class="is-danger" id="deleteSelectedPeriodButton" type="button">删除年月</button>
                       <button id="shiftWeekButton" type="button">从 Day1 起顺延一天</button>
@@ -445,13 +449,13 @@
           </div>
           <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
         </div>
-        <p class="avatar-dialog-copy" id="spaceDialogCopy">选择一个接近的模板，再改成属于你的名字。最多可以保留 8 个空间。</p>
+        <p class="avatar-dialog-copy" id="spaceDialogCopy" hidden></p>
         <fieldset class="space-template-options">
           <legend>从哪里开始？</legend>
-          <label><input type="radio" name="templateId" value="health" /><span><b>♡ 健康模板</b><small>健康重点、身体复盘与体重</small></span></label>
-          <label><input type="radio" name="templateId" value="study" /><span><b>✎ 学习模板</b><small>学习重点、科目任务与复盘</small></span></label>
-          <label><input type="radio" name="templateId" value="work" /><span><b>▣ 工作模板</b><small>工作重点、事项交付与总结</small></span></label>
-          <label><input type="radio" name="templateId" value="custom" checked /><span><b>✦ 空白模板</b><small>通用重点、任务和复盘</small></span></label>
+          <label><input type="radio" name="templateId" value="health" /><span><b>♡ 健康模板</b></span></label>
+          <label><input type="radio" name="templateId" value="study" /><span><b>✎ 学习模板</b></span></label>
+          <label><input type="radio" name="templateId" value="work" /><span><b>▣ 工作模板</b></span></label>
+          <label><input type="radio" name="templateId" value="custom" checked /><span><b>✦ 空白模板</b></span></label>
         </fieldset>
         <div class="dialog-fields">
           <label class="field field--wide"><span>空间名称</span><input name="name" maxlength="16" required placeholder="例如：阅读计划、副业、早睡挑战" /></label>
@@ -461,14 +465,14 @@
           <summary class="space-icon-picker-head">
             <div>
               <strong id="spaceIconPickerTitle">用表情包做空间图标</strong>
-              <span>点击展开选择；图片会优先于上面的符号显示。</span>
+              <span>展开选择</span>
             </div>
             <div class="space-icon-preview" id="spaceIconPreview" aria-live="polite"><span>✦</span></div>
           </summary>
           <div class="space-icon-picker-body">
             <div class="sticker-tabs" id="spaceIconStickerTabs" role="tablist" aria-label="空间图标表情包分类"></div>
             <div class="sticker-grid avatar-sticker-grid space-icon-sticker-grid" id="spaceIconStickerGrid" role="tabpanel"></div>
-            <button class="text-button space-icon-clear" id="spaceIconClearButton" type="button">不用表情包，显示空间符号</button>
+            <button class="text-button space-icon-clear" id="spaceIconClearButton" type="button">使用空间符号</button>
           </div>
         </details>
         <div class="dialog-actions">
@@ -517,7 +521,7 @@
           <div class="series-editor-head">
             <div>
               <strong id="seriesEditorTitle">这张图要记录哪些指标？</strong>
-              <span>最多三条曲线；每条曲线都可留空使用自动刻度，或自定义纵轴范围。</span>
+              <span>最多 3 项指标，可自定纵轴。</span>
             </div>
             <button id="addSeriesButton" type="button">＋ 添加指标</button>
           </div>
@@ -693,20 +697,6 @@
       </form>
     </dialog>
 
-    <dialog class="dialog" id="weekPlanTextDialog" aria-labelledby="weekPlanTextTitle">
-      <section class="dialog-card dialog-card--wide">
-        <div class="dialog-head">
-          <div><span class="eyebrow">WEEK NOTE</span><h2 id="weekPlanTextTitle">本周便签</h2></div>
-          <button class="icon-button" type="button" data-close-dialog aria-label="关闭">×</button>
-        </div>
-        <p class="avatar-dialog-copy">复制到手机便签里，出门时照着做；晚上回来打开网页，再统一记录完成情况。这里是普通文字，不会下载 JSON 文件。</p>
-        <textarea class="week-plan-text-output" id="weekPlanTextOutput" rows="18" readonly></textarea>
-        <div class="dialog-actions">
-          <button class="text-button" type="button" data-close-dialog>关闭</button>
-          <button class="primary-button" id="copyWeekPlanTextButton" type="button">复制文本</button>
-        </div>
-      </section>
-    </dialog>
 
     <dialog class="dialog" id="weeklyReportDialog" aria-labelledby="weeklyReportDialogTitle">
       <section class="dialog-card dialog-card--wide weekly-report-dialog-card">
@@ -778,9 +768,9 @@
     </nav>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="data-model.js?v=0820a"></script>
-    <script src="stickers.js?v=0820a"></script>
-    <script src="冷笑话.js?v=0820a"></script>
-    <script src="app.js?v=0820a"></script>
+    <script src="data-model.js?v=0820b"></script>
+    <script src="stickers.js?v=0820b"></script>
+    <script src="冷笑话.js?v=0820b"></script>
+    <script src="app.js?v=0820b"></script>
   </body>
 </html>
