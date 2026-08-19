@@ -286,7 +286,7 @@
     transform:rotate(8deg) !important;
   }
   body.is-mobile-app .hero-fan-symbol--icecream {
-    top:10px !important;
+    top:72px !important;
     left:-13px !important;
     color:#576690 !important;
     background:#f0f2f8 !important;
@@ -327,18 +327,11 @@
   body.is-mobile-app .hero-line i:nth-child(3) { left:43% !important; top:37px !important; background:#db7d74 !important; }
   body.is-mobile-app .hero-line i:nth-child(4) { left:67% !important; top:8px !important; background:#f2bf55 !important; }
   body.is-mobile-app .hero-line i:nth-child(5) { right:-3px !important; top:16px !important; background:#576690 !important; }
-  body.is-mobile-app .hero-spark--one {
-    top:286px !important;
-    left:30px !important;
-    color:#f1bb3d !important;
-    font-size:23px !important;
-    transform:rotate(-12deg) !important;
-  }
   body.is-mobile-app .hero-spark--two {
-    top:108px !important;
-    right:31px !important;
+    top:27px !important;
+    right:24px !important;
     color:#e799b0 !important;
-    font-size:38px !important;
+    font-size:36px !important;
     transform:rotate(-12deg) !important;
   }
 
