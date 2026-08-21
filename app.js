@@ -11,6 +11,71 @@
     ],
     migrateState: (candidate) => candidate,
   };
+  const APP_UTILS = globalThis.ASOUL_APP_UTILS;
+  if (!APP_UTILS) throw new Error("app-utils.js must load before app.js");
+  const {
+    addDaysIso,
+    escapeAttr,
+    escapeHtml,
+    escapeXml,
+    formatChartAxisLabel,
+    formatCompactDate,
+    formatDateRange,
+    formatFriendlyDate,
+    formatGoalDate,
+    formatMonthDay,
+    formatNumber,
+    formatProgressInput,
+    formatProgressNumber,
+    formatProgressUpdateTime,
+    formatSeriesInput,
+    formatSeriesValue,
+    formatWeight,
+    getGoalCountdown,
+    getMonthMondays,
+    parseChartDate,
+    parseSeriesValue,
+    safeDate,
+    safeString,
+    safeWeight,
+    shortLabel,
+    startOfWeekIso,
+    todayIso,
+  } = APP_UTILS;
+  const BACKUP_CODEC = globalThis.ASOUL_BACKUP_CODEC;
+  if (!BACKUP_CODEC) throw new Error("backup-codec.js must load before app.js");
+  const {
+    createDiaryBackupPayload,
+    parseDiaryBackup,
+  } = BACKUP_CODEC;
+  const MILESTONE_DOMAIN = globalThis.ASOUL_MILESTONE_DOMAIN;
+  if (!MILESTONE_DOMAIN) throw new Error("milestone-domain.js must load before app.js");
+  const {
+    applyProgressDelta,
+    getProgressPercent,
+    getReportSpaceNames,
+    moveItemById,
+    selectValidSpaceIds,
+  } = MILESTONE_DOMAIN;
+  const CHART_DOMAIN = globalThis.ASOUL_CHART_DOMAIN;
+  if (!CHART_DOMAIN) throw new Error("chart-domain.js must load before app.js");
+  const {
+    buildSmoothPath,
+    getChartSeriesGeometry,
+    getLabelEvery,
+    getNextZoom,
+  } = CHART_DOMAIN;
+  const SCHEDULE_DOMAIN = globalThis.ASOUL_SCHEDULE_DOMAIN;
+  if (!SCHEDULE_DOMAIN) throw new Error("schedule-domain.js must load before app.js");
+  const {
+    countWeekItemStates,
+    hasScheduleDayContent,
+    hasWeekDayRecord,
+    parseAiPlanTemplate,
+    shiftWeekDays,
+    weekItemStateLabel,
+    weekItemStateMark,
+  } = SCHEDULE_DOMAIN;
   const STORAGE_KEY = "asoul-health-diary-v1";
   const JOKES_STORAGE_KEY = "asoul-health-diary-jokes-v1";
   const SOUND_STORAGE_KEY = "asoul-health-diary-week-sound-v1";
@@ -26,6 +91,7 @@
     "#35a8bb",
     "#a77957",
   ];
+  const CARD_AUTO_COLORS = ["#576690", "#E799B0", "#36a58b", "#DB7D74"];
   const CHART_ZOOM_LEVELS = [1, 2, 4, 8];
   const MAX_SPACES = 8;
   const MAX_GOALS = 4;
@@ -286,7 +352,6 @@
   const spaceIconStickerGrid = $("#spaceIconStickerGrid");
   const avatarPreview = $("#avatarPreview");
   const avatarPlaceholder = $("#avatarPlaceholder");
-  const autosaveStatus = $("#autosaveStatus");
   const weekTimeline = $("#weekTimeline");
   const weekDetail = $("#weekDetail");
   const weekEmpty = $("#weekEmpty");
@@ -321,14 +386,8 @@
   init();
 
   function init() {
-    hydrateProfileForm();
-    renderProfileAvatar();
-    renderGoals();
-    renderProgressGoals();
+    renderAllDataViews({ hydrateProfile: true });
     showRandomJoke();
-    renderSpaceSwitcher();
-    renderWeeks();
-    renderCharts();
     renderBackupStatus();
     bindEvents();
     renderWeekSoundToggle();
@@ -336,18 +395,20 @@
     initPwa();
     preloadCanvasAssets();
 
-    if (stateLoadIssue) {
-      autosaveStatus.textContent = stateLoadIssue;
-      autosaveStatus.classList.remove("is-saved");
-    } else if (!storageAvailable) {
-      autosaveStatus.textContent = "浏览器限制了本地保存，请使用 Chrome 或 Edge 打开";
-      autosaveStatus.classList.remove("is-saved");
-    }
+    if (stateLoadIssue) showToast(stateLoadIssue);
+    else if (!storageAvailable) showToast("浏览器限制了本地保存，请使用 Chrome 或 Edge 打开");
   }
 
   function bindEvents() {
-    $("#addChartButton").addEventListener("click", () => openChartDialog());
-    $("#emptyAddButton").addEventListener("click", () => openChartDialog());
+    bindMilestoneEvents();
+    bindSpaceEvents();
+    bindScheduleEvents();
+    bindChartEvents();
+    bindProfileAndDataEvents();
+    bindDialogShellEvents();
+  }
+
+  function bindMilestoneEvents() {
     $("#addGoalButton").addEventListener("click", () => openGoalDialog());
     $("#editGoalButton").addEventListener("click", () => selectedGoalId && openGoalDialog(selectedGoalId));
     $("#deleteGoalButton").addEventListener("click", deleteSelectedGoal);
@@ -358,9 +419,26 @@
     $("#deleteProgressGoalButton").addEventListener("click", deleteSelectedProgressGoal);
     $("#moveProgressGoalEarlierButton").addEventListener("click", () => moveSelectedProgressGoal(-1));
     $("#moveProgressGoalLaterButton").addEventListener("click", () => moveSelectedProgressGoal(1));
+    goalForm.addEventListener("submit", saveGoalFromDialog);
+    progressGoalForm.addEventListener("submit", saveProgressGoalFromDialog);
+    $("#goalStickerPicker").addEventListener("toggle", renderGoalStickerPicker);
+    $("#progressGoalStickerPicker").addEventListener("toggle", renderProgressGoalStickerPicker);
+  }
+
+  function bindSpaceEvents() {
     $("#addSpaceButton").addEventListener("click", () => openSpaceDialog());
     $("#editSpaceButton").addEventListener("click", () => openSpaceDialog(activeSpaceId));
     $("#deleteSpaceButton").addEventListener("click", () => deleteSpace(activeSpaceId));
+    spaceForm.addEventListener("submit", saveSpaceFromDialog);
+    $$('[name="templateId"]', spaceForm).forEach((input) => input.addEventListener("change", syncSpaceFormTemplate));
+    spaceForm.elements.icon.addEventListener("input", () => {
+      pendingSpaceIconSticker = "";
+      renderSpaceIconPicker();
+    });
+    $("#spaceIconPicker").addEventListener("toggle", renderSpaceIconPicker);
+  }
+
+  function bindScheduleEvents() {
     $("#addWeekButton").addEventListener("click", openPeriodDialog);
     $("#emptyAddWeekButton").addEventListener("click", openPeriodDialog);
     $("#importWeekButton").addEventListener("click", openWeekImportDialog);
@@ -378,13 +456,36 @@
     });
     $("#previousPeriodButton").addEventListener("click", () => selectAdjacentPeriod(-1));
     $("#nextPeriodButton").addEventListener("click", () => selectAdjacentPeriod(1));
-    $("#weekSoundToggle").addEventListener("click", toggleWeekSound);
     $("#showSelectedWeekReportButton").addEventListener("click", () => selectedWeekId && openWeeklyReport(selectedWeekId));
     $("#copySelectedWeekReportButton").addEventListener("click", () => selectedWeekId && copyWeekReportText(selectedWeekId));
     $("#downloadWeeklyReportImageButton").addEventListener("click", () => selectedWeekId && downloadWeeklyReportImage(selectedWeekId));
     $("#downloadWeeklySummaryImageButton").addEventListener("click", () => selectedWeekId && downloadWeeklySummaryImage(selectedWeekId));
     $("#deleteSelectedPeriodButton").addEventListener("click", deleteSelectedPeriod);
+    weekForm.addEventListener("submit", savePeriodFromDialog);
+    weekStickerForm.addEventListener("submit", saveWeekSticker);
+    weekImportForm.addEventListener("submit", importWeekPlan);
+    $("#clearWeekStickerButton").addEventListener("click", clearWeekSticker);
+  }
+
+  function bindChartEvents() {
+    $("#addChartButton").addEventListener("click", () => openChartDialog());
+    $("#emptyAddButton").addEventListener("click", () => openChartDialog());
+    $("#addSeriesButton").addEventListener("click", () => addSeriesEditorRow());
+    chartForm.addEventListener("submit", saveChartFromDialog);
+    nodeForm.addEventListener("submit", saveNodeFromDialog);
+    deleteNodeButton.addEventListener("click", deleteActiveNode);
+    $$("[data-preset]").forEach((button) => {
+      button.addEventListener("click", () => applyPreset(button.dataset.preset));
+    });
+  }
+
+  function bindProfileAndDataEvents() {
     $("#avatarButton").addEventListener("click", openAvatarDialog);
+    avatarForm.addEventListener("submit", saveAvatarFromDialog);
+    $("#clearAvatarButton").addEventListener("click", clearAvatar);
+    $("#weekSoundToggle").addEventListener("click", toggleWeekSound);
+    $("#nextJokeButton").addEventListener("click", showRandomJoke);
+    $("#revealJokeButton").addEventListener("click", revealJokeAnswer);
     $("#exportButton").addEventListener("click", exportBackup);
     $("#importButton").addEventListener("click", () => $("#importInput").click());
     $("#footerExportButton").addEventListener("click", exportBackup);
@@ -392,44 +493,19 @@
     $("#resetDataButton").addEventListener("click", resetDiaryData);
     $("#footerResetDataButton").addEventListener("click", resetDiaryData);
     $("#importInput").addEventListener("change", importBackup);
-    $("#addSeriesButton").addEventListener("click", () => addSeriesEditorRow());
-    $("#nextJokeButton").addEventListener("click", showRandomJoke);
-    $("#revealJokeButton").addEventListener("click", revealJokeAnswer);
     window.addEventListener("pagehide", flushScheduledSave);
-
     profileForm.addEventListener("input", (event) => {
       const field = event.target;
       if (!field.name || !(field.name in state.profile)) return;
       state.profile[field.name] = field.value;
-      if (field.name === "name") renderProfileAvatar();
-      scheduleSave();
+      persistState(field.name === "name" ? ["avatar"] : [], { deferred: true });
     });
+  }
 
-    chartForm.addEventListener("submit", saveChartFromDialog);
-    nodeForm.addEventListener("submit", saveNodeFromDialog);
-    goalForm.addEventListener("submit", saveGoalFromDialog);
-    progressGoalForm.addEventListener("submit", saveProgressGoalFromDialog);
-    spaceForm.addEventListener("submit", saveSpaceFromDialog);
-    weekForm.addEventListener("submit", savePeriodFromDialog);
-    weekStickerForm.addEventListener("submit", saveWeekSticker);
-    weekImportForm.addEventListener("submit", importWeekPlan);
-    avatarForm.addEventListener("submit", saveAvatarFromDialog);
-    $$('[name="templateId"]', spaceForm).forEach((input) => input.addEventListener("change", syncSpaceFormTemplate));
-    spaceForm.elements.icon.addEventListener("input", () => {
-      pendingSpaceIconSticker = "";
-      renderSpaceIconPicker();
-    });
-    $("#spaceIconPicker").addEventListener("toggle", renderSpaceIconPicker);
-    $("#goalStickerPicker").addEventListener("toggle", renderGoalStickerPicker);
-    $("#progressGoalStickerPicker").addEventListener("toggle", renderProgressGoalStickerPicker);
-    $("#clearAvatarButton").addEventListener("click", clearAvatar);
-    deleteNodeButton.addEventListener("click", deleteActiveNode);
-    $("#clearWeekStickerButton").addEventListener("click", clearWeekSticker);
-
+  function bindDialogShellEvents() {
     $$('[data-close-dialog]').forEach((button) => {
       button.addEventListener("click", () => button.closest("dialog").close());
     });
-
     document.addEventListener("click", (event) => {
       const explicitClose = event.target.closest("[data-close-menu]");
       if (explicitClose) {
@@ -444,11 +520,6 @@
       if (event.key !== "Escape") return;
       $$(".section-action-menu[open], .week-action-menu[open], .chart-action-menu[open], .week-item-state[open]").forEach((menu) => menu.removeAttribute("open"));
     });
-
-    $$("[data-preset]").forEach((button) => {
-      button.addEventListener("click", () => applyPreset(button.dataset.preset));
-    });
-
     [goalDialog, progressGoalDialog, spaceDialog, chartDialog, nodeDialog, weekDialog, weekStickerDialog, weekImportDialog, weeklyReportDialog, avatarDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
@@ -724,6 +795,7 @@
         name: safeString(item?.name, 16) || template.name,
         icon: safeString(item?.icon, 2) || template.icon,
         iconSticker: safeSticker(item?.iconSticker),
+        color: safeCardColor(item?.color),
         aiContext: normalizeAiContext(item?.aiContext),
         createdAt: Number(item?.createdAt) || Date.now(),
       });
@@ -750,19 +822,14 @@
     const targetDate = safeDate(goal.targetDate);
     if (!title || !targetDate) return null;
     const availableSpaces = Array.isArray(spaces) ? spaces : DEFAULT_SPACES;
-    const validSpaceIds = new Set(availableSpaces.map((space) => space.id));
-    const requestedSpaceIds = Array.isArray(goal.spaceIds)
-      ? goal.spaceIds
-      : [];
-    const spaceIds = [...new Set(requestedSpaceIds
-      .map((spaceId) => safeString(spaceId, 60))
-      .filter((spaceId) => validSpaceIds.has(spaceId)))];
+    const spaceIds = selectValidSpaceIds(goal.spaceIds, availableSpaces);
     return {
       id: safeId(goal.id),
       title,
       targetDate,
       note: safeString(goal.note, 80),
       sticker: safeSticker(goal.sticker),
+      color: safeCardColor(goal.color),
       spaceIds,
       createdAt: Number(goal.createdAt) || Date.now(),
     };
@@ -783,10 +850,7 @@
       }))
       .filter((update) => Number.isFinite(update.amount) && update.amount !== 0);
     const availableSpaces = Array.isArray(spaces) ? spaces : DEFAULT_SPACES;
-    const validSpaceIds = new Set(availableSpaces.map((space) => space.id));
-    const spaceIds = [...new Set((Array.isArray(goal.spaceIds) ? goal.spaceIds : [])
-      .map((spaceId) => safeString(spaceId, 60))
-      .filter((spaceId) => validSpaceIds.has(spaceId)))];
+    const spaceIds = selectValidSpaceIds(goal.spaceIds, availableSpaces);
     return {
       id: safeId(goal.id),
       title,
@@ -798,6 +862,7 @@
         : 1,
       note: safeString(goal.note, 80),
       sticker: safeSticker(goal.sticker),
+      color: safeCardColor(goal.color),
       spaceIds,
       updates,
       createdAt: Number(goal.createdAt) || Date.now(),
@@ -929,35 +994,19 @@
     return clean;
   }
 
-  function saveState(showSavedStatus = true) {
+  function saveState() {
     if (!storageAvailable || stateSaveBlocked) {
-      if (stateLoadIssue) autosaveStatus.textContent = stateLoadIssue;
       return;
     }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      if (showSavedStatus) {
-        autosaveStatus.textContent = "已自动保存";
-        autosaveStatus.classList.add("is-saved");
-        window.setTimeout(() => {
-          autosaveStatus.textContent = "更改会自动保存";
-          autosaveStatus.classList.remove("is-saved");
-        }, 1700);
-      }
     } catch (error) {
       showToast("保存空间不足，请先备份并精简部分记录");
-      autosaveStatus.textContent = "保存空间不足";
-      autosaveStatus.classList.remove("is-saved");
     }
   }
 
   function scheduleSave() {
-    if (stateSaveBlocked) {
-      autosaveStatus.textContent = stateLoadIssue;
-      return;
-    }
-    autosaveStatus.textContent = "正在保存…";
-    autosaveStatus.classList.remove("is-saved");
+    if (stateSaveBlocked) return;
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
       saveTimer = null;
@@ -969,7 +1018,46 @@
     if (!saveTimer) return;
     window.clearTimeout(saveTimer);
     saveTimer = null;
-    saveState(false);
+    saveState();
+  }
+
+  function renderViews(...viewNames) {
+    const views = new Set(viewNames.flat());
+    if (views.has("profileForm")) hydrateProfileForm();
+    if (views.has("avatar")) renderProfileAvatar();
+    if (views.has("goals")) renderGoals();
+    if (views.has("progressGoals")) renderProgressGoals();
+    if (views.has("spaces")) renderSpaceSwitcher();
+    if (views.has("schedule")) renderWeeks();
+    if (views.has("charts")) renderCharts();
+    if (views.has("backupStatus")) renderBackupStatus();
+  }
+
+  function renderAllDataViews({ hydrateProfile = false } = {}) {
+    renderViews(
+      ...(hydrateProfile ? ["profileForm"] : []),
+      "avatar",
+      "goals",
+      "progressGoals",
+      "spaces",
+      "schedule",
+      "charts",
+    );
+  }
+
+  function persistState(viewNames = [], { deferred = false } = {}) {
+    if (deferred) scheduleSave();
+    else saveState();
+    renderViews(...viewNames);
+  }
+
+  function persistSpaceChange({ includeMilestones = false } = {}) {
+    persistState([
+      ...(includeMilestones ? ["goals", "progressGoals"] : []),
+      "spaces",
+      "schedule",
+      "charts",
+    ]);
   }
 
   function resetDiaryData() {
@@ -1000,15 +1088,7 @@
     } catch (error) {
       storageAvailable = false;
     }
-    hydrateProfileForm();
-    renderProfileAvatar();
-    renderGoals();
-    renderProgressGoals();
-    renderSpaceSwitcher();
-    renderWeeks();
-    renderCharts();
-    autosaveStatus.textContent = "更改会自动保存";
-    autosaveStatus.classList.remove("is-saved");
+    renderAllDataViews({ hydrateProfile: true });
     showToast("记录已清空，可以重新开始啦");
   }
 
@@ -1049,11 +1129,9 @@
     goalList.dataset.count = String(goals.length);
     goalList.innerHTML = goals.map((goal, index) => {
       const countdown = getGoalCountdown(goal.targetDate);
-      const reportSpaceNames = goal.spaceIds
-        .map((spaceId) => state.spaces.find((space) => space.id === spaceId)?.name)
-        .filter(Boolean);
+      const reportSpaceNames = getReportSpaceNames(goal, state.spaces);
       return `
-        <button class="goal-card goal-card--tone-${index % 4} goal-card--${countdown.state}${goal.id === selectedGoalId ? " is-selected" : ""}" type="button" data-select-goal="${escapeAttr(goal.id)}" aria-pressed="${goal.id === selectedGoalId}">
+        <button class="goal-card goal-card--tone-${index % 4} goal-card--${countdown.state}${goal.id === selectedGoalId ? " is-selected" : ""}" type="button" data-select-goal="${escapeAttr(goal.id)}" aria-pressed="${goal.id === selectedGoalId}" style="--goal-color:${escapeAttr(getCardColor(goal, index))}">
           <span class="goal-card-sticker${goal.sticker ? " has-sticker" : ""}" aria-hidden="true">
             ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" loading="lazy" />` : "◎"}
           </span>
@@ -1124,14 +1202,12 @@
     progressGoalList.classList.toggle("progress-goal-list--single", goals.length === 1);
     progressGoalList.dataset.count = String(goals.length);
     progressGoalList.innerHTML = goals.map((goal, index) => {
-      const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
+      const percent = getProgressPercent(goal);
       const isComplete = goal.current >= goal.target;
       const lastUpdate = goal.updates.at(-1);
-      const reportSpaceNames = goal.spaceIds
-        .map((spaceId) => state.spaces.find((space) => space.id === spaceId)?.name)
-        .filter(Boolean);
+      const reportSpaceNames = getReportSpaceNames(goal, state.spaces);
       return `
-        <article class="progress-goal-card progress-goal-card--tone-${index % 4}${goal.id === selectedProgressGoalId ? " is-selected" : ""}${isComplete ? " is-complete" : ""}" style="--progress:${percent}%">
+        <article class="progress-goal-card progress-goal-card--tone-${index % 4}${goal.id === selectedProgressGoalId ? " is-selected" : ""}${isComplete ? " is-complete" : ""}" style="--progress:${percent}%;--progress-color:${escapeAttr(getCardColor(goal, index))}">
           <button class="progress-goal-main" type="button" data-select-progress-goal="${escapeAttr(goal.id)}" aria-pressed="${goal.id === selectedProgressGoalId}">
             <span class="progress-goal-sticker${goal.sticker ? " has-sticker" : ""}" aria-hidden="true">
               ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" loading="lazy" />` : "↗"}
@@ -1218,10 +1294,16 @@
       const id = nearest?.dataset.selectGoal || nearest?.dataset.selectProgressGoal;
       if (id && id !== getSelectedId()) selectId(id);
     };
-    container.addEventListener("scroll", () => {
+    const queueSelectionSync = (delay = 140) => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(syncSelection, 120);
+      timer = window.setTimeout(syncSelection, delay);
+    };
+    container.addEventListener("scroll", () => {
+      queueSelectionSync();
     }, { passive: true });
+    container.addEventListener("scrollend", syncSelection, { passive: true });
+    container.addEventListener("pointerup", () => queueSelectionSync(180), { passive: true });
+    container.addEventListener("touchend", () => queueSelectionSync(180), { passive: true });
   }
 
   function renderProgressGoalSpaceOptions(selectedSpaceIds) {
@@ -1255,6 +1337,7 @@
     progressGoalForm.elements.current.value = goal ? formatProgressInput(goal.current) : "0";
     progressGoalForm.elements.defaultIncrement.value = goal ? formatProgressInput(goal.defaultIncrement) : "";
     progressGoalForm.elements.note.value = goal?.note || "";
+    setThemeColorField(progressGoalForm, goal?.color, state.progressGoals.length);
     renderProgressGoalSpaceOptions(goal ? goal.spaceIds : []);
     $("#progressGoalDialogEyebrow").textContent = goal ? "EDIT PROGRESS" : "NEW PROGRESS";
     $("#progressGoalDialogTitle").textContent = goal ? `编辑“${goal.title}”` : "新建进度目标";
@@ -1281,6 +1364,7 @@
       defaultIncrement: formData.get("defaultIncrement"),
       note: formData.get("note"),
       sticker: pendingProgressGoalSticker,
+      color: formData.get("color"),
       spaceIds: selectedSpaceIds,
       updates: existing?.updates || [],
       createdAt: existing?.createdAt,
@@ -1295,8 +1379,7 @@
     selectedProgressGoalId = goal.id;
     progressGoalDialog.close();
     editingProgressGoalId = null;
-    saveState();
-    renderProgressGoals();
+    persistState(["progressGoals"]);
     showToast(existing ? "进度目标已经更新" : "新的进度目标已经建立");
   }
 
@@ -1345,16 +1428,14 @@
       showToast("本次调整不能为 0；减少进度请填写负数");
       return;
     }
-    goal.current = Math.max(0, Math.min(1_000_000_000, goal.current + amount));
-    goal.defaultIncrement = amount;
-    goal.updates.push({ id: makeId(), amount, createdAt: Date.now() });
-    goal.updates = goal.updates.slice(-100);
-    selectedProgressGoalId = goal.id;
-    saveState(false);
-    renderProgressGoals();
-    showToast(goal.current >= goal.target
-      ? `${goal.title}已经达到目标`
-      : `已${amount > 0 ? "增加" : "减少"} ${formatProgressNumber(Math.abs(amount))} ${goal.unit}`);
+    const updatedGoal = applyProgressDelta(goal, amount, { id: makeId(), createdAt: Date.now() });
+    if (!updatedGoal) return;
+    state.progressGoals[state.progressGoals.indexOf(goal)] = updatedGoal;
+    selectedProgressGoalId = updatedGoal.id;
+    persistState(["progressGoals"]);
+    showToast(updatedGoal.current >= updatedGoal.target
+      ? `${updatedGoal.title}已经达到目标`
+      : `已${amount > 0 ? "增加" : "减少"} ${formatProgressNumber(Math.abs(amount))} ${updatedGoal.unit}`);
   }
 
   function deleteSelectedProgressGoal() {
@@ -1363,8 +1444,7 @@
     if (!window.confirm(`确定删除进度目标“${goal.title}”吗？\n\n已添加的进度记录也会一起删除。`)) return;
     state.progressGoals = state.progressGoals.filter((item) => item.id !== goal.id);
     selectedProgressGoalId = state.progressGoals[0]?.id || null;
-    saveState();
-    renderProgressGoals();
+    persistState(["progressGoals"]);
     showToast("进度目标已删除");
   }
 
@@ -1386,6 +1466,7 @@
     goalForm.elements.title.value = goal?.title || "";
     goalForm.elements.targetDate.value = goal?.targetDate || addDaysIso(todayIso(), 30);
     goalForm.elements.note.value = goal?.note || "";
+    setThemeColorField(goalForm, goal?.color, state.goals.length);
     renderGoalSpaceOptions(goal ? goal.spaceIds : []);
     $("#goalDialogEyebrow").textContent = goal ? "EDIT COUNTDOWN" : "NEW COUNTDOWN";
     $("#goalDialogTitle").textContent = goal ? `编辑“${goal.title}”` : "新建倒计时";
@@ -1409,6 +1490,7 @@
       targetDate: formData.get("targetDate"),
       note: formData.get("note"),
       sticker: pendingGoalSticker,
+      color: formData.get("color"),
       spaceIds: selectedSpaceIds,
       createdAt: existing?.createdAt,
     }, state.spaces);
@@ -1422,8 +1504,7 @@
     selectedGoalId = goal.id;
     goalDialog.close();
     editingGoalId = null;
-    saveState();
-    renderGoals();
+    persistState(["goals"]);
     showToast(existing ? "倒计时已经更新" : "新的倒计时已经建立");
   }
 
@@ -1433,8 +1514,7 @@
     if (!window.confirm(`确定删除倒计时“${goal.title}”吗？\n\n空间、日程和周报记录不会受到影响。`)) return;
     state.goals = state.goals.filter((item) => item.id !== goal.id);
     selectedGoalId = state.goals[0]?.id || null;
-    saveState();
-    renderGoals();
+    persistState(["goals"]);
     showToast("倒计时已删除，其他记录保持不变");
   }
 
@@ -1443,14 +1523,10 @@
   }
 
   function moveSelectedMilestone(collectionName, selectedId, direction, label) {
-    const collection = state[collectionName];
-    const index = collection.findIndex((item) => item.id === selectedId);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= collection.length) return;
-    [collection[index], collection[target]] = [collection[target], collection[index]];
-    saveState(false);
-    renderGoals();
-    renderProgressGoals();
+    const result = moveItemById(state[collectionName], selectedId, direction);
+    if (!result.moved) return;
+    state[collectionName] = result.items;
+    persistState(["goals", "progressGoals"]);
     showToast(`${label}已${direction < 0 ? "向前" : "向后"}移动`);
   }
 
@@ -1521,6 +1597,7 @@
     if (!spaceSwitcher) return;
     const renderSpaceButton = (space, extraClass = "") => {
       const template = getSpaceTemplate(space.id);
+      const color = getCardColor(space, state.spaces.indexOf(space));
       const periodCount = state.periods.filter((period) => period.spaceId === space.id).length;
       const isActive = space.id === activeSpaceId;
       const icon = template.iconSticker
@@ -1528,7 +1605,7 @@
         : escapeHtml(template.icon);
       return `
         <div class="space-switcher-item${extraClass}">
-          <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}">
+          <button class="space-switcher-button${isActive ? " is-active" : ""}" type="button" data-space-id="${space.id}" aria-pressed="${isActive}" style="--space-color:${escapeAttr(color)}">
             <span class="space-switcher-icon${template.iconSticker ? " has-sticker" : ""}" aria-hidden="true">${icon}</span>
             <span><strong>${escapeHtml(template.name)}</strong><small>${periodCount ? `${periodCount} 个月份` : "从这里开始"}</small></span>
           </button>
@@ -1611,10 +1688,7 @@
     selectedWeekId = pickRelevantWeek(weeks)?.id || null;
     weekYearFilter = periods.at(-1)?.yearMonth.slice(0, 4) || String(new Date().getFullYear());
     weekMonthFilter = periods.at(-1)?.yearMonth.slice(5, 7) || String(new Date().getMonth() + 1).padStart(2, "0");
-    saveState(false);
-    renderSpaceSwitcher();
-    renderWeeks();
-    renderCharts();
+    persistSpaceChange();
   }
 
   function syncSpaceCopy() {
@@ -1644,6 +1718,7 @@
     }
     editingSpaceId = editingSpace?.id || null;
     spaceForm.reset();
+    setThemeColorField(spaceForm, editingSpace?.color, editingSpace ? state.spaces.indexOf(editingSpace) : state.spaces.length);
     if (editingSpace) {
       spaceForm.elements.templateId.value = safeTemplateId(editingSpace.templateId);
       spaceForm.elements.name.value = editingSpace.name;
@@ -1729,6 +1804,7 @@
       name: safeString(formData.get("name"), 16) || template.name,
       icon: safeString(formData.get("icon"), 2) || template.icon,
       iconSticker: safeSticker(pendingSpaceIconSticker),
+      color: safeCardColor(formData.get("color")),
       aiContext: existing?.aiContext || normalizeAiContext(),
       createdAt: existing?.createdAt || Date.now(),
     };
@@ -1739,13 +1815,8 @@
     selectedWeekId = null;
     weekYearFilter = String(new Date().getFullYear());
     weekMonthFilter = String(new Date().getMonth() + 1).padStart(2, "0");
-    saveState(false);
     spaceDialog.close();
-    renderGoals();
-    renderProgressGoals();
-    renderSpaceSwitcher();
-    renderWeeks();
-    renderCharts();
+    persistSpaceChange({ includeMilestones: true });
     showToast(existing ? `“${space.name}”空间已更新` : `“${space.name}”空间已经建立`);
   }
 
@@ -1778,12 +1849,7 @@
     weekYearFilter = periods.at(-1)?.yearMonth.slice(0, 4) || "";
     weekMonthFilter = periods.at(-1)?.yearMonth.slice(5, 7) || "";
     selectedWeekId = pickRelevantWeek(getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(periods.at(-1)?.yearMonth || "-")))?.id || null;
-    saveState(false);
-    renderGoals();
-    renderProgressGoals();
-    renderSpaceSwitcher();
-    renderWeeks();
-    renderCharts();
+    persistSpaceChange({ includeMilestones: true });
     showToast(`“${space.name}”空间已删除`);
   }
 
@@ -1836,10 +1902,8 @@
     weekYearFilter = yearMonth.slice(0, 4);
     weekMonthFilter = yearMonth.slice(5, 7);
     selectedWeekId = pickRelevantWeek(getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(yearMonth)))?.id || null;
-    saveState(false);
     weekDialog.close();
-    renderSpaceSwitcher();
-    renderWeeks();
+    persistState(["spaces", "schedule"]);
     showToast(`${Number(weekMonthFilter)} 月的周一节点已经展开`);
   }
 
@@ -1860,9 +1924,7 @@
     weekYearFilter = nextPeriod?.yearMonth.slice(0, 4) || "";
     weekMonthFilter = nextPeriod?.yearMonth.slice(5, 7) || "";
     selectedWeekId = pickRelevantWeek(getActiveSpaceWeeks().filter((week) => week.startDate.startsWith(nextPeriod?.yearMonth || "-")))?.id || null;
-    saveState(false);
-    renderSpaceSwitcher();
-    renderWeeks();
+    persistState(["spaces", "schedule"]);
     showToast(`${label} 已删除`);
   }
 
@@ -1874,11 +1936,7 @@
     selectedDayByWeek.set(week.id, selectedDayId);
     const startIndex = Math.max(0, week.days.findIndex((day) => day.id === selectedDayId));
     const startDayNumber = startIndex + 1;
-    const lastDay = week.days[6];
-    const hasLastDayData = lastDay && (
-      lastDay.items.length || lastDay.focus ||
-      lastDay.note || lastDay.status || lastDay.sticker || Number.isFinite(lastDay.weight)
-    );
+    const hasLastDayData = hasScheduleDayContent(week.days[6]);
     const warning = hasLastDayData
       ? "原 Day7 已有内容，顺延后会被丢弃。"
       : "原 Day7 目前没有内容。";
@@ -1891,22 +1949,13 @@
         ? "Day1 保持不变。"
         : `Day1 到 Day${startIndex} 保持不变。`;
     if (!window.confirm(`确定从 Day${startDayNumber} 开始把日程往后排一天吗？\n\n${preservedRange}${movingRange}${warning}`)) return;
-    const sourceDays = JSON.parse(JSON.stringify(week.days));
     const templateId = getSpace(week.spaceId).templateId;
-    for (let index = 6; index > startIndex; index -= 1) {
-      const identity = week.days[index];
-      const moved = normalizeWeekDay(sourceDays[index - 1], index, week.startDate, templateId);
-      moved.id = identity.id;
-      moved.date = identity.date;
-      week.days[index] = moved;
-    }
-    const startIdentity = week.days[startIndex];
-    const emptyStartDay = normalizeWeekDay({}, startIndex, week.startDate, templateId);
-    emptyStartDay.id = startIdentity.id;
-    emptyStartDay.date = startIdentity.date;
-    week.days[startIndex] = emptyStartDay;
-    saveState(false);
-    renderWeeks();
+    week.days = shiftWeekDays(week.days, startIndex, {
+      startDate: week.startDate,
+      templateId,
+      normalizeDay: normalizeWeekDay,
+    });
+    persistState(["schedule"]);
     showToast(`已从 Day${startDayNumber} 开始顺延一天，前面的日期保持不变`);
   }
 
@@ -2018,30 +2067,6 @@
     renderWeeks();
   }
 
-  function hasWeekDayRecord(day) {
-    return day.recorded === true;
-  }
-
-  function weekItemStateMark(state) {
-    return ({ done: "✓", changed: "⚡", missed: "×" })[state] || "·";
-  }
-
-  function weekItemStateLabel(state) {
-    return ({ done: "完成", changed: "调整过计划", missed: "未完成" })[state] || "待记录";
-  }
-
-  function countWeekItemStates(week) {
-    return week.days.reduce((counts, day) => {
-      day.items.forEach((item) => {
-        if (item.state === "done") counts.done += 1;
-        else if (item.state === "changed") counts.changed += 1;
-        else if (item.state === "missed") counts.missed += 1;
-        else counts.pending += 1;
-      });
-      return counts;
-    }, { done: 0, changed: 0, missed: 0, pending: 0 });
-  }
-
   function renderWeekDetail(week) {
     if (!week) return;
     let selectedDayId = selectedDayByWeek.get(week.id);
@@ -2058,12 +2083,7 @@
       : `Day1 到 Day${selectedDay.dayNumber - 1} 保持不变`;
     weekDetail.innerHTML = `
       <article class="week-board">
-        <div class="week-day-stepper" aria-label="切换当天">
-          <button type="button" data-week-day-step="-1" aria-label="前一天"${selectedIndex === 0 ? " disabled" : ""}>←</button>
-          <strong>Day ${selectedDay.dayNumber} <small>/ 7 · ${escapeHtml(formatCompactDate(selectedDay.date))}</small></strong>
-          <button type="button" data-week-day-step="1" aria-label="后一天"${selectedIndex === week.days.length - 1 ? " disabled" : ""}>→</button>
-        </div>
-        ${renderWeekDayEditor(week, selectedDay)}
+        ${renderWeekDayEditor(week, selectedDay, selectedIndex)}
       </article>`;
     $$('[data-week-day-step]', weekDetail).forEach((button) => {
       button.addEventListener("click", () => selectAdjacentWeekDay(week, Number(button.dataset.weekDayStep)));
@@ -2122,7 +2142,7 @@
       </div>`;
   }
 
-  function renderWeekDayEditor(week, day) {
+  function renderWeekDayEditor(week, day, selectedIndex) {
     const template = getSpaceTemplate(week.spaceId);
     const statusClass = ({ "这期拉了": "missed", "还不错": "okay", "好好好": "great" })[day.status] || "pending";
     const rowCount = Math.max(day.items.length, 1);
@@ -2163,14 +2183,24 @@
     return `
       <section class="week-inline-day week-inline-day--${statusClass}" data-inline-week="${week.id}" data-inline-day="${day.id}">
         <header class="week-inline-day-head">
-          <div class="week-day-identity">
-            <span>DAY ${day.dayNumber} · ${escapeHtml(formatCompactDate(day.date))}</span>
-            <input data-day-text-field="title" maxlength="20" aria-label="这一天的名称" value="${escapeAttr(day.title)}" />
+          <div class="week-day-heading-group">
+            <div class="week-day-identity">
+              <span>DAY ${day.dayNumber} · ${escapeHtml(formatCompactDate(day.date))}</span>
+              <label class="week-day-title-edit" title="点击修改当天名称">
+                <input data-day-text-field="title" maxlength="20" aria-label="这一天的名称，可直接修改" value="${escapeAttr(day.title)}" />
+              </label>
+            </div>
+            <nav class="week-day-navigation" aria-label="切换当天">
+              <button type="button" data-week-day-step="-1" aria-label="前一天"${selectedIndex === 0 ? " disabled" : ""}>←</button>
+              <strong><span>Day ${day.dayNumber} / ${week.days.length}</span><small>${escapeHtml(formatCompactDate(day.date))}</small></strong>
+              <button type="button" data-week-day-step="1" aria-label="后一天"${selectedIndex === week.days.length - 1 ? " disabled" : ""}>→</button>
+            </nav>
           </div>
           <button class="week-day-sticker-button" type="button" data-pick-day-sticker aria-label="选择今天的表情">
             ${sticker ? `<img src="${escapeAttr(assetUrl(sticker))}" alt="今天的表情" />` : `<span aria-hidden="true">＋</span><small>选表情</small>`}
           </button>
           <div class="week-day-statuses" aria-label="今天完成得怎么样">${statuses}</div>
+          <small class="week-day-title-help">点击今日标题可以直接修改哟~</small>
           <div class="week-day-primary-actions">
             <button class="week-record-today${day.recorded ? " is-recorded" : ""}" type="button" data-record-today aria-pressed="${day.recorded}">${day.recorded ? "✓ 今天已记录" : "记录今天"}</button>
             <button class="week-shift-day" type="button" data-shift-current-day>顺延一天</button>
@@ -2182,7 +2212,14 @@
         </div>
 
         <div class="week-item-table">
-          <div class="week-item-table-head"><strong>计划安排</strong><small>✓ 完成　⚡ 调整过　× 未完成</small></div>
+          <div class="week-item-table-head">
+            <strong>计划安排</strong>
+            <div class="week-item-legend" aria-label="安排状态说明">
+              <span class="is-done">✓ 完成</span>
+              <span class="is-changed">⚡ 调整过</span>
+              <span class="is-missed">× 未完成</span>
+            </div>
+          </div>
           <div class="week-item-rows">${rows}</div>
           <button class="week-add-item" type="button" data-add-week-item>＋ 添加一项安排</button>
         </div>
@@ -2199,13 +2236,18 @@
     return day.items[index];
   }
 
+  function persistWeekDetail(week, { deferred = false } = {}) {
+    persistState([], { deferred });
+    if (!deferred) renderWeekDetail(week);
+  }
+
   function bindInlineWeekDayEditor(week, day) {
     $$('[data-week-item-text]', weekDetail).forEach((input) => {
       input.addEventListener("input", () => {
         const row = input.closest('[data-week-item-index]');
         const item = ensureWeekItem(day, Number(row.dataset.weekItemIndex));
         item.text = safeString(input.value, 160);
-        scheduleSave();
+        persistWeekDetail(week, { deferred: true });
       });
     });
 
@@ -2215,8 +2257,7 @@
         const item = ensureWeekItem(day, Number(row.dataset.weekItemIndex));
         item.state = WEEK_ITEM_STATES.has(button.dataset.setWeekItemState) ? button.dataset.setWeekItemState : "";
         if (item.state) playWeekFeedback(item.state !== "missed");
-        saveState(false);
-        renderWeekDetail(week);
+        persistWeekDetail(week);
       });
     });
 
@@ -2224,7 +2265,7 @@
       input.addEventListener("input", () => {
         const field = input.dataset.dayTextField;
         day[field] = safeString(input.value, field === "note" ? 600 : field === "title" ? 20 : 500);
-        scheduleSave();
+        persistWeekDetail(week, { deferred: true });
       });
       input.addEventListener("change", () => window.setTimeout(() => renderWeekDetail(week), 0));
     });
@@ -2232,8 +2273,7 @@
     $$('[data-remove-week-item]', weekDetail).forEach((button) => {
       button.addEventListener("click", () => {
         day.items.splice(Number(button.dataset.removeWeekItem), 1);
-        saveState(false);
-        renderWeekDetail(week);
+        persistWeekDetail(week);
       });
     });
     $("[data-add-week-item]", weekDetail).addEventListener("click", () => {
@@ -2242,23 +2282,20 @@
         return;
       }
       day.items.push({ id: makeId(), text: "", state: "", legacyActual: "" });
-      saveState(false);
-      renderWeekDetail(week);
+      persistWeekDetail(week);
       $$('[data-week-item-text]', weekDetail).at(-1)?.focus();
     });
 
     $("[data-record-today]", weekDetail)?.addEventListener("click", () => {
       day.recorded = !day.recorded;
-      saveState(false);
-      renderWeeks();
+      persistState(["schedule"]);
       showToast(day.recorded ? `Day${day.dayNumber} 已计入本周记录` : `Day${day.dayNumber} 已取消记录`);
     });
     $$('[data-set-day-status]', weekDetail).forEach((button) => {
       button.addEventListener("click", () => {
         day.status = ["这期拉了", "还不错", "好好好"].includes(button.dataset.setDayStatus) ? button.dataset.setDayStatus : "";
         if (day.status) playWeekFeedback(day.status !== "这期拉了");
-        saveState(false);
-        renderWeekDetail(week);
+        persistWeekDetail(week);
       });
     });
     $("[data-pick-day-sticker]", weekDetail)?.addEventListener("click", () => openWeekStickerPicker(week.id, day.id));
@@ -2286,9 +2323,8 @@
     if (!week || !day) return;
     day.sticker = safeSticker(selectedWeekSticker);
     preloadCanvasAsset(day.sticker);
-    saveState(false);
     weekStickerDialog.close();
-    renderWeeks();
+    persistState(["schedule"]);
     showToast(`Day${day.dayNumber} 已经设置好啦`);
   }
 
@@ -2424,7 +2460,7 @@
     if (!week) return;
     const space = getSpace();
     space.aiContext = collectAiContext();
-    saveState(false);
+    persistState();
     const contextText = [
       `这是我在“${space.name}”空间的真实情况，请先读完，稍后我会继续发送网页要求的计划模板。`,
       "",
@@ -2442,48 +2478,14 @@
     const space = getSpace();
     space.aiContext = collectAiContext();
     const prompt = buildAiPlanningPrompt(findWeek(selectedWeekId));
-    saveState(false);
+    persistState();
     await copyText(prompt);
     showToast("计划模板已复制，请继续粘贴到同一个 AI 对话");
   }
 
   function parseAiPlanText(rawText) {
-    const text = String(rawText || "").replace(/```[^\n]*|```/g, "").trim();
-    if (!text) return [];
-    const weeks = [];
-    let currentWeek = null;
-    let currentDay = null;
-    text.split(/\r?\n/).forEach((rawLine) => {
-      const line = rawLine.trim().replace(/^[-*]\s*/, "");
-      const weekMatch = line.match(/^【周开始】\s*(\d{4}-\d{2}-\d{2})/);
-      if (weekMatch) {
-        currentWeek = { startDate: weekMatch[1], days: [] };
-        weeks.push(currentWeek);
-        currentDay = null;
-        return;
-      }
-      const dayMatch = line.match(/^【Day\s*([1-7])】\s*(.*)$/i);
-      if (dayMatch && currentWeek) {
-        const index = Number(dayMatch[1]) - 1;
-        currentDay = currentWeek.days[index] || { items: [] };
-        currentDay.title = safeString(dayMatch[2], 36) || "休息日";
-        currentWeek.days[index] = currentDay;
-        return;
-      }
-      if (!currentDay) return;
-      const focusMatch = line.match(/^【重点】\s*(.*)$/);
-      if (focusMatch) {
-        currentDay.focus = safeString(focusMatch[1], 500);
-        return;
-      }
-      const taskMatch = line.match(/^【任务】\s*(.*)$/);
-      if (taskMatch) {
-        const task = safeString(taskMatch[1].replace(/[｜|]/, "："), 160);
-        if (task) currentDay.items.push({ text: task, state: "", legacyActual: "" });
-        return;
-      }
-    });
-    return weeks.map((week) => normalizeWeek({ ...week, spaceId: activeSpaceId }, state.spaces));
+    return parseAiPlanTemplate(rawText)
+      .map((week) => normalizeWeek({ ...week, spaceId: activeSpaceId }, state.spaces));
   }
 
   function importWeekPlan(event) {
@@ -2512,9 +2514,8 @@
       });
       selectedWeekId = existing.id;
     });
-    saveState(false);
     weekImportDialog.close();
-    renderWeeks();
+    persistState(["schedule"]);
     showToast("本周计划已导入，原有状态与当天小记已保留");
   }
 
@@ -2553,7 +2554,7 @@
     if (reportProgressGoals.length) {
       lines.push("- 进度目标（当前累计）：");
       reportProgressGoals.forEach((goal) => {
-        const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
+        const percent = getProgressPercent(goal);
         lines.push(`  - ${goal.title}：${formatProgressNumber(goal.current)} / ${formatProgressNumber(goal.target)} ${goal.unit}（${formatProgressNumber(percent)}%）`);
       });
     }
@@ -2619,7 +2620,7 @@
                 ${goals.map((goal, index) => {
                   const countdown = getGoalCountdown(goal.targetDate, reportDate);
                   return `
-                    <article class="weekly-report-goal weekly-report-goal--tone-${index % 4}">
+                    <article class="weekly-report-goal weekly-report-goal--tone-${index % 4}" style="--report-goal-color:${escapeAttr(getCardColor(goal, index))}">
                       ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" />` : ""}
                       <span>${escapeHtml(goal.title)}</span>
                       <strong>${escapeHtml(countdown.phrase)}</strong>
@@ -2632,9 +2633,9 @@
             <div class="weekly-report-milestone-group">
               <div class="weekly-report-goal-list">
                 ${progressGoals.map((goal, index) => {
-                  const percent = Math.min(100, Math.max(0, goal.current / goal.target * 100));
+                  const percent = getProgressPercent(goal);
                   return `
-                    <article class="weekly-report-goal weekly-report-progress weekly-report-goal--tone-${(index + goals.length) % 4}" style="--report-progress:${percent}%">
+                    <article class="weekly-report-goal weekly-report-progress weekly-report-goal--tone-${(index + goals.length) % 4}" style="--report-progress:${percent}%;--report-goal-color:${escapeAttr(getCardColor(goal, index + goals.length))}">
                       ${goal.sticker ? `<img src="${escapeAttr(assetUrl(goal.sticker))}" alt="" />` : ""}
                       <span>${escapeHtml(goal.title)}</span>
                       <strong>${escapeHtml(formatProgressNumber(goal.current))} / ${escapeHtml(formatProgressNumber(goal.target))} ${escapeHtml(goal.unit)}</strong>
@@ -2753,8 +2754,13 @@
     const milestoneCardHeight = 104;
     const milestoneRows = Math.ceil(milestones.length / 2);
     const milestoneHeight = milestones.length ? 70 + milestoneRows * (milestoneCardHeight + gap) : 0;
+    const dayCardWidth = (width - outer * 2 - gap) / 2;
     const dayHeights = week.days.map((day) => getCanvasDayHeight(day));
-    const height = outer + 176 + milestoneHeight + 72 + dayHeights.reduce((sum, value) => sum + value, 0) + gap * 6 + 72;
+    const dayRowHeights = Array.from({ length: Math.ceil(week.days.length / 2) }, (_, rowIndex) => (
+      Math.max(...dayHeights.slice(rowIndex * 2, rowIndex * 2 + 2))
+    ));
+    const daySectionHeight = dayRowHeights.reduce((sum, value) => sum + value, 0) + gap * Math.max(0, dayRowHeights.length - 1);
+    const height = outer + 176 + milestoneHeight + 72 + daySectionHeight + 72;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
@@ -2820,9 +2826,14 @@
     });
     y += 72;
 
+    const dayRowOffsets = dayRowHeights.map((_, rowIndex) => (
+      dayRowHeights.slice(0, rowIndex).reduce((sum, value) => sum + value, 0) + rowIndex * gap
+    ));
     week.days.forEach((day, index) => {
-      drawCanvasDayVertical(context, day, template, outer, y, width - outer * 2, dayHeights[index], canvasImageCache, index);
-      y += dayHeights[index] + (index < week.days.length - 1 ? gap : 0);
+      const rowIndex = Math.floor(index / 2);
+      const cardX = outer + index % 2 * (dayCardWidth + gap);
+      const cardY = y + dayRowOffsets[rowIndex];
+      drawCanvasDayVertical(context, day, template, cardX, cardY, dayCardWidth, dayRowHeights[rowIndex], canvasImageCache, index);
     });
     context.fillStyle = "#938d9b";
     context.font = "600 12px system-ui, sans-serif";
@@ -2833,8 +2844,7 @@
   }
 
   function drawCanvasMilestone(context, item, x, y, width, height, week, stickerImages, toneIndex = 0) {
-    const tones = ["#8871ec", "#e88da9", "#4ea78e", "#dd756b"];
-    const tone = tones[toneIndex % tones.length];
+    const tone = getCardColor(item.data, toneIndex);
     drawCanvasCard(context, x, y, width, height, "#ffffff", "#e9e3f3");
     context.fillStyle = tone;
     context.fillRect(x, y, 5, height);
@@ -2854,7 +2864,7 @@
       context.font = "550 12px system-ui, sans-serif";
       context.fillText(formatGoalDate(item.data.targetDate), x + width - 18, y + 64);
     } else {
-      const percent = Math.min(100, Math.max(0, item.data.current / item.data.target * 100));
+      const percent = getProgressPercent(item.data);
       context.font = "850 16px system-ui, sans-serif";
       context.fillText(`${formatProgressNumber(item.data.current)} / ${formatProgressNumber(item.data.target)} ${item.data.unit}`, x + width - 18, y + 38);
       drawCanvasProgress(context, textX, y + height - 24, x + width - 18 - textX, percent, tone);
@@ -2869,9 +2879,14 @@
   }
 
   function getCanvasDayHeight(day) {
-    const entryCount = Math.min(7, getCanvasDayEntries(day).length);
+    const entries = getCanvasDayEntries(day);
+    const visibleEntries = (entries.length ? entries : [{ text: "当天没有安排事项" }]).slice(0, 7);
+    const listHeight = visibleEntries.reduce((sum, entry) => {
+      const lineCount = Math.min(2, Math.max(1, Math.ceil([...String(entry.text || "未填写安排")].length / 18)));
+      return sum + lineCount * 18 + 11;
+    }, 0);
     const hasFooter = Boolean(day.focus || day.note);
-    return 138 + Math.max(1, entryCount) * 31 + (hasFooter ? 54 : 20);
+    return 132 + listHeight + (entries.length > 7 ? 22 : 0) + (hasFooter ? 80 : 28);
   }
 
   function drawCanvasDayVertical(context, day, template, x, y, width, height, stickerImages, index) {
@@ -2903,20 +2918,22 @@
     const entries = getCanvasDayEntries(day);
     const listX = x + 128;
     const listY = y + 132;
-    (entries.length ? entries : [{ text: "当天没有安排事项", state: "" }]).slice(0, 7).forEach((entry, entryIndex) => {
-      const rowY = listY + entryIndex * 31;
+    let rowY = listY;
+    (entries.length ? entries : [{ text: "当天没有安排事项", state: "" }]).slice(0, 7).forEach((entry) => {
       const mark = weekItemStateMark(entry.state);
       context.fillStyle = entry.state === "done" ? "#32977c" : entry.state === "changed" ? "#d69a31" : entry.state === "missed" ? "#cc626c" : "#9a929f";
       context.font = "900 17px system-ui, sans-serif";
       context.fillText(mark, listX, rowY);
       context.fillStyle = "#484251";
       context.font = "760 14px system-ui, sans-serif";
-      drawCanvasText(context, entry.text || "未填写安排", listX + 28, rowY, width - 190, 18, 1);
+      const lineCount = Math.min(2, Math.max(1, Math.ceil([...String(entry.text || "未填写安排")].length / 18)));
+      drawCanvasText(context, entry.text || "未填写安排", listX + 28, rowY, width - 176, 18, 2);
+      rowY += lineCount * 18 + 11;
     });
     if (entries.length > 7) {
       context.fillStyle = "#8e8794";
       context.font = "550 12px system-ui, sans-serif";
-      context.fillText(`另有 ${entries.length - 7} 项，请在网页中查看`, listX + 28, listY + 7 * 31);
+      context.fillText(`另有 ${entries.length - 7} 项，请在网页中查看`, listX + 28, rowY);
     }
     const footerParts = [];
     if (day.focus) footerParts.push(`${template.firstFieldLabel}：${day.focus}`);
@@ -2925,26 +2942,20 @@
       context.strokeStyle = "#ede9f0";
       context.setLineDash([5, 6]);
       context.beginPath();
-      context.moveTo(listX, y + height - 46);
-      context.lineTo(x + width - 26, y + height - 46);
+      context.moveTo(listX, y + height - 67);
+      context.lineTo(x + width - 26, y + height - 67);
       context.stroke();
       context.setLineDash([]);
       context.fillStyle = "#736d79";
       context.font = "520 12px system-ui, sans-serif";
-      drawCanvasText(context, footerParts.join(" · "), listX, y + height - 22, width - 176, 17, 1);
+      drawCanvasText(context, footerParts.join(" · "), listX, y + height - 40, width - 176, 17, 2);
     }
   }
 
   function createWeeklySummaryCanvas(week) {
     const scale = 2;
     const width = 1920;
-    const height = 1080;
     const outer = 78;
-    const contextCanvas = document.createElement("canvas");
-    contextCanvas.width = width * scale;
-    contextCanvas.height = height * scale;
-    const context = contextCanvas.getContext("2d");
-    context.scale(scale, scale);
     const template = getSpaceTemplate(week.spaceId);
     const goals = state.goals.filter((goal) => goal.spaceIds.includes(week.spaceId));
     const progressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(week.spaceId));
@@ -2952,9 +2963,30 @@
       ...goals.map((goal) => ({ type: "countdown", data: goal })),
       ...progressGoals.map((goal) => ({ type: "progress", data: goal })),
     ].slice(0, 4);
+    const daysY = milestones.length > 2 ? 576 : 450;
+    const height = daysY + 374;
+    const contextCanvas = document.createElement("canvas");
+    contextCanvas.width = width * scale;
+    contextCanvas.height = height * scale;
+    const context = contextCanvas.getContext("2d");
+    context.scale(scale, scale);
     const itemCounts = countWeekItemStates(week);
     const recordedCount = week.days.filter((day) => day.recorded === true).length;
 
+    drawWeeklySummaryBackground(context, width, height, outer);
+    drawWeeklySummaryHeader(context, week, template, itemCounts, recordedCount, width, outer);
+    drawWeeklySummaryMilestones(context, milestones, week, width, outer);
+    drawWeeklySummaryDays(context, week, daysY, width, outer);
+
+    context.fillStyle = "#8c8693";
+    context.font = "600 17px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.fillText("ASOUL 一个魂生活日记", width / 2, height - 54);
+    context.textAlign = "left";
+    return contextCanvas;
+  }
+
+  function drawWeeklySummaryBackground(context, width, height, outer) {
     const background = context.createLinearGradient(0, 0, width, height);
     background.addColorStop(0, "#fffdfb");
     background.addColorStop(.52, "#faf8ff");
@@ -2970,7 +3002,9 @@
     context.arc(80, height - 50, 300, 0, Math.PI * 2);
     context.fill();
     drawCanvasAppIcon(context, width - outer - 76, outer - 3, 76);
+  }
 
+  function drawWeeklySummaryHeader(context, week, template, itemCounts, recordedCount, width, outer) {
     context.fillStyle = "#7865cf";
     context.font = "850 22px system-ui, sans-serif";
     context.fillText(`ASOUL ${template.id.toUpperCase()} WEEKLY`, outer, outer + 24);
@@ -2983,7 +3017,9 @@
     drawCanvasPill(context, width - outer - 560, outer + 102, 132, 50, `${itemCounts.done} 完成`, "#eaf6f2", "#397f6d");
     drawCanvasPill(context, width - outer - 414, outer + 102, 132, 50, `${itemCounts.changed} 调整`, "#fff7df", "#9a6c25");
     drawCanvasPill(context, width - outer - 268, outer + 102, 132, 50, `${itemCounts.missed} 未完成`, "#fff0f2", "#a85f6b");
+  }
 
+  function drawWeeklySummaryMilestones(context, milestones, week, width, outer) {
     const milestoneY = 280;
     context.fillStyle = "#6252ad";
     context.font = "850 18px system-ui, sans-serif";
@@ -3000,8 +3036,9 @@
       context.font = "600 19px system-ui, sans-serif";
       context.fillText("这个空间暂时没有关联的倒计时或进度目标。", outer, milestoneY + 45);
     }
+  }
 
-    const daysY = milestones.length > 2 ? 576 : 450;
+  function drawWeeklySummaryDays(context, week, daysY, width, outer) {
     context.fillStyle = "#6252ad";
     context.font = "850 18px system-ui, sans-serif";
     context.fillText("SEVEN DAYS · 一周足迹", outer, daysY - 24);
@@ -3032,17 +3069,14 @@
       drawCanvasText(context, day.title || "生活日", x + 18, daysY + 148, dayWidth - 36, 20, 2);
       context.fillStyle = "#817b88";
       context.font = "600 13px system-ui, sans-serif";
-      context.fillText(`${done} 完成 · ${changed} 调整 · ${missed} 未完成`, x + 18, daysY + 198);
-      context.fillText(day.recorded ? "今天已记录" : "等待记录", x + 18, daysY + 224);
-      drawCanvasProgress(context, x + 18, daysY + 250, dayWidth - 36, entries.length ? (done + changed) / entries.length * 100 : 0, tone);
+      context.fillText(`${done} 完成 · ${changed} 调整 · ${missed} 未完成`, x + 18, daysY + 180);
+      if (day.note) {
+        context.fillStyle = "#817b88";
+        context.font = "600 12px system-ui, sans-serif";
+        drawCanvasText(context, day.note, x + 18, daysY + 204, dayWidth - 36, 16, 2);
+      }
+      drawCanvasProgress(context, x + 18, daysY + 244, dayWidth - 36, entries.length ? (done + changed) / entries.length * 100 : 0, tone);
     });
-
-    context.fillStyle = "#8c8693";
-    context.font = "600 17px system-ui, sans-serif";
-    context.textAlign = "center";
-    context.fillText("把一周摊开看见，也把下一步留给自己。 · ASOUL 一个魂生活日记", width / 2, height - 54);
-    context.textAlign = "left";
-    return contextCanvas;
   }
 
   function drawCanvasSoulMark(context, x, y, size) {
@@ -3310,11 +3344,11 @@
       </label>
       <div class="series-axis-fields">
         <label class="field">
-          <span>纵轴最小值 <small>留空自动</small></span>
+          <span>纵轴最小值</span>
           <input data-series-axis-min type="number" step="any" inputmode="decimal" placeholder="留空自动" value="${Number.isFinite(Number(item.axisMin)) && item.axisMin !== null && item.axisMin !== "" ? escapeAttr(item.axisMin) : ""}" />
         </label>
         <label class="field">
-          <span>纵轴最大值 <small>留空自动</small></span>
+          <span>纵轴最大值</span>
           <input data-series-axis-max type="number" step="any" inputmode="decimal" placeholder="留空自动" value="${Number.isFinite(Number(item.axisMax)) && item.axisMax !== null && item.axisMax !== "" ? escapeAttr(item.axisMax) : ""}" />
         </label>
       </div>
@@ -3386,6 +3420,42 @@
     })[value] || "曲线颜色";
   }
 
+  function safeCardColor(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    return ALLOWED_COLORS.find((color) => color.toLowerCase() === normalized) || "";
+  }
+
+  function getCardColor(item, index = 0) {
+    return safeCardColor(item?.color) || CARD_AUTO_COLORS[Math.max(0, index) % CARD_AUTO_COLORS.length];
+  }
+
+  function setThemeColorField(form, selectedColor = "", fallbackIndex = 0) {
+    const select = form?.elements?.color;
+    if (!select) return;
+    if (!select.options.length) {
+      select.innerHTML = `
+        <option value="">自动配色（按卡片顺序）</option>
+        ${ALLOWED_COLORS.map((color) => `<option value="${color}">${escapeHtml(colorName(color))}</option>`).join("")}
+      `;
+    }
+    const field = select.closest("[data-theme-color-field]");
+    field.dataset.fallbackIndex = String(Math.max(0, fallbackIndex));
+    select.value = safeCardColor(selectedColor);
+    if (!select.dataset.themeColorBound) {
+      select.dataset.themeColorBound = "true";
+      select.addEventListener("change", () => updateThemeColorPreview(select));
+    }
+    updateThemeColorPreview(select);
+  }
+
+  function updateThemeColorPreview(select) {
+    const field = select.closest("[data-theme-color-field]");
+    if (!field) return;
+    const fallbackIndex = Number(field.dataset.fallbackIndex) || 0;
+    field.style.setProperty("--theme-preview-color", getCardColor({ color: select.value }, fallbackIndex));
+    field.classList.toggle("is-auto", !safeCardColor(select.value));
+  }
+
   function saveChartFromDialog(event) {
     event.preventDefault();
     if (!chartForm.reportValidity()) return;
@@ -3428,9 +3498,8 @@
       showToast("空白曲线图已经准备好啦");
     }
 
-    saveState(false);
     chartDialog.close();
-    renderCharts();
+    persistState(["charts"]);
   }
 
   function renderCharts() {
@@ -3510,11 +3579,10 @@
       <article class="chart-card" style="--chart-color:${primaryColor}">
         <div class="chart-card-head">
           <div class="chart-card-title">
-            <div>
+            <div class="chart-heading-line">
               <h3>${escapeHtml(chart.title)}</h3>
               <div class="chart-meta">
-                <span><b>${escapeHtml(chart.xLabel)}</b> · ${chart.series.length} 项指标</span>
-                <span aria-hidden="true">·</span>
+                <span>${chart.series.length} 项指标</span>
                 <span>${chart.nodes.length} 个节点</span>
               </div>
             </div>
@@ -3563,8 +3631,28 @@
     const context = canvas.getContext("2d");
     context.scale(scale, scale);
     const template = getSpaceTemplate(chart.spaceId);
-    const primary = chart.series[0];
-    const primaryColor = primary?.color || "#8f7aea";
+    drawChartCanvasHeader(context, chart, template, width, height);
+
+    const plot = { left: 134, top: 304, right: 106, bottom: 150 };
+    const plotWidth = width - plot.left - plot.right;
+    const plotHeight = height - plot.top - plot.bottom;
+    const xAt = (index) => chart.nodes.length === 1
+      ? plot.left + plotWidth / 2
+      : plot.left + index / (chart.nodes.length - 1) * plotWidth;
+    const seriesData = getChartSeriesGeometry(chart, {
+      xAt,
+      yAt: (value, min, max) => plot.top + (max - value) / (max - min) * plotHeight,
+      anchorCustomMax: false,
+    });
+
+    drawChartCanvasGrid(context, seriesData[0], plot, plotHeight, width);
+    drawChartCanvasSeries(context, seriesData, plot, plotHeight);
+    drawChartCanvasNodes(context, chart, seriesData[0], { xAt, plotWidth, height });
+    return canvas;
+  }
+
+  function drawChartCanvasHeader(context, chart, template, width, height) {
+    const primaryColor = chart.series[0]?.color || "#8f7aea";
     const background = context.createLinearGradient(0, 0, width, height);
     background.addColorStop(0, "#fffdfb");
     background.addColorStop(.52, "#faf8ff");
@@ -3576,7 +3664,6 @@
     context.arc(width - 80, 60, 350, 0, Math.PI * 2);
     context.fill();
     drawCanvasAppIcon(context, width - 145, 64, 76);
-
     context.fillStyle = primaryColor;
     context.font = "850 22px system-ui, sans-serif";
     context.fillText(`ASOUL ${template.id.toUpperCase()} CURVE`, 86, 88);
@@ -3586,7 +3673,6 @@
     context.fillStyle = "#817a89";
     context.font = "650 20px system-ui, sans-serif";
     context.fillText(`${chart.nodes.length} 个节点 · ${chart.xLabel} · 生成于 ${formatFriendlyDate(todayIso())}`, 88, 194);
-
     let legendX = 88;
     chart.series.forEach((series) => {
       context.fillStyle = series.color;
@@ -3598,35 +3684,9 @@
       context.fillText(series.name, legendX + 23, 238);
       legendX += 44 + context.measureText(series.name).width;
     });
+  }
 
-    const plot = { left: 134, top: 304, right: 106, bottom: 150 };
-    const plotWidth = width - plot.left - plot.right;
-    const plotHeight = height - plot.top - plot.bottom;
-    const xAt = (index) => chart.nodes.length === 1
-      ? plot.left + plotWidth / 2
-      : plot.left + index / (chart.nodes.length - 1) * plotWidth;
-    const seriesData = chart.series.map((series) => {
-      const values = chart.nodes.map((node) => {
-        const raw = node.values?.[series.id];
-        return raw === null || raw === undefined ? NaN : Number(raw);
-      }).filter(Number.isFinite);
-      let min = values.length ? Math.min(...values) : 0;
-      let max = values.length ? Math.max(...values) : 1;
-      const range = max - min;
-      const padding = range === 0 ? Math.max(Math.abs(max) * .12, 1) : range * .16;
-      min = series.axisMin !== null && series.axisMin !== undefined && Number.isFinite(Number(series.axisMin)) ? Number(series.axisMin) : Math.max(0, min - padding);
-      max = series.axisMax !== null && series.axisMax !== undefined && Number.isFinite(Number(series.axisMax)) ? Number(series.axisMax) : max + padding;
-      if (max <= min) max = min + Math.max(Math.abs(min) * .12, 1);
-      const points = chart.nodes.map((node, index) => {
-        const raw = node.values?.[series.id];
-        const value = raw === null || raw === undefined ? NaN : Number(raw);
-        if (!Number.isFinite(value)) return null;
-        const visible = Math.max(min, Math.min(max, value));
-        return { node, value, x: xAt(index), y: plot.top + (max - visible) / (max - min) * plotHeight };
-      }).filter(Boolean);
-      return { ...series, min, max, points };
-    });
-
+  function drawChartCanvasGrid(context, primarySeries, plot, plotHeight, width) {
     for (let index = 0; index < 5; index += 1) {
       const ratio = index / 4;
       const y = plot.top + ratio * plotHeight;
@@ -3639,10 +3699,12 @@
       context.fillStyle = "#858091";
       context.font = "650 16px system-ui, sans-serif";
       context.textAlign = "right";
-      context.fillText(formatSeriesValue(seriesData[0], seriesData[0].max - ratio * (seriesData[0].max - seriesData[0].min)), plot.left - 18, y + 6);
+      context.fillText(formatSeriesValue(primarySeries, primarySeries.max - ratio * (primarySeries.max - primarySeries.min)), plot.left - 18, y + 6);
     }
     context.textAlign = "left";
+  }
 
+  function drawChartCanvasSeries(context, seriesData, plot, plotHeight) {
     seriesData.forEach((series, seriesIndex) => {
       if (!series.points.length) return;
       if (seriesIndex === 0 && series.points.length > 1) {
@@ -3674,9 +3736,10 @@
         context.stroke();
       });
     });
+  }
 
-    const maxLabels = 9;
-    const labelEvery = Math.max(1, Math.ceil((chart.nodes.length - 1) / Math.max(1, maxLabels - 1)));
+  function drawChartCanvasNodes(context, chart, primarySeries, { xAt, plotWidth, height }) {
+    const labelEvery = getLabelEvery(chart.nodes.length, 9);
     chart.nodes.forEach((node, index) => {
       const x = xAt(index);
       if (index === 0 || index === chart.nodes.length - 1 || index % labelEvery === 0) {
@@ -3690,15 +3753,10 @@
       if (image?.complete && image.naturalWidth) {
         const spacing = plotWidth / Math.max(1, chart.nodes.length - 1);
         const size = Math.max(28, Math.min(58, spacing * .42));
-        const primaryPoint = seriesData[0].points.find((point) => point.node.id === node.id);
+        const primaryPoint = primarySeries.points.find((point) => point.node.id === node.id);
         if (primaryPoint) drawCanvasSticker(context, image, primaryPoint.x - size / 2, primaryPoint.y - size - 26, size);
       }
     });
-    context.textAlign = "left";
-    context.fillStyle = "#8b8592";
-    context.font = "600 16px system-ui, sans-serif";
-    context.fillText("曲线图会采用每条曲线自己的纵轴范围；此图显示左侧第一项指标刻度。", 88, height - 44);
-    return canvas;
   }
 
   function drawCanvasSmoothPath(context, points) {
@@ -3731,73 +3789,89 @@
     const zoom = chartZoomById.get(chart.id) || 1;
     const zoomIndex = Math.max(0, CHART_ZOOM_LEVELS.indexOf(zoom));
     const canZoom = chart.nodes.length > 1;
+    const layout = createChartSvgLayout(chart, zoom);
+    const { compactChart, visualScale, nodeVisualScale, width, height, margin, axisFontSize, plotWidth, plotHeight, xAt } = layout;
+    const seriesData = getChartSeriesGeometry(chart, {
+      xAt,
+      yAt: (value, min, max) => margin.top + ((max - value) / (max - min)) * plotHeight,
+    });
+
+    const baseline = margin.top + plotHeight;
+    const primary = seriesData[0];
+    const primaryPath = buildSmoothPath(primary.points);
+    const areaPath = primary.points.length > 1
+      ? `${primaryPath} L ${primary.points.at(-1).px.toFixed(2)} ${baseline} L ${primary.points[0].px.toFixed(2)} ${baseline} Z`
+      : "";
+    const gradientId = `gradient-${chart.id}-${primary.id}`;
+    const tickCount = 5;
+    const grid = renderChartSvgGrid(chart, seriesData, layout, tickCount);
+
+    const nodeSpacing = plotWidth / Math.max(chart.nodes.length - 1, 1);
+    const labelEvery = getLabelEvery(chart.nodes.length, Math.max(2, Math.floor(plotWidth / 96)));
+    const xLabels = renderChartSvgXLabels(chart, layout, labelEvery);
+    const lineMarkup = renderChartSvgLines(seriesData, compactChart, visualScale);
+    const pointMarkup = renderChartSvgPoints(chart, seriesData, layout, { compactChart, labelEvery, nodeSpacing });
+    const { fixedYAxis, fixedYAxisUnits, fixedSeriesLegend } = renderChartFixedAxes(seriesData, layout, tickCount);
+
+    return `
+      <div class="chart-zoom-bar" aria-label="曲线图缩放">
+        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
+        <strong>${zoom}×</strong>
+        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
+      </div>
+      <div class="chart-plot-shell">
+      <div class="chart-y-axis-fixed" aria-hidden="true"><em class="chart-y-axis-unit">${fixedYAxisUnits}</em>${fixedYAxis}</div>
+      <div class="chart-series-fixed" aria-hidden="true">${fixedSeriesLegend}</div>
+      <div class="chart-x-axis-fixed" aria-hidden="true">${escapeHtml(chart.xLabel)}</div>
+      <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
+      <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height};--chart-visual-scale:${visualScale}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
+        <defs>
+          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${primary.color}" stop-opacity="0.24" />
+            <stop offset="100%" stop-color="${primary.color}" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        ${grid}
+        ${areaPath ? `<path class="chart-area" d="${areaPath}" fill="url(#${gradientId})" />` : ""}
+        ${lineMarkup}
+        ${xLabels}
+        ${pointMarkup}
+      </svg>
+      </div>
+      </div>`;
+  }
+
+  function createChartSvgLayout(chart, zoom) {
     const compactChart = window.matchMedia("(max-width: 900px)").matches;
-    const mobileVisualScales = [1, 1.3, 1.65, 2];
-    const visualScale = compactChart ? mobileVisualScales[zoomIndex] : 1 + zoomIndex * 0.1;
-    const baseWidth = compactChart ? 360 : 920;
+    const phoneChart = window.matchMedia("(max-width: 520px)").matches;
+    const visualScale = 1;
+    const nodeVisualScale = phoneChart ? 1 : compactChart ? 0.82 : 0.78;
+    const baseWidth = phoneChart
+      ? 360
+      : compactChart
+        ? Math.max(560, Math.min(820, window.innerWidth - 56))
+        : 920;
     const width = Math.round(baseWidth * zoom);
-    const height = Math.round((compactChart ? 360 : 370) * (1 + zoomIndex * 0.08));
+    const height = phoneChart ? 360 : 370;
     const margin = {
       top: Math.round((compactChart ? 54 : 58) * visualScale),
       right: Math.round((compactChart ? 18 : 34) * visualScale),
       bottom: Math.round((compactChart ? 51 : 62) * visualScale),
       left: Math.round((chart.series.length > 1 ? (compactChart ? 66 : 112) : (compactChart ? 48 : 76)) * visualScale),
     };
-    const axisFontSize = (compactChart ? 10 : 11) * visualScale;
-    const axisNameSize = (compactChart ? 10.5 : 12) * visualScale;
+    const axisFontSize = (phoneChart ? 10 : compactChart ? 12 : 11) * visualScale;
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const xAt = (index) => chart.nodes.length === 1
       ? margin.left + plotWidth / 2
       : margin.left + (index / (chart.nodes.length - 1)) * plotWidth;
-    const seriesData = chart.series.map((series) => {
-      const finiteValues = chart.nodes
-        .map((node) => {
-          const raw = node.values?.[series.id];
-          return raw === null || raw === undefined ? NaN : Number(raw);
-        })
-        .filter(Number.isFinite);
-      const hasData = finiteValues.length > 0;
-      let automaticMin = finiteValues.length ? Math.min(...finiteValues) : 0;
-      let automaticMax = finiteValues.length ? Math.max(...finiteValues) : 1;
-      const naturalRange = automaticMax - automaticMin;
-      const padding = naturalRange === 0 ? Math.max(Math.abs(automaticMax) * 0.12, 1) : naturalRange * 0.16;
-      automaticMin = Math.max(0, automaticMin - padding);
-      automaticMax += padding;
-      const customMin = series.axisMin !== null && series.axisMin !== undefined && Number.isFinite(Number(series.axisMin)) ? Number(series.axisMin) : null;
-      const customMax = series.axisMax !== null && series.axisMax !== undefined && Number.isFinite(Number(series.axisMax)) ? Number(series.axisMax) : null;
-      let min = customMin ?? automaticMin;
-      let max = customMax ?? automaticMax;
-      if (max <= min) {
-        const fallbackRange = Math.max(Math.abs(min) * 0.12, 1);
-        if (customMax !== null && customMin === null) min = max - fallbackRange;
-        else max = min + fallbackRange;
-      }
-      const points = chart.nodes.map((node, index) => {
-        const raw = node.values?.[series.id];
-        const value = raw === null || raw === undefined ? NaN : Number(raw);
-        if (!Number.isFinite(value)) return null;
-        const visibleValue = Math.max(min, Math.min(max, value));
-        return {
-          node,
-          value,
-          px: xAt(index),
-          py: margin.top + ((max - visibleValue) / (max - min)) * plotHeight,
-        };
-      }).filter(Boolean);
-      return { ...series, min, max, points, pointByNode: new Map(points.map((point) => [point.node.id, point])), hasData };
-    });
+    return { compactChart, phoneChart, visualScale, nodeVisualScale, width, height, margin, axisFontSize, plotWidth, plotHeight, xAt };
+  }
 
-    const baseline = margin.top + plotHeight;
+  function renderChartSvgGrid(chart, seriesData, layout, tickCount) {
+    const { margin, plotHeight, width, axisFontSize, visualScale } = layout;
     const primary = seriesData[0];
-    const primaryPath = smoothPath(primary.points);
-    const areaPath = primary.points.length > 1
-      ? `${primaryPath} L ${primary.points.at(-1).px.toFixed(2)} ${baseline} L ${primary.points[0].px.toFixed(2)} ${baseline} Z`
-      : "";
-    const gradientId = `gradient-${chart.id}-${primary.id}`;
-    const tickCount = 5;
-
-    const grid = Array.from({ length: tickCount }, (_, index) => {
+    return Array.from({ length: tickCount }, (_, index) => {
       const ratio = index / (tickCount - 1);
       const y = margin.top + ratio * plotHeight;
       const value = primary.max - ratio * (primary.max - primary.min);
@@ -3809,39 +3883,56 @@
         <line class="chart-grid-line" x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" />
         <text class="chart-axis-text chart-axis-text--y${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" style="font-size:${axisFontSize.toFixed(2)}px" x="${margin.left - 9 * visualScale}" y="${y + 4 * visualScale}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
     }).join("");
+  }
 
-    const nodeSpacing = plotWidth / Math.max(chart.nodes.length - 1, 1);
-    const maxLabels = Math.max(2, Math.floor(plotWidth / 96));
-    const labelEvery = Math.max(1, Math.ceil(Math.max(chart.nodes.length - 1, 1) / Math.max(maxLabels - 1, 1)));
+  function renderChartSvgXLabels(chart, layout, labelEvery) {
+    const { axisFontSize, xAt, height, visualScale } = layout;
     const parsedNodeDates = chart.nodes.map((node) => parseChartDate(node.x));
-    const xLabels = chart.nodes.map((node, index) => {
+    return chart.nodes.map((node, index) => {
       const date = parsedNodeDates[index];
       const previousDate = parsedNodeDates[index - 1];
       const yearChanged = Boolean(date?.year && previousDate?.year && date.year !== previousDate.year);
       if (index !== 0 && index !== chart.nodes.length - 1 && index % labelEvery !== 0 && !yearChanged) return "";
       return `<text class="chart-axis-text" style="font-size:${axisFontSize.toFixed(2)}px" x="${xAt(index)}" y="${height - 21 * visualScale}" text-anchor="middle">${escapeXml(formatChartAxisLabel(node.x, index === 0 || yearChanged))}</text>`;
     }).join("");
+  }
 
-    const lineMarkup = seriesData.map((item) => {
-      const path = smoothPath(item.points);
+  function renderChartSvgLines(seriesData, compactChart, visualScale) {
+    return seriesData.map((item) => {
+      const path = buildSmoothPath(item.points);
       const lineWidth = (compactChart ? 2.8 : 3) * visualScale;
       return `<path class="chart-line" style="--chart-color:${item.color};stroke-width:${lineWidth.toFixed(2)}" d="${path}" />`;
     }).join("");
+  }
 
-    const pointMarkup = chart.nodes.map((node, nodeIndex) => {
+  function renderChartSvgPoints(chart, seriesData, layout, { compactChart, labelEvery, nodeSpacing }) {
+    const { phoneChart, nodeVisualScale, visualScale, plotWidth, plotHeight, margin, xAt } = layout;
+    const phoneMarkerEvery = Math.max(1, Math.ceil((chart.nodes.length - 1) / 6));
+    const declutterDensePoints = phoneChart && chart.nodes.length > 8 && nodeSpacing < 44 * visualScale;
+    return chart.nodes.map((node, nodeIndex) => {
       const pointValues = seriesData.map((item) => ({
         series: item,
         point: item.pointByNode.get(node.id),
       })).filter((item) => item.point);
       const label = `${node.x}：${pointValues.map(({ series, point }) => `${series.name} ${formatSeriesValue(series, point.value)}`).join("；")}`;
       const isSelected = selectedNodeByChart.get(chart.id) === node.id;
-      const showPointMarker = isSelected || nodeSpacing >= 14 || nodeIndex % labelEvery === 0 || nodeIndex === chart.nodes.length - 1;
-      const desiredStickerSize = (seriesData.length > 1 ? 29 : 38) * visualScale;
-      const stickerSize = Math.max(20 * visualScale, Math.min(desiredStickerSize, nodeSpacing * .86));
-      const stickerMarkup = pointValues.map(({ series, point }, pointIndex) => {
+      const isEdgeNode = nodeIndex === 0 || nodeIndex === chart.nodes.length - 1;
+      const showPointMarker = isSelected || isEdgeNode || (declutterDensePoints
+        ? nodeIndex % phoneMarkerEvery === 0
+        : nodeSpacing >= 14 || nodeIndex % labelEvery === 0);
+      const availableStickerPointValues = compactChart && pointValues.length > 1 && chart.nodes.length > 8
+        ? pointValues.filter(({ series }, pointIndex) => safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""))).slice(0, 1)
+        : pointValues;
+      const stickerPointValues = !declutterDensePoints || showPointMarker ? availableStickerPointValues : [];
+      const hasMultipleStickers = stickerPointValues.length > 1;
+      const densityScale = chart.nodes.length >= 12 ? .8 : chart.nodes.length >= 9 ? .9 : 1;
+      const desiredStickerSize = (hasMultipleStickers ? 29 : 44) * nodeVisualScale * densityScale;
+      const minimumStickerSize = (hasMultipleStickers ? 16 : 22) * nodeVisualScale;
+      const stickerSize = Math.max(minimumStickerSize, Math.min(desiredStickerSize, nodeSpacing * (hasMultipleStickers ? .68 : .84)));
+      const stickerMarkup = stickerPointValues.map(({ series, point }, pointIndex) => {
         const sticker = safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""));
         if (!sticker) return "";
-        const centerX = point.px + (pointIndex - (pointValues.length - 1) / 2) * (stickerSize + 4);
+        const centerX = point.px + (pointIndex - (stickerPointValues.length - 1) / 2) * (stickerSize + (hasMultipleStickers ? 2 : 4));
         const centerY = point.py - stickerSize / 2 - 12 * visualScale;
         const clipRadius = stickerSize / 2;
         const clipId = `clip-${chart.id}-${node.id}-${series.id}`;
@@ -3850,8 +3941,8 @@
           <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - clipRadius}" y="${centerY - clipRadius}" width="${stickerSize}" height="${stickerSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
       }).join("");
       const cores = showPointMarker ? pointValues.map(({ series, point }) => `
-        <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(10 * visualScale).toFixed(2)}" />
-        <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(6 * visualScale).toFixed(2)}" />
+        <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(10 * nodeVisualScale).toFixed(2)}" />
+        <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(6 * nodeVisualScale).toFixed(2)}" />
       `).join("") : "";
       const hitWidth = Math.max(10 * visualScale, Math.min(42 * visualScale, plotWidth / Math.max(chart.nodes.length, 1)));
       return `
@@ -3862,11 +3953,11 @@
           ${cores}
         </g>`;
     }).join("");
+  }
 
-    const axisSeriesNames = seriesData.map((item, index) => `
-      ${index ? '<tspan class="chart-axis-separator" dx="10">·</tspan>' : ""}<tspan class="chart-axis-series-name" style="fill:${item.color}"${index ? ' dx="10"' : ""}>● ${escapeXml(item.name)}</tspan>
-    `).join("");
-    const fixedYAxis = compactChart ? Array.from({ length: tickCount }, (_, index) => {
+  function renderChartFixedAxes(seriesData, layout, tickCount) {
+    const { margin, plotHeight, height } = layout;
+    const fixedYAxis = Array.from({ length: tickCount }, (_, index) => {
       const ratio = index / (tickCount - 1);
       const top = ((margin.top + ratio * plotHeight) / height) * 100;
       const labels = seriesData
@@ -3874,59 +3965,20 @@
         .map((item) => `<b style="color:${item.color}">${escapeHtml(formatSeriesValue(item, item.max - ratio * (item.max - item.min)))}</b>`)
         .join("<i>/</i>");
       return `<span style="top:${top.toFixed(3)}%">${labels}</span>`;
-    }).join("") : "";
-    const fixedYAxisUnits = compactChart ? seriesData
+    }).join("");
+    const fixedYAxisUnits = seriesData
       .filter((item) => item.hasData)
       .map((item) => {
         const parts = String(item.name || "").split("/");
         const unit = parts.length > 1 ? parts.at(-1).trim() : item.name;
         return `<b style="color:${item.color}">${escapeHtml(unit)}</b>`;
       })
-      .join("<i>·</i>") : "";
-
-    return `
-      <div class="chart-zoom-bar" aria-label="曲线图缩放">
-        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || zoomIndex <= 0 ? " disabled" : ""}>− 缩小</button>
-        <strong>${zoom}×</strong>
-        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || zoomIndex >= CHART_ZOOM_LEVELS.length - 1 ? " disabled" : ""}>＋ 放大</button>
-      </div>
-      <div class="chart-plot-shell">
-      ${compactChart ? `<div class="chart-y-axis-fixed" aria-hidden="true"><em class="chart-y-axis-unit">${fixedYAxisUnits}</em>${fixedYAxis}</div>` : ""}
-      <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
-      <svg class="chart-svg" style="width:${zoom * 100}%;min-width:${zoom * 100}%;max-width:none;aspect-ratio:${width}/${height};--chart-visual-scale:${visualScale}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
-        <defs>
-          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${primary.color}" stop-opacity="0.24" />
-            <stop offset="100%" stop-color="${primary.color}" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-        ${grid}
-        <text class="chart-axis-name chart-axis-name--series" style="font-size:${axisNameSize.toFixed(2)}px" x="${margin.left}" y="${22 * visualScale}">${axisSeriesNames}</text>
-        <text class="chart-axis-name" style="font-size:${axisNameSize.toFixed(2)}px" x="${width - margin.right}" y="${height - 6 * visualScale}" text-anchor="end">${escapeXml(chart.xLabel)}</text>
-        ${areaPath ? `<path class="chart-area" d="${areaPath}" fill="url(#${gradientId})" />` : ""}
-        ${lineMarkup}
-        ${xLabels}
-        ${pointMarkup}
-      </svg>
-      </div>
-      </div>`;
-  }
-
-  function smoothPath(points) {
-    if (!points.length) return "";
-    if (points.length === 1) return `M ${points[0].px.toFixed(2)} ${points[0].py.toFixed(2)}`;
-    if (points.length === 2) {
-      return `M ${points[0].px.toFixed(2)} ${points[0].py.toFixed(2)} L ${points[1].px.toFixed(2)} ${points[1].py.toFixed(2)}`;
-    }
-
-    let path = `M ${points[0].px.toFixed(2)} ${points[0].py.toFixed(2)}`;
-    for (let index = 0; index < points.length - 1; index += 1) {
-      const current = points[index];
-      const next = points[index + 1];
-      const controlOffset = (next.px - current.px) * 0.38;
-      path += ` C ${(current.px + controlOffset).toFixed(2)} ${current.py.toFixed(2)}, ${(next.px - controlOffset).toFixed(2)} ${next.py.toFixed(2)}, ${next.px.toFixed(2)} ${next.py.toFixed(2)}`;
-    }
-    return path;
+      .join("<i>·</i>");
+    const fixedSeriesLegend = seriesData
+      .filter((item) => item.hasData)
+      .map((item) => `<b style="color:${item.color}"><i></i>${escapeHtml(item.name)}</b>`)
+      .join("");
+    return { fixedYAxis, fixedYAxisUnits, fixedSeriesLegend };
   }
 
   function openNodeDialog(chartId, nodeId = null) {
@@ -4023,9 +4075,8 @@
 
     Object.values(stickers).forEach(preloadCanvasAsset);
 
-    saveState(false);
     nodeDialog.close();
-    renderCharts();
+    persistState(["charts"]);
   }
 
   function deleteActiveNode() {
@@ -4034,9 +4085,8 @@
     if (!window.confirm("确定删除这个节点吗？这一步无法撤销。")) return;
     chart.nodes = chart.nodes.filter((node) => node.id !== editingNodeId);
     selectedNodeByChart.delete(chart.id);
-    saveState(false);
     nodeDialog.close();
-    renderCharts();
+    persistState(["charts"]);
     showToast("节点已删除");
   }
 
@@ -4048,8 +4098,7 @@
     selectedNodeByChart.delete(chartId);
     chartZoomById.delete(chartId);
     chartScrollById.delete(chartId);
-    saveState(false);
-    renderCharts();
+    persistState(["charts"]);
     showToast("图表已删除");
   }
 
@@ -4068,8 +4117,7 @@
     const sourceIndex = state.charts.findIndex((chart) => chart.id === spaceCharts[index].id);
     const targetIndex = state.charts.findIndex((chart) => chart.id === spaceCharts[target].id);
     [state.charts[sourceIndex], state.charts[targetIndex]] = [state.charts[targetIndex], state.charts[sourceIndex]];
-    saveState(false);
-    renderCharts();
+    persistState(["charts"]);
     showToast(direction < 0 ? "图表已上移" : "图表已下移");
   }
 
@@ -4092,7 +4140,6 @@
 
   function changeChartZoom(chartId, action) {
     const current = chartZoomById.get(chartId) || 1;
-    const index = Math.max(0, CHART_ZOOM_LEVELS.indexOf(current));
     const chart = findChart(chartId);
     if (current === 1 && action === "in" && chart?.nodes.length > 1) {
       const selectedId = selectedNodeByChart.get(chartId);
@@ -4100,9 +4147,7 @@
       chartScrollById.set(chartId, selectedIndex / (chart.nodes.length - 1));
     }
     if (action === "reset") chartScrollById.set(chartId, 0);
-    const next = action === "reset"
-      ? 1
-      : CHART_ZOOM_LEVELS[Math.max(0, Math.min(CHART_ZOOM_LEVELS.length - 1, index + (action === "in" ? 1 : -1)))];
+    const next = getNextZoom(current, action, CHART_ZOOM_LEVELS);
     chartZoomById.set(chartId, next);
     renderCharts();
   }
@@ -4201,8 +4246,7 @@
       return;
     }
     state.profile.avatar = pendingAvatarSticker;
-    renderProfileAvatar();
-    saveState();
+    persistState(["avatar"]);
     avatarDialog.close();
     showToast("表情包头像换好啦");
   }
@@ -4210,8 +4254,7 @@
   function clearAvatar() {
     state.profile.avatar = "";
     pendingAvatarSticker = "";
-    renderProfileAvatar();
-    saveState();
+    persistState(["avatar"]);
     avatarDialog.close();
     showToast("已恢复默认头像");
   }
@@ -4242,12 +4285,7 @@
   }
 
   function exportBackup() {
-    const backup = {
-      backupType: "asoul-life-diary",
-      exportedAt: new Date().toISOString(),
-      ...state,
-      jokes: coldJokes,
-    };
+    const backup = createDiaryBackupPayload(state, coldJokes, new Date().toISOString());
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -4266,8 +4304,7 @@
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const imported = JSON.parse(await file.text());
-      if (!isDiaryBackupPayload(imported)) throw new Error("invalid backup structure");
+      const imported = parseDiaryBackup(await file.text());
       const nextState = normalizeState(imported);
       if (!window.confirm("恢复备份会覆盖当前页面里的资料，确定继续吗？")) return;
       state = nextState;
@@ -4280,26 +4317,20 @@
         saveJokes();
         showRandomJoke();
       }
-      saveState(false);
+      persistState();
       selectedNodeByChart.clear();
       selectedDayByWeek.clear();
       chartZoomById.clear();
       chartScrollById.clear();
       selectedGoalId = state.goals[0]?.id || null;
       selectedProgressGoalId = state.progressGoals[0]?.id || null;
-      hydrateProfileForm();
-      renderProfileAvatar();
-      renderGoals();
-      renderProgressGoals();
       activeSpaceId = safeSpaceId(state.activeSpaceId);
       const activeWeeks = getActiveSpaceWeeks();
       const activePeriods = getActiveSpacePeriods();
       selectedWeekId = pickRelevantWeek(activeWeeks)?.id || null;
       if (activePeriods.length) weekYearFilter = activePeriods.at(-1).yearMonth.slice(0, 4);
       weekMonthFilter = activePeriods.at(-1)?.yearMonth.slice(5, 7) || "";
-      renderSpaceSwitcher();
-      renderWeeks();
-      renderCharts();
+      renderAllDataViews({ hydrateProfile: true });
       preloadCanvasAssets();
       showToast("生活日记已恢复");
     } catch (error) {
@@ -4309,15 +4340,6 @@
     } finally {
       event.target.value = "";
     }
-  }
-
-  function isDiaryBackupPayload(candidate) {
-    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return false;
-    if (candidate.backupType && !["asoul-health-diary", "asoul-life-diary"].includes(candidate.backupType)) return false;
-    const hasProfile = candidate.profile && typeof candidate.profile === "object" && !Array.isArray(candidate.profile);
-    const hasCharts = Array.isArray(candidate.charts);
-    const hasWeeks = candidate.weeks === undefined || Array.isArray(candidate.weeks) || Array.isArray(candidate.weeklyPlans);
-    return hasProfile && hasCharts && hasWeeks;
   }
 
   function findChart(id) {
@@ -4332,109 +4354,6 @@
   function safeId(value) {
     const text = String(value || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
     return text || makeId();
-  }
-
-  function safeString(value, maxLength) {
-    return String(value ?? "").trim().slice(0, maxLength);
-  }
-
-  function safeDate(value) {
-    const text = String(value || "").trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return "";
-    const [year, month, day] = text.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    const isExactDate = date.getFullYear() === year
-      && date.getMonth() === month - 1
-      && date.getDate() === day;
-    return isExactDate ? text : "";
-  }
-
-  function safeWeight(value) {
-    const text = String(value ?? "").trim();
-    if (!text) return null;
-    const weight = Number(text);
-    if (!Number.isFinite(weight) || weight < 20 || weight > 500) return null;
-    return Math.round(weight * 100) / 100;
-  }
-
-  function formatWeight(value) {
-    return value === null || value === undefined ? "未填写" : `${formatNumber(value)} 斤`;
-  }
-
-  function todayIso() {
-    const now = new Date();
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
-    return local.toISOString().slice(0, 10);
-  }
-
-  function startOfWeekIso(value) {
-    const dateValue = safeDate(value) || todayIso();
-    const date = new Date(`${dateValue}T12:00:00`);
-    const offset = (date.getDay() + 6) % 7;
-    date.setDate(date.getDate() - offset);
-    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-    return local.toISOString().slice(0, 10);
-  }
-
-  function getMonthMondays(yearMonth) {
-    if (!/^\d{4}-\d{2}$/.test(String(yearMonth || ""))) return [];
-    const date = new Date(`${yearMonth}-01T12:00:00`);
-    const offset = (8 - date.getDay()) % 7;
-    date.setDate(date.getDate() + offset);
-    const mondays = [];
-    while (true) {
-      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-      const value = local.toISOString().slice(0, 10);
-      if (!value.startsWith(yearMonth)) break;
-      mondays.push(value);
-      date.setDate(date.getDate() + 7);
-    }
-    return mondays;
-  }
-
-  function addDaysIso(value, amount) {
-    const base = safeDate(value) || todayIso();
-    const date = new Date(`${base}T12:00:00`);
-    date.setDate(date.getDate() + Number(amount || 0));
-    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-    return local.toISOString().slice(0, 10);
-  }
-
-  function formatMonthDay(value) {
-    const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
-    return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(date);
-  }
-
-  function formatFriendlyDate(value) {
-    const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
-    return `${date.getMonth() + 1}月${date.getDate()}日`;
-  }
-
-  function formatGoalDate(value) {
-    const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
-    return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" }).format(date);
-  }
-
-  function getGoalCountdown(targetDate, baseDate = todayIso()) {
-    const [targetYear, targetMonth, targetDay] = (safeDate(targetDate) || todayIso()).split("-").map(Number);
-    const [baseYear, baseMonth, baseDay] = (safeDate(baseDate) || todayIso()).split("-").map(Number);
-    const days = Math.round((
-      Date.UTC(targetYear, targetMonth - 1, targetDay) - Date.UTC(baseYear, baseMonth - 1, baseDay)
-    ) / 86_400_000);
-    if (days > 0) return { days, value: String(days), unit: "天后", phrase: `还有 ${days} 天`, state: "upcoming" };
-    if (days === 0) return { days, value: "今天", unit: "就是此刻", phrase: "就是今天", state: "today" };
-    return { days, value: String(Math.abs(days)), unit: "天前", phrase: `已过去 ${Math.abs(days)} 天`, state: "past" };
-  }
-
-  function formatCompactDate(value) {
-    const date = new Date(`${safeDate(value) || todayIso()}T12:00:00`);
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${month}${day}`;
-  }
-
-  function formatDateRange(startDate) {
-    return `${formatMonthDay(startDate)} — ${formatMonthDay(addDaysIso(startDate, 6))}`;
   }
 
   function safeSticker(value) {
@@ -4459,98 +4378,6 @@
     } catch (error) {
       return "";
     }
-  }
-
-  function parseSeriesValue(series, rawValue) {
-    const text = String(rawValue ?? "").trim();
-    if (/配速/.test(series.name)) {
-      const paceMatch = text.match(/^(\d{1,2})\s*[:′']\s*(\d{1,2})\s*[″"]?$/);
-      if (paceMatch) {
-        const minutes = Number(paceMatch[1]);
-        const seconds = Number(paceMatch[2]);
-        return seconds < 60 ? minutes + seconds / 60 : NaN;
-      }
-    }
-    return text === "" ? NaN : Number(text);
-  }
-
-  function formatSeriesInput(series, value) {
-    if (!/配速/.test(series.name)) return String(value);
-    let minutes = Math.floor(value);
-    let seconds = Math.round((value - minutes) * 60);
-    if (seconds === 60) {
-      minutes += 1;
-      seconds = 0;
-    }
-    return `${minutes}:${String(seconds).padStart(2, "0")}`;
-  }
-
-  function formatSeriesValue(series, value) {
-    if (!/配速/.test(series.name)) return formatNumber(value);
-    let minutes = Math.floor(value);
-    let seconds = Math.round((value - minutes) * 60);
-    if (seconds === 60) {
-      minutes += 1;
-      seconds = 0;
-    }
-    return `${minutes}′${String(seconds).padStart(2, "0")}″`;
-  }
-
-  function formatNumber(value) {
-    return new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(Number(value));
-  }
-
-  function formatProgressNumber(value) {
-    return new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(Number(value) || 0);
-  }
-
-  function formatProgressInput(value) {
-    const number = Number(value);
-    return Number.isFinite(number) ? String(Math.round(number * 100) / 100) : "";
-  }
-
-  function formatProgressUpdateTime(value) {
-    const date = new Date(Number(value));
-    if (Number.isNaN(date.getTime())) return "刚刚";
-    return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(date);
-  }
-
-  function shortLabel(value) {
-    const text = String(value);
-    return text.length > 9 ? `${text.slice(0, 8)}…` : text;
-  }
-
-  function parseChartDate(value) {
-    const text = String(value || "").trim();
-    let match = text.match(/^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})(?:日)?$/);
-    if (match) return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
-    match = text.match(/^(\d{1,2})[-/.月](\d{1,2})(?:日)?$/);
-    if (match) return { year: null, month: Number(match[1]), day: Number(match[2]) };
-    return null;
-  }
-
-  function formatChartAxisLabel(value, includeYear = false) {
-    const date = parseChartDate(value);
-    if (!date || date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) return shortLabel(value);
-    const monthDay = `${String(date.month).padStart(2, "0")}/${String(date.day).padStart(2, "0")}`;
-    return includeYear && date.year ? `${String(date.year).slice(-2)}/${monthDay}` : monthDay;
-  }
-
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function escapeXml(value) {
-    return escapeHtml(value);
-  }
-
-  function escapeAttr(value) {
-    return escapeHtml(value);
   }
 
   function focusDialogFieldWithoutScrolling(scrollContainer, field) {

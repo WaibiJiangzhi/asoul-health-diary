@@ -11,6 +11,6 @@
   "theme_color": "#576690",
   "categories": ["lifestyle", "productivity"],
   "icons": [
-    { "src": "icons/1.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icons/1.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any" }
   ]
 }

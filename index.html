@@ -16,29 +16,32 @@
         }
       }
     </style>
-    <link rel="icon" type="image/png" href="icons/1.png?v=0825" />
-    <link rel="apple-touch-icon" href="icons/1.png?v=0825" />
-    <link rel="manifest" href="manifest.webmanifest?v=0825" />
+    <link rel="icon" type="image/png" href="icons/1.png?v=0843" />
+    <link rel="apple-touch-icon" href="icons/1.png?v=0843" />
+    <link rel="manifest" href="manifest.webmanifest?v=0843" />
     <meta
       name="description"
       content="Asoul 一个魂生活日记——在本地记录属于你的每一点变化。"
     />
     <title>Asoul 一个魂生活日记</title>
-    <link rel="stylesheet" href="styles.css?v=0821" />
-    <link rel="stylesheet" href="weekly-planner.css?v=0821" />
-    <link rel="stylesheet" href="weekly-polish.css?v=0821" />
-    <link rel="stylesheet" href="complete-polish.css?v=0821" />
-    <link rel="stylesheet" href="mobile-app.css?v=0837" />
+    <link rel="stylesheet" href="design-system.css?v=0879" />
+    <link rel="stylesheet" href="styles.css?v=0875" />
+    <link rel="stylesheet" href="weekly-polish.css?v=0863" />
+    <link rel="stylesheet" href="complete-polish.css?v=0875" />
+    <link rel="stylesheet" href="mobile-app.css?v=0894" />
+    <link rel="stylesheet" href="responsive-platform.css?v=0894" />
+    <link rel="stylesheet" href="home.css?v=0900" />
+    <link rel="stylesheet" href="goals.css?v=0900" />
+    <link rel="stylesheet" href="schedule.css?v=0897" />
+    <link rel="stylesheet" href="charts.css?v=0897" />
+    <link rel="stylesheet" href="personal.css?v=0894" />
   </head>
   <body>
-    <div class="page-glow page-glow--one" aria-hidden="true"></div>
-    <div class="page-glow page-glow--two" aria-hidden="true"></div>
-
     <header class="site-header">
       <a class="brand" href="#top" data-nav-home aria-label="返回首页">
         <img class="brand-asoul-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
         <span class="brand-app-mark" aria-label="一个魂生活日记">
-          <img src="icons/1.png?v=0825" alt="" />
+          <img src="icons/1.png?v=0843" alt="" />
         </span>
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
@@ -169,7 +172,6 @@
               <input name="signature" maxlength="60" aria-label="个性签名" />
             </label>
           </form>
-          <span class="autosave-status" id="autosaveStatus" role="status">更改会自动保存</span>
         </div>
 
         <div class="personal-preferences" aria-label="个人设置">
@@ -320,8 +322,8 @@
             <span class="eyebrow" id="chartsEyebrow">一个魂的状态轨迹</span>
             <h2 id="chartsTitle">今天，想记录什么？</h2>
           </div>
-          <button class="primary-button" id="addChartButton" type="button">
-            <span aria-hidden="true">＋</span> 添加曲线图
+          <button class="section-add-button" id="addChartButton" type="button" title="添加曲线图">
+            <span aria-hidden="true">＋</span><b>新建</b>
           </button>
         </div>
 
@@ -376,6 +378,10 @@
           <label class="field field--wide"><span>倒计时名称</span><input name="title" maxlength="30" required placeholder="例如：考研初试" /></label>
           <label class="field field--wide"><span>倒计时日期</span><input name="targetDate" type="date" required /></label>
           <label class="field field--wide"><span>一句提醒（选填）</span><input name="note" maxlength="80" placeholder="例如：稳稳推进，比临时冲刺更重要" /></label>
+          <label class="field field--wide theme-color-field" data-theme-color-field>
+            <span>卡片颜色</span>
+            <span class="theme-color-control"><i aria-hidden="true"></i><select name="color" aria-label="倒计时卡片颜色"></select></span>
+          </label>
         </div>
         <fieldset class="goal-space-picker">
           <legend>显示在哪些空间的周报？</legend>
@@ -414,6 +420,10 @@
           <label class="field"><span>当前进度</span><input name="current" type="number" min="0" max="1000000000" step="any" required value="0" /></label>
           <label class="field"><span>默认每次调整</span><input name="defaultIncrement" type="number" min="-1000000000" max="1000000000" step="any" required placeholder="例如：500；减少时填 -500" /></label>
           <label class="field field--wide"><span>一句说明（选填）</span><input name="note" maxlength="80" placeholder="例如：每天背完新词后更新一次" /></label>
+          <label class="field field--wide theme-color-field" data-theme-color-field>
+            <span>卡片颜色</span>
+            <span class="theme-color-control"><i aria-hidden="true"></i><select name="color" aria-label="进度目标卡片颜色"></select></span>
+          </label>
         </div>
         <fieldset class="goal-space-picker">
           <legend>显示在哪些空间的周报？</legend>
@@ -456,6 +466,10 @@
         <div class="dialog-fields">
           <label class="field field--wide"><span>空间名称</span><input name="name" maxlength="16" required placeholder="例如：阅读计划、副业、早睡挑战" /></label>
           <label class="field"><span>空间符号（也可以在下方选表情）</span><input name="icon" maxlength="2" placeholder="✦" /></label>
+          <label class="field theme-color-field" data-theme-color-field>
+            <span>空间卡颜色</span>
+            <span class="theme-color-control"><i aria-hidden="true"></i><select name="color" aria-label="空间卡片颜色"></select></span>
+          </label>
         </div>
         <details class="space-icon-picker" id="spaceIconPicker">
           <summary class="space-icon-picker-head">
@@ -719,8 +733,13 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="data-model.js?v=0821"></script>
+    <script src="app-utils.js?v=0865"></script>
+    <script src="backup-codec.js?v=0867"></script>
+    <script src="milestone-domain.js?v=0868"></script>
+    <script src="chart-domain.js?v=0868"></script>
+    <script src="schedule-domain.js?v=0868"></script>
     <script src="stickers.js?v=0821"></script>
     <script src="冷笑话.js?v=0821"></script>
-  <script src="app.js?v=0836"></script>
+  <script src="app.js?v=0899"></script>
   </body>
 </html>
