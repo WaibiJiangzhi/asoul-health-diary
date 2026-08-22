@@ -1537,6 +1537,7 @@ body.is-mobile-app .week-item-row{
 .week-action-menu > summary::marker{ content:""; }
 .week-action-menu > summary::-webkit-details-marker{ display:none; }
 .week-action-menu:not([open]) > div{ display:none; }
+.week-node-actions > .week-action-menu{ display:flex; align-self:stretch; align-items:center; justify-content:center; }
 
 .week-day-heading-group{ display:contents; }
 .week-day-title-edit{ position:relative; display:flex; min-width:0; max-width:100%; align-items:center; gap:6px; cursor:text; }

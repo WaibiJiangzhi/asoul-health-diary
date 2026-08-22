@@ -3,9 +3,6 @@
 /每周截图记录/
 /发布/
 
-# Large source archive that is not used by the app
-/images/新加卷/
-
 # Local/editor noise
 .DS_Store
 Thumbs.db
