@@ -16,28 +16,24 @@ if ((Test-Path -LiteralPath $packageDir) -or (Test-Path -LiteralPath $zipPath)) 
 }
 
 $corePaths = @(
-  (Join-Path $projectRoot "app.js"),
-  (Join-Path $projectRoot "data-model.js"),
-  (Join-Path $projectRoot "styles.css"),
-  (Join-Path $projectRoot "weekly-planner.css"),
-  (Join-Path $projectRoot "weekly-polish.css"),
-  (Join-Path $projectRoot "stickers.js")
+  (Join-Path $projectRoot "index.html"),
+  (Join-Path $projectRoot "sw.js"),
+  (Join-Path $projectRoot "manifest.webmanifest"),
+  (Join-Path $projectRoot "local-server.ps1"),
+  (Join-Path $projectRoot "Asoul一个魂健康日记.cmd"),
+  (Join-Path $projectRoot "README.md")
 )
-
-$entryHtml = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.html" | Select-Object -First 1
-$launcher = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.cmd" | Select-Object -First 1
-$guide = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.md" | Select-Object -First 1
-$jokes = Get-ChildItem -LiteralPath $projectRoot -File -Filter "*.js" |
-  Where-Object { $_.Name -notin @("app.js", "data-model.js", "stickers.js") } |
-  Select-Object -First 1
-
-foreach ($required in @($entryHtml, $launcher, $guide, $jokes)) {
-  if ($null -eq $required) { throw "Missing release entry file" }
-  $corePaths += $required.FullName
-}
+$coreDirectories = @(
+  (Join-Path $projectRoot "js"),
+  (Join-Path $projectRoot "css"),
+  (Join-Path $projectRoot "icons")
+)
 
 foreach ($path in $corePaths) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing release file: $path" }
+}
+foreach ($path in $coreDirectories) {
+  if (-not (Test-Path -LiteralPath $path -PathType Container)) { throw "Missing release directory: $path" }
 }
 
 $logo = Get-ChildItem -LiteralPath $projectRoot -File -Filter "Asoul.png" -Recurse |
@@ -53,6 +49,9 @@ if ($imageFolders.Count -ne 4) {
 New-Item -ItemType Directory -Path $packageDir | Out-Null
 foreach ($path in $corePaths) {
   Copy-Item -LiteralPath $path -Destination $packageDir
+}
+foreach ($path in $coreDirectories) {
+  Copy-Item -LiteralPath $path -Destination $packageDir -Recurse
 }
 
 $targetImageRoot = Join-Path $packageDir (Split-Path -Leaf $imageRoot)

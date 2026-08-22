@@ -1,0 +1,1183 @@
+{
+  "backupType": "asoul-health-diary",
+  "exportedAt": "2026-08-18T16:05:22.272Z",
+  "version": 4,
+  "profile": {
+    "name": "就一枝匠纸",
+    "gender": "男",
+    "height": "181",
+    "age": "22",
+    "avatar": "图片/嘉然表情包/2期/a6.png"
+  },
+  "weeks": [
+    {
+      "id": "1610183f-07e5-404e-a41d-b5896f607ca7",
+      "startDate": "2026-08-08",
+      "title": "8/8 开始的一周",
+      "goal": "",
+      "note": "",
+      "createdAt": 1786784229342,
+      "days": [
+        {
+          "id": "9826bee3-e34c-47e0-9917-47354de99c70",
+          "dayNumber": 1,
+          "date": "2026-08-08",
+          "title": "训练日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "db27af84-0ed4-4db9-b898-e85bb8bb60cb",
+              "name": "慢跑",
+              "value": "5 km",
+              "done": null
+            },
+            {
+              "id": "61889e60-9b02-46c3-95c6-cefadcc9898b",
+              "name": "俯卧撑",
+              "value": "4 组",
+              "done": null
+            },
+            {
+              "id": "e8e3f719-008e-4f0f-9849-3ba9053fb110",
+              "name": "平板支撑",
+              "value": "3 组",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "2d1e4ddf-a8a4-43af-8073-95177b6f50d9",
+              "name": "慢跑",
+              "value": "5 km，平均配速约 7:30/km",
+              "done": true
+            },
+            {
+              "id": "5ea3bc40-1482-49b1-8084-48785c88fca9",
+              "name": "俯卧撑",
+              "value": "4 组，平均每组 9 个",
+              "done": true
+            },
+            {
+              "id": "cfc7eb01-fda7-4b9c-a2e8-3ef87403e85e",
+              "name": "平板支撑",
+              "value": "3 组，约 39 秒",
+              "done": true
+            }
+          ],
+          "dietPlan": "今日已爽吃，无需补救；下一餐开始遵循基础规则，不用刻意少吃。",
+          "dietRecord": "爽吃烤鱼",
+          "weight": null,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/嘉然表情包/2期/a11.png"
+        },
+        {
+          "id": "0f10f508-aebb-4149-81c3-d9f4086036d8",
+          "dayNumber": 2,
+          "date": "2026-08-09",
+          "title": "休息日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "9bf0fda5-04af-44b1-aa5c-982dd88509b8",
+              "name": "简单关节活动",
+              "value": "活动开身体",
+              "done": null
+            },
+            {
+              "id": "c798a8ce-b302-433d-93f4-fd3830e2ce77",
+              "name": "慢走",
+              "value": "20 分钟",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "9e86cd3b-8ec3-406e-98b1-ce8169ab042a",
+              "name": "简单关节活动",
+              "value": "",
+              "done": true
+            },
+            {
+              "id": "d0e35eb8-35e5-4cc2-a305-6be58750601f",
+              "name": "慢走",
+              "value": "",
+              "done": true
+            }
+          ],
+          "dietPlan": "每餐 1 拳蛋白质 + 3/4 拳主食 + 2 拳蔬菜，少碰甜饮、油炸食物。",
+          "dietRecord": "中午吃了少一点米饭的擂椒卤肉饭套餐；晚上感觉吃多了一点。",
+          "weight": null,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/贝拉表情包/芭蕾拉/e3786c60e0a1d668ee64607b7ad20302353403349.png"
+        },
+        {
+          "id": "c8c16d68-cd88-4823-9789-eb24777fbad9",
+          "dayNumber": 3,
+          "date": "2026-08-10",
+          "title": "训练日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "a4a87c9e-2413-4809-8221-db5914b43cae",
+              "name": "慢跑",
+              "value": "5 km",
+              "done": null
+            },
+            {
+              "id": "fbacf720-c2b3-4fe8-bd31-cec28a220f0c",
+              "name": "俯卧撑",
+              "value": "4 组",
+              "done": null
+            },
+            {
+              "id": "e3949ffd-6ae7-4da8-8a31-7e56d83220db",
+              "name": "平板支撑",
+              "value": "3 组",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "f7f64ff4-8aae-435e-b1c7-066cb97e4e50",
+              "name": "跑步",
+              "value": "5 km，平均配速 6:06/km",
+              "done": true
+            },
+            {
+              "id": "30515194-cf69-4d46-bf99-95944789377c",
+              "name": "俯卧撑",
+              "value": "每组约 5 个，以动作质量为主",
+              "done": true
+            },
+            {
+              "id": "c79175aa-03b5-4d20-9447-53b7c8fe0c14",
+              "name": "平板支撑",
+              "value": "3 组：43 / 42 / 41 秒，平均 42 秒",
+              "done": true
+            }
+          ],
+          "dietPlan": "1 拳 + 小半拳蛋白质 + 1 拳主食 + 2 拳蔬菜；主食正常吃，保障跑步体力。",
+          "dietRecord": "",
+          "weight": null,
+          "note": "俯卧撑今天没什么力，改成以质量为主。",
+          "status": "好好好",
+          "sticker": "图片/乃琳表情包/二期/a14.gif"
+        },
+        {
+          "id": "355a790d-71df-472f-a7e7-f6e0feca5ecf",
+          "dayNumber": 4,
+          "date": "2026-08-11",
+          "title": "休息日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "a70011e3-29e4-4bcf-b5c7-c7869e6ddb1c",
+              "name": "完全休息",
+              "value": "不安排训练",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "4ca304a9-da5d-4183-a10c-54491395cc96",
+              "name": "完全休息",
+              "value": "",
+              "done": true
+            }
+          ],
+          "dietPlan": "1 拳蛋白质 + 半拳主食 + 2 拳蔬菜，主食减量控制热量。",
+          "dietRecord": "黄桃燕麦酸奶爽喝一杯。",
+          "weight": null,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/嘉然表情包/一期/1dedd36bcef99f6da7e270120b08bb0922e6cde1d_raw.jpg"
+        },
+        {
+          "id": "18840404-30e0-4d1d-8513-617865b06482",
+          "dayNumber": 5,
+          "date": "2026-08-12",
+          "title": "训练日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "81821d3e-8bf8-4209-b2f1-ad0976792897",
+              "name": "慢跑",
+              "value": "5 km",
+              "done": null
+            },
+            {
+              "id": "942ecc31-488d-47d6-8503-80e36ad9c796",
+              "name": "俯卧撑",
+              "value": "4 组",
+              "done": null
+            },
+            {
+              "id": "b8f6de8a-cdcf-4d1b-ae31-3a13d68ea7b3",
+              "name": "平板支撑",
+              "value": "3 组",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "ca182404-bacc-48b3-bf1d-1cbcb3b58605",
+              "name": "跑步",
+              "value": "跑到一半下雨，距离约 5 km，平均配速估计 6:30/km",
+              "done": true
+            },
+            {
+              "id": "5607e313-bd55-4a0d-8bf7-168999e9deba",
+              "name": "俯卧撑",
+              "value": "约 10 个，动作不太标准",
+              "done": true
+            },
+            {
+              "id": "6b21bce2-0da7-4df4-809e-a277bcf7c589",
+              "name": "平板支撑",
+              "value": "约 30 秒，组数未记录",
+              "done": true
+            }
+          ],
+          "dietPlan": "1 拳 + 小半拳蛋白质 + 1 拳主食 + 2 拳蔬菜。",
+          "dietRecord": "",
+          "weight": null,
+          "note": "跑到一半下雨了。",
+          "status": "好好好",
+          "sticker": "图片/贝拉表情包/一期拉/比心.png"
+        },
+        {
+          "id": "149a5a1c-acaa-4ca4-a79f-e1ffcde16712",
+          "dayNumber": 6,
+          "date": "2026-08-13",
+          "title": "训练日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "1ba301ee-4db1-40e1-bf2a-8c142cb701b9",
+              "name": "放松慢跑",
+              "value": "3 km",
+              "done": null
+            },
+            {
+              "id": "fc8c2a09-a464-40a3-8025-0c5efe27c943",
+              "name": "平板支撑",
+              "value": "3 组",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "980679cc-c8b3-4065-9c5e-b24696c6e42a",
+              "name": "跑步",
+              "value": "3 km，平均配速 6:13/km",
+              "done": true
+            },
+            {
+              "id": "34274cb8-afb2-4232-8706-a744d92d951d",
+              "name": "平板支撑",
+              "value": "3 组：60 / 43 / 41 秒，平均 48 秒",
+              "done": true
+            }
+          ],
+          "dietPlan": "1 拳蛋白质 + 3/4 拳主食 + 2 拳蔬菜，清淡为主，不用吃太饱。",
+          "dietRecord": "晚上蛋白质吃多了一点。",
+          "weight": null,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/乃琳表情包/一期/8136d57d5718a15d7879c700f0e89d470ae493f7_raw.png"
+        },
+        {
+          "id": "4ab5d59e-cbc9-4c79-8779-89114f6cf374",
+          "dayNumber": 7,
+          "date": "2026-08-14",
+          "title": "休息日",
+          "duration": "",
+          "planItems": [
+            {
+              "id": "73b173df-1e8d-4daa-add7-32dec7094f0c",
+              "name": "完全休息",
+              "value": "不安排训练",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "c6e6fb09-3a86-412e-ba48-fa7989e7584b",
+              "name": "完全休息",
+              "value": "",
+              "done": true
+            }
+          ],
+          "dietPlan": "1 拳蛋白质 + 半拳主食 + 2 拳蔬菜，绿叶菜可不限量。",
+          "dietRecord": "晚上下班出去吃顿好的，爽吃单人餐。",
+          "weight": null,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/嘉然表情包/此间为爱/e8bc573063295418029078d8f4d15825353403349.png"
+        }
+      ]
+    },
+    {
+      "id": "ec02bddd-2538-43be-90c4-7e5cd77db2ff",
+      "startDate": "2026-08-15",
+      "title": "稳定减脂增肌 · 0815 这一周",
+      "goal": "稳定完成 3 次跑步与 2 次基础力量训练；不靠补偿性节食，先把动作质量和恢复守住。",
+      "note": "0815 是放松休息与好好吃饭的一天。跑步日之间安排恢复或休息；俯卧撑全部使用明确次数，并以动作标准为前提。",
+      "createdAt": 1786786136510,
+      "days": [
+        {
+          "id": "f5418e2b-6cc7-4e3d-9d4f-feeaccfa4bde",
+          "dayNumber": 1,
+          "date": "2026-08-15",
+          "title": "休息日",
+          "duration": "0 分钟",
+          "planItems": [
+            {
+              "id": "d14fff58-bc7d-48f7-ba2a-29914657826e",
+              "name": "放松休息",
+              "value": "不安排训练",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "80911a0e-3cab-4ee9-b868-e8fc29f68cad",
+              "name": "放松休息",
+              "value": "今天很舒服",
+              "done": true
+            }
+          ],
+          "dietPlan": "好吃好喝放松一天",
+          "dietRecord": "萨莉亚牛排不太行",
+          "weight": 161.6,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/乃琳表情包/一期/7b1582a624b39d92d74b75f651151684a0e29a55_raw.jpg"
+        },
+        {
+          "id": "833358e3-c750-4d8a-8fa5-4a4ebbd29103",
+          "dayNumber": 2,
+          "date": "2026-08-16",
+          "title": "训练日",
+          "duration": "45 分钟",
+          "planItems": [
+            {
+              "id": "32d7967a-5015-4316-8455-91b8fa743653",
+              "name": "慢跑",
+              "value": "5 km，轻松配速",
+              "done": null
+            },
+            {
+              "id": "13fe5690-f0a1-45e3-b6ec-b6848b7fbf2f",
+              "name": "俯卧撑",
+              "value": "4 组，每组 6 个",
+              "done": null
+            },
+            {
+              "id": "af00a78d-c6e2-4566-87ee-038227760404",
+              "name": "平板支撑",
+              "value": "3 组，每组 40 秒",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "669c1281-5d83-4fe8-ab65-e9d47814fe3e",
+              "name": "慢跑",
+              "value": "",
+              "done": false
+            },
+            {
+              "id": "eb2d8cfe-dd32-4674-ba92-d1404defaf03",
+              "name": "俯卧撑",
+              "value": "",
+              "done": false
+            },
+            {
+              "id": "9785759b-5332-4fd7-b37b-78181defc854",
+              "name": "平板支撑",
+              "value": "",
+              "done": false
+            }
+          ],
+          "dietPlan": "1 拳蛋白质 + 1 拳主食 + 2 拳蔬菜；跑前后正常吃主食和喝水。",
+          "dietRecord": "",
+          "weight": 159.9,
+          "note": "今天在研究AI研究爽了，还有做视频，就没运动😭，后面注意",
+          "status": "这期拉了",
+          "sticker": "图片/贝拉表情包/芭蕾拉/087b273121becd0c158b03755cf761a6353403349.png"
+        },
+        {
+          "id": "ca588adb-3626-4fd2-8fee-790acbcd2621",
+          "dayNumber": 3,
+          "date": "2026-08-17",
+          "title": "训练日",
+          "duration": "30 分钟",
+          "planItems": [
+            {
+              "id": "aae02227-025e-404e-a91a-fabec5a49d8f",
+              "name": "慢跑",
+              "value": "5 km",
+              "done": null
+            },
+            {
+              "id": "131084a6-7bb7-450f-b0f7-bb4d8a77f4d8",
+              "name": "俯卧撑",
+              "value": "4 组",
+              "done": null
+            },
+            {
+              "id": "9cb31116-95d4-4eff-8bf5-9592a82982c4",
+              "name": "平板支撑",
+              "value": "3 组",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "714660b7-0c5d-4b40-ae68-936083273bb8",
+              "name": "慢跑",
+              "value": "644配速",
+              "done": true
+            },
+            {
+              "id": "e9ef7f43-c631-43fe-8f88-5189c4bc1b58",
+              "name": "俯卧撑",
+              "value": "6 6 10",
+              "done": true
+            },
+            {
+              "id": "a80f763b-aff9-4e3a-b309-96be75276f8e",
+              "name": "平板支撑",
+              "value": "37 40 45",
+              "done": true
+            }
+          ],
+          "dietPlan": "每餐 1 拳蛋白质 + 3/4 拳主食 + 2 拳蔬菜，少甜饮和油炸。",
+          "dietRecord": "",
+          "weight": 20,
+          "note": "",
+          "status": "好好好",
+          "sticker": "图片/嘉然表情包/2期/a11.png"
+        },
+        {
+          "id": "5d73445a-9753-4290-8160-8b94993cbcf5",
+          "dayNumber": 4,
+          "date": "2026-08-18",
+          "title": "休息日",
+          "duration": "0 分钟",
+          "planItems": [
+            {
+              "id": "0c6bf5b3-5499-494c-891a-3d116789845f",
+              "name": "完全休息",
+              "value": "不安排训练",
+              "done": null
+            }
+          ],
+          "records": [
+            {
+              "id": "da47a3b7-4342-4904-98ac-876819d4d57e",
+              "name": "完全休息",
+              "value": "",
+              "done": true
+            }
+          ],
+          "dietPlan": "1 拳蛋白质 + 半至 3/4 拳主食 + 2 拳蔬菜；按饥饿程度吃，不刻意少吃。",
+          "dietRecord": "油炸上火食品吃多了",
+          "weight": null,
+          "note": "",
+          "status": "",
+          "sticker": ""
+        },
+        {
+          "id": "36fd0f0b-d7eb-4939-b25f-195c39bf186d",
+          "dayNumber": 5,
+          "date": "2026-08-19",
+          "title": "训练日",
+          "duration": "45 分钟",
+          "planItems": [
+            {
+              "id": "4efd2a28-1f1a-4bbe-9cc3-28e9f23895d1",
+              "name": "慢跑",
+              "value": "5 km，轻松完成",
+              "done": null
+            },
+            {
+              "id": "32e09489-ed69-497e-82a3-dd04be04aae7",
+              "name": "俯卧撑",
+              "value": "4 组，每组 7 个",
+              "done": null
+            },
+            {
+              "id": "7dda4c22-b81d-456f-9159-659737f19563",
+              "name": "平板支撑",
+              "value": "3 组，每组 40 秒",
+              "done": null
+            }
+          ],
+          "records": [],
+          "dietPlan": "1 拳蛋白质 + 1 拳主食 + 2 拳蔬菜；训练后正常吃饭，不用额外节食。",
+          "dietRecord": "",
+          "weight": null,
+          "note": "",
+          "status": "",
+          "sticker": ""
+        },
+        {
+          "id": "345645ad-f0c2-4503-934e-bbb02205375a",
+          "dayNumber": 6,
+          "date": "2026-08-20",
+          "title": "训练日",
+          "duration": "30 分钟",
+          "planItems": [
+            {
+              "id": "5c1da5ea-29e7-4bb3-b346-213199ab7afd",
+              "name": "放松慢跑",
+              "value": "3 km，不追配速",
+              "done": null
+            },
+            {
+              "id": "a7b0ca01-260c-4213-a92c-14111c847b08",
+              "name": "平板支撑",
+              "value": "3 组，每组 40 秒",
+              "done": null
+            }
+          ],
+          "records": [],
+          "dietPlan": "1 拳蛋白质 + 3/4 拳主食 + 2 拳蔬菜，清淡为主，但要吃够。",
+          "dietRecord": "",
+          "weight": null,
+          "note": "",
+          "status": "",
+          "sticker": ""
+        },
+        {
+          "id": "d20da472-98f3-42a5-8120-1789bf2296ab",
+          "dayNumber": 7,
+          "date": "2026-08-21",
+          "title": "休息日",
+          "duration": "0 分钟",
+          "planItems": [
+            {
+              "id": "76269882-2482-4f33-92a0-69281bd6dbd4",
+              "name": "完全休息",
+              "value": "不安排训练",
+              "done": null
+            }
+          ],
+          "records": [],
+          "dietPlan": "每餐优先保证蛋白质和蔬菜，主食按饥饿程度正常吃。",
+          "dietRecord": "",
+          "weight": null,
+          "note": "",
+          "status": "",
+          "sticker": ""
+        }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "id": "1375cc53-c921-446d-b604-802891148234",
+      "title": "每日心情指数",
+      "xLabel": "日期",
+      "series": [
+        {
+          "id": "9bfb69c6-b4d1-4603-8f05-78073e507efd",
+          "name": "心情 / 100分",
+          "color": "#E799B0"
+        }
+      ],
+      "createdAt": 1786800067963,
+      "nodes": [
+        {
+          "id": "2165b1d9-63bd-4582-a453-fcb472918000",
+          "x": "8/15",
+          "values": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": 90
+          },
+          "note": "",
+          "sticker": "图片/嘉然表情包/2期/a11.png",
+          "stickers": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": "图片/嘉然表情包/2期/a11.png"
+          },
+          "createdAt": 1786810244788
+        },
+        {
+          "id": "dfc5e6b6-fb2f-4931-b9d2-fee97d64ee2b",
+          "x": "8/16",
+          "values": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": 92
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/芭蕾拉/61888202625a41d617c7a339bb116d5f353403349.png",
+          "stickers": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": "图片/贝拉表情包/芭蕾拉/61888202625a41d617c7a339bb116d5f353403349.png"
+          },
+          "createdAt": 1786889930576
+        },
+        {
+          "id": "b5e52ee9-a1ec-4541-9b81-2e35946a3f44",
+          "x": "8/17",
+          "values": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": 93
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/滑板拉/2.png",
+          "stickers": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": "图片/贝拉表情包/滑板拉/2.png"
+          },
+          "createdAt": 1786977905137
+        },
+        {
+          "id": "2233c972-ec87-487a-a440-7118dea27f24",
+          "x": "8/19",
+          "values": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": 93
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/二期拉/ab.png",
+          "stickers": {
+            "9bfb69c6-b4d1-4603-8f05-78073e507efd": "图片/贝拉表情包/二期拉/ab.png"
+          },
+          "createdAt": 1787069117695
+        }
+      ]
+    },
+    {
+      "id": "1c9c0842-ba0a-49dc-a424-6dd26a9f7404",
+      "title": "我的体重变化",
+      "xLabel": "日期",
+      "series": [
+        {
+          "id": "db960d80-8d3e-4b4b-b7cb-f746097d14c8",
+          "name": "体重 / 斤",
+          "color": "#a77957"
+        }
+      ],
+      "createdAt": 1786774786972,
+      "nodes": [
+        {
+          "id": "31d340a9-4db4-435c-a472-107b410551a2",
+          "x": "8/14",
+          "values": {
+            "db960d80-8d3e-4b4b-b7cb-f746097d14c8": 161.8
+          },
+          "note": "",
+          "sticker": "图片/乃琳表情包/一期/b4c2b5879745ea2fe76f8529a969ccda861cfa8b_raw.jpg",
+          "stickers": {
+            "db960d80-8d3e-4b4b-b7cb-f746097d14c8": "图片/乃琳表情包/一期/b4c2b5879745ea2fe76f8529a969ccda861cfa8b_raw.jpg"
+          },
+          "createdAt": 1786774804670
+        },
+        {
+          "id": "f984182b-6d9d-4831-b0c1-72121ad47808",
+          "x": "8/15",
+          "values": {
+            "db960d80-8d3e-4b4b-b7cb-f746097d14c8": 161.6
+          },
+          "note": "",
+          "sticker": "图片/嘉然表情包/2期/a21.png",
+          "stickers": {
+            "db960d80-8d3e-4b4b-b7cb-f746097d14c8": "图片/嘉然表情包/2期/a21.png"
+          },
+          "createdAt": 1786810110053
+        },
+        {
+          "id": "aa22303c-d1ff-4489-a7ea-f83ba39e843a",
+          "x": "8/16",
+          "values": {
+            "db960d80-8d3e-4b4b-b7cb-f746097d14c8": 160.6
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/芭蕾拉/087b273121becd0c158b03755cf761a6353403349.png",
+          "stickers": {
+            "db960d80-8d3e-4b4b-b7cb-f746097d14c8": "图片/贝拉表情包/芭蕾拉/087b273121becd0c158b03755cf761a6353403349.png"
+          },
+          "createdAt": 1786889937646
+        }
+      ]
+    },
+    {
+      "id": "bac0fbea-bac1-47e4-923e-fb249a526940",
+      "title": "跑步记录",
+      "xLabel": "日期",
+      "series": [
+        {
+          "id": "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f",
+          "name": "跑量 / km",
+          "color": "#DB7D74"
+        },
+        {
+          "id": "d31aefee-3988-4899-b7d0-ab29409bb145",
+          "name": "配速 / 分钟每公里",
+          "color": "#576690"
+        }
+      ],
+      "createdAt": 1786774859385,
+      "nodes": [
+        {
+          "id": "4d8fa76f-e692-436c-ae5e-e6a11bd52106",
+          "x": "8/8",
+          "values": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": 5,
+            "d31aefee-3988-4899-b7d0-ab29409bb145": 7.5
+          },
+          "note": "",
+          "sticker": "图片/嘉然表情包/2期/a10.png",
+          "stickers": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": "图片/嘉然表情包/2期/a10.png",
+            "d31aefee-3988-4899-b7d0-ab29409bb145": "图片/嘉然表情包/2期/a10.png"
+          },
+          "createdAt": 1786774957957
+        },
+        {
+          "id": "39fdd42c-88f4-48e0-bca8-29cda47d74a6",
+          "x": "8/10",
+          "values": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": 5,
+            "d31aefee-3988-4899-b7d0-ab29409bb145": 6.1
+          },
+          "note": "",
+          "sticker": "图片/嘉然表情包/2期/a11.png",
+          "stickers": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": "图片/嘉然表情包/2期/a11.png",
+            "d31aefee-3988-4899-b7d0-ab29409bb145": "图片/嘉然表情包/2期/a11.png"
+          },
+          "createdAt": 1786774996333
+        },
+        {
+          "id": "28ec4cf4-58f9-4f26-a221-50733ee40975",
+          "x": "8/12",
+          "values": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": 5,
+            "d31aefee-3988-4899-b7d0-ab29409bb145": 6.5
+          },
+          "note": "跑一半下雨了",
+          "sticker": "图片/嘉然表情包/2期/a3.png",
+          "stickers": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": "图片/嘉然表情包/2期/a3.png",
+            "d31aefee-3988-4899-b7d0-ab29409bb145": "图片/嘉然表情包/2期/a25.png"
+          },
+          "createdAt": 1786775054737
+        },
+        {
+          "id": "2185d0b9-bbf9-4d8e-9972-ffe8351939be",
+          "x": "8/13",
+          "values": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": 3,
+            "d31aefee-3988-4899-b7d0-ab29409bb145": 6.216666666666667
+          },
+          "note": "",
+          "sticker": "图片/嘉然表情包/2期/a21.png",
+          "stickers": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": "图片/嘉然表情包/2期/a21.png",
+            "d31aefee-3988-4899-b7d0-ab29409bb145": "图片/嘉然表情包/2期/a6.png"
+          },
+          "createdAt": 1786775085678
+        },
+        {
+          "id": "9e1acbd1-baff-4036-8ec9-61b5c92f693e",
+          "x": "8/17",
+          "values": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": 5,
+            "d31aefee-3988-4899-b7d0-ab29409bb145": 6.733333333333333
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/滑板拉/14.png",
+          "stickers": {
+            "ab5ffcb4-36f8-4b81-9fb6-b0e298016a3f": "图片/贝拉表情包/滑板拉/14.png"
+          },
+          "createdAt": 1786977952695
+        }
+      ]
+    },
+    {
+      "id": "48145416-2ff9-4b3a-af90-b51a46a1ce6d",
+      "title": "平板支撑记录",
+      "xLabel": "日期",
+      "series": [
+        {
+          "id": "d2e8e137-497e-41f1-922e-c4d2233f0e18",
+          "name": "每组平均时间 / 秒",
+          "color": "#576690"
+        },
+        {
+          "id": "397df0b6-5fff-455d-82d7-cc09fd2eed40",
+          "name": "组数 / 组",
+          "color": "#DB7D74"
+        }
+      ],
+      "createdAt": 1786775363758,
+      "nodes": [
+        {
+          "id": "68c5bea0-104c-4cdd-b334-36ec513bbd44",
+          "x": "8/8",
+          "values": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": 39,
+            "397df0b6-5fff-455d-82d7-cc09fd2eed40": 3
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/芭蕾拉/8ef5dc91b116f97f39465c9ed5962eb1353403349.png",
+          "stickers": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": "图片/贝拉表情包/芭蕾拉/8ef5dc91b116f97f39465c9ed5962eb1353403349.png"
+          },
+          "createdAt": 1786775376737
+        },
+        {
+          "id": "43c5667c-73a9-4327-b033-0fec831cd3f4",
+          "x": "8/10",
+          "values": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": 42,
+            "397df0b6-5fff-455d-82d7-cc09fd2eed40": 3
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/芭蕾拉/2266c1171e49f4dc359b12335d596877353403349.png",
+          "stickers": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": "图片/贝拉表情包/芭蕾拉/2266c1171e49f4dc359b12335d596877353403349.png"
+          },
+          "createdAt": 1786775394347
+        },
+        {
+          "id": "bd641014-4ed0-4634-9e83-981d9272eaeb",
+          "x": "8/12",
+          "values": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": 30,
+            "397df0b6-5fff-455d-82d7-cc09fd2eed40": 3
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/芭蕾拉/b0f3be3180676bc52675caaea7bec8df353403349.png",
+          "stickers": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": "图片/贝拉表情包/芭蕾拉/b0f3be3180676bc52675caaea7bec8df353403349.png"
+          },
+          "createdAt": 1786775417111
+        },
+        {
+          "id": "de0af17c-e6e7-40ef-ad91-34d2088f39fd",
+          "x": "8/13",
+          "values": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": 50,
+            "397df0b6-5fff-455d-82d7-cc09fd2eed40": 3
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/芭蕾拉/6db2b78b41d14163c95bf2e9ccb1fcb0353403349.png",
+          "stickers": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": "图片/贝拉表情包/芭蕾拉/6db2b78b41d14163c95bf2e9ccb1fcb0353403349.png"
+          },
+          "createdAt": 1786775453539
+        },
+        {
+          "id": "e1d76582-9571-48b1-a385-d8d7ec73267e",
+          "x": "8/17",
+          "values": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": 40,
+            "397df0b6-5fff-455d-82d7-cc09fd2eed40": 3
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/二期拉/ak.png",
+          "stickers": {
+            "d2e8e137-497e-41f1-922e-c4d2233f0e18": "图片/贝拉表情包/二期拉/ak.png"
+          },
+          "createdAt": 1786977975751
+        }
+      ]
+    },
+    {
+      "id": "8c0eb977-3911-45f4-80f3-2e67dba162e3",
+      "title": "俯卧撑记录",
+      "xLabel": "日期",
+      "series": [
+        {
+          "id": "8766ec69-a22d-4791-9ad8-fea06250c2d3",
+          "name": "俯卧撑单组平均 / 个",
+          "color": "#36a58b"
+        },
+        {
+          "id": "6fd9bb85-7d4b-42c6-9cca-61c7528e9f10",
+          "name": "俯卧撑组数 / 组",
+          "color": "#DB7D74"
+        },
+        {
+          "id": "82ccf9f8-6396-43a1-bc31-f58779c1786b",
+          "name": "俯卧撑单组最多 / 个",
+          "color": "#576690"
+        }
+      ],
+      "createdAt": 1786775130461,
+      "nodes": [
+        {
+          "id": "d039f677-08e6-4f90-8f7a-62b1e8743ee0",
+          "x": "8/8",
+          "values": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": 9,
+            "6fd9bb85-7d4b-42c6-9cca-61c7528e9f10": 4,
+            "82ccf9f8-6396-43a1-bc31-f58779c1786b": null
+          },
+          "note": "",
+          "sticker": "图片/乃琳表情包/二期/a3.gif",
+          "stickers": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": "图片/乃琳表情包/二期/a3.gif"
+          },
+          "createdAt": 1786775184777
+        },
+        {
+          "id": "3241eb94-1ebc-4289-84f7-4835a2a74b7a",
+          "x": "8/10",
+          "values": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": 5,
+            "6fd9bb85-7d4b-42c6-9cca-61c7528e9f10": 4,
+            "82ccf9f8-6396-43a1-bc31-f58779c1786b": null
+          },
+          "note": "俯卧撑没力，以质为主！",
+          "sticker": "图片/乃琳表情包/脑洞波/0479f9d57c85926dac6333b082658717a6432c4e.gif",
+          "stickers": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": "图片/乃琳表情包/脑洞波/0479f9d57c85926dac6333b082658717a6432c4e.gif"
+          },
+          "createdAt": 1786775211234
+        },
+        {
+          "id": "55756bc2-5311-4912-8181-136ee83ac4b4",
+          "x": "8/12",
+          "values": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": 10,
+            "6fd9bb85-7d4b-42c6-9cca-61c7528e9f10": 4,
+            "82ccf9f8-6396-43a1-bc31-f58779c1786b": null
+          },
+          "note": "俯卧撑10个左右（不标准）",
+          "sticker": "图片/乃琳表情包/二期/a7.gif",
+          "stickers": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": "图片/乃琳表情包/二期/a7.gif"
+          },
+          "createdAt": 1786775285189
+        },
+        {
+          "id": "dc72f54f-cf96-4c05-a4ab-dd82d2cd3c2f",
+          "x": "8/17",
+          "values": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": 7,
+            "6fd9bb85-7d4b-42c6-9cca-61c7528e9f10": 4,
+            "82ccf9f8-6396-43a1-bc31-f58779c1786b": 10
+          },
+          "note": "",
+          "sticker": "图片/贝拉表情包/滑板拉/5.png",
+          "stickers": {
+            "8766ec69-a22d-4791-9ad8-fea06250c2d3": "图片/贝拉表情包/滑板拉/5.png"
+          },
+          "createdAt": 1786978003826
+        }
+      ]
+    }
+  ],
+  "jokes": [
+    {
+      "question": "生蚝掉进泥土里，这是什么？",
+      "answer": "蚝喜欢泥。"
+    },
+    {
+      "question": "贝拉：我叫贝拉。乃琳：我叫乃琳。嘉然：",
+      "answer": "我叫你把摄像头拉下来一点！"
+    },
+    {
+      "question": "一个魂去枝江跑步，为什么越跑越热？",
+      "answer": "因为逐渐，逐渐沸腾期待~"
+    },
+    {
+      "question": "哪种水果每天都特别忙？",
+      "answer": "芒果，因为它一直很“忙”。"
+    },
+    {
+      "question": "蚕宝宝为什么特别会存钱？",
+      "answer": "因为它很会“结茧”——节俭。"
+    },
+    {
+      "question": "什么动物最容易贴在墙上？",
+      "answer": "海豹，因为贴在墙上就成了“海报”。"
+    },
+    {
+      "question": "狐狸为什么走路特别容易摔倒？",
+      "answer": "因为它脚滑——狡猾。"
+    },
+    {
+      "question": "小鸭子不想听小鸡表白，会说什么？",
+      "answer": "你 duck 不必。"
+    },
+    {
+      "question": "三国里谁的形象最立体？",
+      "answer": "张飞，因为他是 3D。"
+    },
+    {
+      "question": "从来没见过的爷爷是什么爷爷？",
+      "answer": "老天爷。"
+    },
+    {
+      "question": "偷什么东西不犯法？",
+      "answer": "偷笑。"
+    },
+    {
+      "question": "人类绝对不能走什么路？",
+      "answer": "电路。"
+    },
+    {
+      "question": "大雁冬天为什么要往南飞？",
+      "answer": "因为走过去太慢了。"
+    },
+    {
+      "question": "小西红柿问妈妈：我们是蔬菜还是水果？",
+      "answer": "妈妈说：见鬼了，西红柿说话了。"
+    },
+    {
+      "question": "看见一条很帅的蜈蚣，想拍下来给大家看，为什么怎么都拍不下来？",
+      "answer": "因为无功不受禄。"
+    },
+    {
+      "question": "三分熟的牛排和五分熟的牛排为什么不会打招呼？",
+      "answer": "因为它们不熟。"
+    },
+    {
+      "question": "餐厅里谁最厉害？",
+      "answer": "客人，因为有点东西。"
+    },
+    {
+      "question": "不能吃辣的时候可以吃什么？",
+      "answer": "猪血，因为血是不辣的。"
+    },
+    {
+      "question": "什么城市不怕被冤枉？",
+      "answer": "深圳，因为身正不怕影子斜。"
+    },
+    {
+      "question": "甲乙丙丁去坐车，为什么只有甲上去了？",
+      "answer": "因为那是一辆装甲车。"
+    },
+    {
+      "question": "甲乙丙丁去坐车，为什么只有丁没上去？",
+      "answer": "因为那是一辆卡丁车。"
+    },
+    {
+      "question": "有个人在海边讲笑话，为什么一去不复返？",
+      "answer": "因为海笑了。"
+    },
+    {
+      "question": "小明去上声乐课，为什么没过多久就不见了？",
+      "answer": "因为他跑调了。"
+    },
+    {
+      "question": "狼爱上羊属于什么恋？",
+      "answer": "食物链。"
+    },
+    {
+      "question": "兵马俑和兵马俑调情会说什么？",
+      "answer": "你个小淘气。"
+    },
+    {
+      "question": "好人和坏人一起坐车，谁先下车？",
+      "answer": "坏人，因为好人坐到底。"
+    },
+    {
+      "question": "为什么打雷的时候要装死？",
+      "answer": "因为假死避雷。"
+    },
+    {
+      "question": "字母 A 和 C 谁比较高？",
+      "answer": "C，因为 A 比 C 低。"
+    },
+    {
+      "question": "在野外迷路了，怎么用手表判断方向？",
+      "answer": "把手表松开，它掉下去的方向就是下方。"
+    },
+    {
+      "question": "氧化还原反应又可以叫什么？",
+      "answer": "电子竞技。"
+    },
+    {
+      "question": "模范生为什么容易被绑架？",
+      "answer": "因为他一脸好绑样。"
+    },
+    {
+      "question": "水的妈妈是谁？",
+      "answer": "水母。"
+    },
+    {
+      "question": "哈利·波特为什么住在灯泡里？",
+      "answer": "因为他是巫师——钨丝。"
+    },
+    {
+      "question": "一颗星星有多重？",
+      "answer": "八克，因为星巴克。"
+    },
+    {
+      "question": "哪个汉字写起来最费时间？",
+      "answer": "朋，因为写完要两个月。"
+    },
+    {
+      "question": "用南瓜砸头和用西瓜砸头，哪个更疼？",
+      "answer": "头更疼。"
+    },
+    {
+      "question": "买蛋挞时问店员：这个是单卖的吗？店员怎么回答？",
+      "answer": "不是，这是葡萄牙的。"
+    },
+    {
+      "question": "什么水果最容易迷路？",
+      "answer": "榴莲，因为流连忘返。"
+    },
+    {
+      "question": "什么蚊子看起来年纪最大？",
+      "answer": "法令蚊。"
+    },
+    {
+      "question": "小明问小美：我是不是胖了，你说呢？小美说什么？",
+      "answer": "呢。"
+    },
+    {
+      "question": "什么动物最没有方向感？",
+      "answer": "麋鹿，因为它天生就迷路。"
+    },
+    {
+      "question": "什么植物最老实本分？",
+      "answer": "芭蕉，因为老实巴交。"
+    },
+    {
+      "question": "为什么超人一定要穿紧身衣？",
+      "answer": "因为救人要紧。"
+    },
+    {
+      "question": "土豆和包子打架输了，谁来安慰它？",
+      "answer": "猪，因为朱古力豆。"
+    },
+    {
+      "question": "羊遇到狼，狼却没吃羊，打一动物。",
+      "answer": "虾，因为狼瞎了。"
+    },
+    {
+      "question": "又一只狼经过，还是没吃羊，再打一动物。",
+      "answer": "海虾，因为还瞎。"
+    },
+    {
+      "question": "羊冲狼大喊一声，狼还是没吃羊，再打一动物。",
+      "answer": "龙虾，因为又聋又瞎。"
+    },
+    {
+      "question": "为什么小白长得特别像他哥哥？",
+      "answer": "因为真相大白。"
+    },
+    {
+      "question": "从 1 到 9 哪个数字最懒，哪个最勤快？",
+      "answer": "1 最懒，2 最勤快，因为一不做二不休。"
+    },
+    {
+      "question": "怎样才能让麻雀立刻安静下来？",
+      "answer": "压它一下，鸦雀无声。"
+    },
+    {
+      "question": "历史上哪个人跑得最快？",
+      "answer": "曹操，因为说曹操曹操就到。"
+    },
+    {
+      "question": "有一个字所有人见了都会念错，是什么字？",
+      "answer": "错字。"
+    }
+  ]
+}

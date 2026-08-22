@@ -1,0 +1,68 @@
+{
+  "backupType": "asoul-health-diary",
+  "exportedAt": "2026-08-19T12:00:00.000Z",
+  "version": 4,
+  "profile": {
+    "name": "旧版测试用户",
+    "gender": "",
+    "height": "",
+    "age": "",
+    "avatar": ""
+  },
+  "weeks": [
+    {
+      "id": "published-v4-week",
+      "startDate": "2026-08-17",
+      "title": "旧版健康周",
+      "goal": "保持记录",
+      "note": "",
+      "createdAt": 1786896000000,
+      "days": [
+        {
+          "id": "published-v4-day-1",
+          "dayNumber": 1,
+          "date": "2026-08-17",
+          "title": "记录日",
+          "duration": "",
+          "planItems": [
+            { "id": "published-v4-plan-1", "name": "活动", "value": "完成一次记录", "done": null }
+          ],
+          "records": [
+            { "id": "published-v4-record-1", "name": "活动", "value": "已经完成", "done": true }
+          ],
+          "dietPlan": "",
+          "dietRecord": "",
+          "weight": null,
+          "note": "旧版小记",
+          "status": "还不错",
+          "sticker": ""
+        }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "id": "published-v4-chart",
+      "title": "旧版体重曲线",
+      "xLabel": "日期",
+      "series": [
+        { "id": "published-v4-series", "name": "体重 / kg", "color": "#E799B0" }
+      ],
+      "createdAt": 1786896000000,
+      "nodes": [
+        {
+          "id": "published-v4-node",
+          "x": "2026-08-17",
+          "values": { "published-v4-series": 50 },
+          "note": "旧版节点",
+          "sticker": "",
+          "stickers": {},
+          "createdAt": 1786896000000
+        }
+      ]
+    }
+  ],
+  "jokes": [
+    { "question": "旧版静态内容", "answer": "迁移后不会进入用户数据" }
+  ]
+}

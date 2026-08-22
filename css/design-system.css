@@ -1,0 +1,406 @@
+/*
+ * A-SOUL Diary design system
+ *
+ * This file owns global design tokens and low-level UI primitives only.
+ * Page composition belongs to css/pages/*.css.
+ * Responsive compositions use four documented ranges:
+ *   phone <= 699px, tablet 700-1099px, desktop 1100-1439px, wide >= 1440px.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-sans: "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  --font-display: "Microsoft YaHei", var(--font-sans);
+  --font-mono: Consolas, "Microsoft YaHei UI", monospace;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 17px;
+  --text-xl: 21px;
+  --title-sm: clamp(28px, 4vw, 42px);
+  --title-md: clamp(30px, 4vw, 49px);
+  --leading-compact: 1.2;
+  --leading-body: 1.65;
+
+  /* Core neutral palette */
+  --color-ink: #302b3d;
+  --color-ink-strong: #242335;
+  --color-muted: #817986;
+  --color-muted-soft: #a7a3b0;
+  --color-line: rgba(72, 63, 83, .11);
+  --color-hairline: rgba(66, 54, 72, .095);
+  --color-canvas: #fffaf4;
+  --color-paper: #fffdf9;
+  --color-surface: #fffdfb;
+  --color-surface-warm: #fff7f3;
+
+  /* A-SOUL member colours */
+  --member-diana: #e799b0;
+  --member-bella: #db7d74;
+  --member-eileen: #576690;
+  --member-diana-ink: #a74365;
+  --member-bella-ink: #934a44;
+  --member-eileen-ink: #435071;
+  --member-diana-soft: #fff0f4;
+  --member-bella-soft: #fff0ee;
+  --member-eileen-soft: #f0f2f8;
+
+  /* Functional accents */
+  --accent-coral: var(--member-bella);
+  --accent-coral-strong: var(--member-bella-ink);
+  --accent-violet: #7380a3;
+  --accent-violet-deep: var(--member-eileen);
+  --accent-mint: #4ca78c;
+  --accent-orange: #ee9d42;
+  --accent-gold: #d79b3f;
+  --accent-mint-soft: #edf8f4;
+  --accent-violet-soft: var(--member-eileen-soft);
+  --accent-gold-soft: #fff8e8;
+  --color-danger: #cf455b;
+
+  /* Spacing rhythm */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shape and depth */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 34px;
+  --radius-pill: 999px;
+  --shadow-soft: 0 12px 35px rgba(80, 54, 78, .07);
+  --shadow-card: 0 18px 46px rgba(77, 59, 82, .09);
+  --shadow-raised: 0 24px 70px rgba(80, 54, 78, .10);
+
+  /* Controls */
+  --control-sm: 36px;
+  --control-md: 42px;
+  --control-lg: 48px;
+  --control-radius: 14px;
+  --focus-ring: 0 0 0 4px rgba(231, 153, 176, .16);
+
+  /* Compatibility aliases. New code should use the semantic names above. */
+  --ink: var(--color-ink-strong);
+  --ink-soft: var(--color-muted);
+  --paper: var(--color-paper);
+  --paper-warm: var(--color-surface-warm);
+  --line: var(--color-line);
+  --coral: var(--accent-coral);
+  --coral-dark: var(--accent-coral-strong);
+  --lavender: var(--accent-violet);
+  --mint: #36a58b;
+  --orange: var(--accent-orange);
+  --shadow: var(--shadow-raised);
+
+  --soul-ink: var(--color-ink);
+  --soul-muted: var(--color-muted);
+  --soul-line: var(--color-line);
+  --soul-hairline: var(--color-hairline);
+  --soul-paper: rgba(255, 254, 251, .94);
+  --soul-surface: var(--color-surface);
+  --soul-ivory: var(--color-canvas);
+  --soul-pink: var(--member-diana);
+  --soul-pink-soft: var(--member-diana-soft);
+  --soul-coral: var(--member-bella);
+  --soul-coral-soft: var(--member-bella-soft);
+  --soul-nailin: var(--member-eileen);
+  --soul-mint: var(--accent-mint);
+  --soul-mint-soft: var(--accent-mint-soft);
+  --soul-violet: var(--accent-violet-deep);
+  --soul-violet-soft: var(--accent-violet-soft);
+  --soul-gold: var(--accent-gold);
+  --soul-gold-soft: var(--accent-gold-soft);
+  --soul-shadow: var(--shadow-card);
+  --soul-purple: #667394;
+
+  --soul-jiaran: var(--member-diana);
+  --soul-bella: var(--member-bella);
+  --jiaran-pink: var(--member-diana);
+  --bella-red: var(--member-bella);
+  --nailin-blue: var(--member-eileen);
+  --neutral-soft: #f0edef;
+
+  font-family: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--ink);
+  background: #fbf8f3;
+  font-family: var(--font-sans);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  background-image: radial-gradient(rgba(36, 35, 53, .13) .5px, transparent .5px);
+  background-size: 13px 13px;
+  content: "";
+  opacity: .18;
+  pointer-events: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+label[for] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  color: inherit;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(87, 102, 144, .22);
+  outline-offset: 3px;
+}
+
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+::selection {
+  color: var(--color-ink);
+  background: rgba(231, 153, 176, .30);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: var(--space-3);
+  color: var(--member-diana-ink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+h1 {
+  margin-bottom: 17px;
+  font-size: var(--title-md);
+  line-height: var(--leading-compact);
+  letter-spacing: -.04em;
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.field > span,
+.color-picker legend {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.field em {
+  margin-left: 3px;
+  color: var(--color-muted-soft);
+  font-size: var(--text-xs);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  outline: none;
+  color: var(--color-ink-strong);
+  background: rgba(255, 255, 255, .78);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.field input,
+.field select {
+  height: 47px;
+  padding: 0 14px;
+}
+
+.field textarea {
+  min-height: 86px;
+  padding: 13px 14px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #bbb7c2;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(231, 153, 176, .72);
+  background: #fff;
+  box-shadow: var(--focus-ring);
+}
+
+.theme-color-field {
+  --theme-preview-color: var(--member-eileen);
+}
+
+.theme-color-control {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.theme-color-control > i {
+  position: relative;
+  display: block;
+  width: 38px;
+  height: 38px;
+  border: 5px solid #fff;
+  border-radius: 12px;
+  background: var(--theme-preview-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-preview-color) 30%, var(--color-line)), 0 4px 12px color-mix(in srgb, var(--theme-preview-color) 16%, transparent);
+}
+
+.theme-color-field.is-auto .theme-color-control > i::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  content: "✦";
+  font-size: 13px;
+  font-style: normal;
+}
+
+.primary-button,
+.secondary-button,
+.text-button,
+.danger-button,
+.icon-button,
+.chart-action,
+.preset-row button,
+.sticker-tab,
+.sticker-item {
+  border: 0;
+  cursor: pointer;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  min-height: var(--control-lg);
+  padding: 0 var(--space-5);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--control-radius);
+  font-weight: 800;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.primary-button {
+  color: #fff;
+  background: var(--member-eileen);
+  box-shadow: 0 10px 22px rgba(87, 102, 144, .2);
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-2px);
+}
+
+.primary-button:hover {
+  background: var(--member-eileen-ink);
+  box-shadow: 0 14px 26px rgba(87, 102, 144, .24);
+}
+
+.primary-button span,
+.secondary-button span {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.secondary-button {
+  color: var(--member-eileen-ink);
+  border: 1px solid rgba(87, 102, 144, .16);
+  background: var(--member-eileen-soft);
+}
+
+.text-button,
+.danger-button {
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.text-button:hover {
+  background: rgba(36, 35, 53, .06);
+}
+
+.danger-button {
+  color: var(--color-danger);
+}
+
+.danger-button:hover {
+  background: rgba(207, 69, 91, .08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    scroll-behavior: auto;
+    transition-duration: .01ms;
+    animation-duration: .01ms;
+    animation-iteration-count: 1;
+  }
+}

@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 
-require("../milestone-domain.js");
+require("../js/domain/milestone-domain.js");
 
 const domain = globalThis.ASOUL_MILESTONE_DOMAIN;
 

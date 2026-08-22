@@ -1,0 +1,165 @@
+/* 0818 complete experience layer: navigation, ordering, export and PWA polish. */
+html{ scroll-behavior: smooth; scroll-padding-top: 92px; }
+body{ padding-bottom: 0; }
+#goalSectionStart{ scroll-margin-top: 92px; }
+
+.section-nav{
+  position: sticky;
+  z-index: 45;
+  top: 12px;
+  display: flex;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 14px auto -44px;
+  padding: 6px;
+  gap: 4px;
+  border: 1px solid rgba(87, 102, 144, .13);
+  border-radius: 18px;
+  background: rgba(255, 253, 251, .82);
+  box-shadow: 0 13px 38px rgba(63, 52, 83, .11), inset 0 1px rgba(255,255,255,.82);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+.section-nav a{
+  display: inline-flex;
+  min-height: 38px;
+  padding: 0 14px;
+  align-items: center;
+  gap: 7px;
+  border-radius: 12px;
+  color: #756e7e;
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+.section-nav a span{ color: var(--member-eileen); font-size: 14px; }
+.section-nav a:hover{ color: var(--member-eileen-ink); background: var(--member-eileen-soft); transform: translateY(-1px); }
+.section-nav a.is-active{ color: #fff; background: var(--member-eileen); box-shadow: 0 7px 18px rgba(87,102,144,.22); }
+.section-nav a.is-active span{ color: #fff; }
+.mobile-bottom-nav{ display: none; }
+
+.item-order-actions{
+  display: inline-flex;
+  gap: 5px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(87,102,144,.12);
+}
+
+
+/* A calmer disclosure affordance than the compressed text-v glyph. */
+.space-icon-picker-head{ position: relative; padding-right: 110px; }
+.space-icon-picker-head::after{
+  content: "展开选择";
+  position: absolute;
+  top: 50%;
+  right: 44px;
+  order: initial;
+  transform: translateY(-50%);
+  color: #756a84;
+  font-size: 11px;
+  font-weight: 850;
+}
+.space-icon-picker-head::before{
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid #8a7da2;
+  border-bottom: 2px solid #8a7da2;
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform .2s ease;
+}
+.space-icon-picker[open] .space-icon-picker-head::after{ content: "收起选择"; }
+.space-icon-picker[open] .space-icon-picker-head::before{ transform: translateY(-25%) rotate(225deg); }
+
+/* Keep the selection hierarchy visible without turning the header into a toolbar wall. */
+
+
+/* Weekly report preview: generous but compact, with a strong editorial rhythm. */
+
+
+.install-app-button{
+  display: inline-flex;
+  min-height: 38px;
+  padding: 4px 12px 4px 6px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(116,98,190,.18);
+  border-radius: 13px;
+  color: #625496;
+  background: linear-gradient(135deg, #f7f3ff, #fff8fa);
+  box-shadow: 0 6px 16px rgba(75,59,111,.07);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.install-app-button img{ width: 28px; height: 28px; border-radius: 9px; }
+.install-app-button:not(:disabled):hover{ transform: translateY(-1px); border-color: rgba(116,98,190,.34); box-shadow: 0 9px 20px rgba(75,59,111,.11); }
+.install-app-button.is-ready{ color: #fff; border-color: transparent; background: var(--accent-mint); }
+.install-app-button:disabled{ opacity: .56; cursor: default; }
+
+/* AI planning is intentionally two copy actions and one paste box. */
+
+
+@media (max-width: 899.98px){
+  body{ padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+  html{ scroll-padding-top: 22px; }
+  #goalSectionStart{ scroll-margin-top: 22px; }
+  .section-nav{ display: none; }
+  .mobile-bottom-nav{
+    position: fixed;
+    z-index: 70;
+    right: 10px;
+    bottom: calc(9px + env(safe-area-inset-bottom));
+    left: 10px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px;
+    border: 1px solid rgba(87,102,144,.13);
+    border-radius: 22px;
+    background: rgba(255,253,251,.9);
+    box-shadow: 0 15px 42px rgba(52,42,70,.18), inset 0 1px rgba(255,255,255,.9);
+    -webkit-backdrop-filter: blur(19px) saturate(1.2);
+    backdrop-filter: blur(19px) saturate(1.2);
+  }
+  .mobile-bottom-nav a{
+    display: grid;
+    min-height: 52px;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    border-radius: 16px;
+    color: #817989;
+    text-decoration: none;
+  }
+  .mobile-bottom-nav a span{ height: 19px; color: var(--member-eileen); font-size: 17px; line-height: 19px; }
+  .mobile-bottom-nav a b{ font-size: 9px; }
+  .mobile-bottom-nav a.is-active{ color: var(--member-eileen-ink); background: var(--member-eileen-soft); }
+  .mobile-bottom-nav a.is-active span{ color: var(--member-eileen); transform: translateY(-1px); }
+  .item-order-actions{ width: 100%; padding: 7px 0 0; justify-content: flex-end; border-top: 1px dashed rgba(87,102,144,.12); border-left: 0; }
+
+  .install-app-button{ order: -1; }
+}
+
+@media (max-width: 560px){
+  .space-icon-picker-head{ padding-right: 36px; }
+  .space-icon-picker-head::after{ display: none; }
+  .space-icon-picker-head::before{ right: 13px; }
+  .install-app-button{ width: 36px; min-width: 36px; min-height: 36px; padding: 3px; justify-content: center; }
+  .install-app-button img{ width: 28px; height: 28px; }
+  .install-app-button span{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+
+}
+
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+  .section-nav a,
+.install-app-button,
+.space-icon-picker-head::before{ transition: none; }
+}

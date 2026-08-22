@@ -1,0 +1,46 @@
+# 由 https://bili-emoji-downloader-vue.vercel.app/?keyword=%E8%B4%9D%E6%8B%89&tabBar=0 导出，项目地址: https://github.com/magicFeirl/bili-emoji-downloader-vue
+# 表情包版权归原作者所有
+# 名称：2025贝拉的冒险
+# 购买地址: https://www.bilibili.com/blackboard/activity-Mz9T5bO5Q3.html?id=1755607083001&type=equity-link-collect-home&part=card
+
+
+# [2025贝拉的冒险_冰山美人]
+https://i0.hdslb.com/bfs/garb/7bc5de397b545eb05f867ecf68d939bb43119411.png
+# [2025贝拉的冒险_要抱抱]
+https://i0.hdslb.com/bfs/garb/a04228fd618f208786008e3e86b0748375671f44.png
+# [2025贝拉的冒险_挥拳]
+https://i0.hdslb.com/bfs/garb/c93a804fb1c96373b958bcd349f26666d2f8d105.png
+# [2025贝拉的冒险_送花]
+https://i0.hdslb.com/bfs/garb/0d0bbe77a7bf4f54aa4a648b7c8111675f15999c.png
+# [2025贝拉的冒险_大聪明]
+https://i0.hdslb.com/bfs/garb/0bb675a2951acfa7cd42e85116063ee67b51718b.png
+# [2025贝拉的冒险_惊呆]
+https://i0.hdslb.com/bfs/garb/bacb7e7bf66229201e5174fb2924e56f89e9f7b1.png
+# [2025贝拉的冒险_选我]
+https://i0.hdslb.com/bfs/garb/f53aac05b69829c4f45cda58d1b9a629afa85e65.png
+# [2025贝拉的冒险_你看这人]
+https://i0.hdslb.com/bfs/garb/e66f1ea3ed14439dd654ab8ddca678395186676a.png
+# [2025贝拉的冒险_挠头]
+https://i0.hdslb.com/bfs/garb/f00a7c0ab767e75dfdba5497e2bddfd81c64e05b.png
+# [2025贝拉的冒险_贝拉驾到]
+https://i0.hdslb.com/bfs/garb/64f6078a3492beca75e278a023cfeac28e3e8059.png
+# [2025贝拉的冒险_小队长登场]
+https://i0.hdslb.com/bfs/garb/7abf8edae4bced78aca69f22725f502be8303fb2.png
+# [2025贝拉的冒险_委屈]
+https://i0.hdslb.com/bfs/garb/2a77ac1d5d985d89abf3b92b0c4215c5ccdf279a.png
+# [2025贝拉的冒险_问号]
+https://i0.hdslb.com/bfs/garb/dcdfe0bce8c8c4ff8f79e3e0de9a9f3f64c38ce9.png
+# [2025贝拉的冒险_观察]
+https://i0.hdslb.com/bfs/garb/84e0ffda4e6ea3f1ff6ae196011e53eb750816db.png
+# [2025贝拉的冒险_营业]
+https://i0.hdslb.com/bfs/garb/32ea14b072bebbc1b065dcf90064e993436bbe48.png
+# [2025贝拉的冒险_害羞]
+https://i0.hdslb.com/bfs/garb/385495a6850768c50ea4b30c026eea2736c642fb.png
+# [2025贝拉的冒险_被吓哭]
+https://i0.hdslb.com/bfs/garb/2102953fcb37d5146afdb9f0181a33da1da8c662.png
+# [2025贝拉的冒险_十分]
+https://i0.hdslb.com/bfs/garb/18927c813dcba6998da944ae9c49d04f57d4771f.png
+# [2025贝拉的冒险_零分]
+https://i0.hdslb.com/bfs/garb/a182c65bd9502bec925c451887d31e98a4214a26.png
+# [2025贝拉的冒险_共犯]
+https://i0.hdslb.com/bfs/garb/885bd044eacae89f8069d626c1c6f31400316d83.png

@@ -4,15 +4,13 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-require("../data-model.js");
+require("../js/core/data-model.js");
 
 const model = globalThis.ASOUL_DATA_MODEL;
 
 assert.equal(model.CURRENT_STATE_VERSION, 10);
 assert.deepEqual(model.DEFAULT_SPACES.map(({ id, name }) => ({ id, name })), [
   { id: "health", name: "健康" },
-  { id: "study", name: "考研" },
-  { id: "work", name: "工作" },
 ]);
 
 const legacyWeeks = [{ id: "week-1", startDate: "2026-08-17" }];
@@ -41,14 +39,14 @@ assert.deepEqual(migratedVersionFour.spaces, model.DEFAULT_SPACES);
 const versionFive = {
   version: 5,
   activeSpaceId: "study",
-  spaces: model.DEFAULT_SPACES,
+  spaces: [{ id: "study", type: "study", name: "考研", icon: "✎" }],
   profile: { name: "test" },
   weeks: [{ id: "study-week", spaceId: "study", startDate: "2026-09-07" }],
   charts: [],
 };
 const migratedVersionFive = model.migrateState(versionFive);
 assert.equal(migratedVersionFive.version, 10);
-assert.equal(migratedVersionFive.spaces[1].templateId, "study");
+assert.equal(migratedVersionFive.spaces[0].templateId, "study");
 assert.equal(migratedVersionFive.periods[0].yearMonth, "2026-09");
 
 const current = {
@@ -91,7 +89,7 @@ const versionSeven = {
 };
 const migratedVersionSeven = model.migrateState(versionSeven);
 assert.equal(migratedVersionSeven.version, 10);
-assert.deepEqual(migratedVersionSeven.goals[0].spaceIds, ["health", "study", "work"]);
+assert.deepEqual(migratedVersionSeven.goals[0].spaceIds, ["health"]);
 
 const versionEight = {
   version: 8,

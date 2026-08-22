@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 
-require("../schedule-domain.js");
+require("../js/domain/schedule-domain.js");
 
 const domain = globalThis.ASOUL_SCHEDULE_DOMAIN;
 

@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 
-require("../app-utils.js");
+require("../js/core/app-utils.js");
 
 const utils = globalThis.ASOUL_APP_UTILS;
 

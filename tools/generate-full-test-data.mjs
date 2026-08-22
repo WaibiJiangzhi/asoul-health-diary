@@ -7,7 +7,8 @@ const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(toolDir, "..");
 const sourcePath = path.join(rootDir, "示例数据", "考研加健身用户示例.json");
 const outputPath = path.join(rootDir, "示例数据", "全功能测试数据.json");
-const stickerScript = fs.readFileSync(path.join(rootDir, "stickers.js"), "utf8");
+const longTermOutputPath = path.join(rootDir, "示例数据", "长期用户300节点示例.json");
+const stickerScript = fs.readFileSync(path.join(rootDir, "js", "content", "stickers.js"), "utf8");
 const stickerContext = { window: {} };
 vm.runInNewContext(stickerScript, stickerContext);
 const packs = stickerContext.window.ASOUL_STICKER_PACKS;
@@ -186,5 +187,89 @@ data.charts.push({
   createdAt: 1782892899000,
 });
 
+const longTermData = JSON.parse(JSON.stringify(data));
+const longTermStartAt = Date.UTC(2024, 2, 1, 8);
+const longTermNodeInterval = 3 * 86400000;
+const longTermNodes = Array.from({ length: 300 }, (_, index) => {
+  const recordedAt = longTermStartAt + index * longTermNodeInterval;
+  const trend = 3.25 + index * 0.0082;
+  const rhythm = Math.sin(index / 10) * 0.42 + Math.cos(index / 27) * 0.18;
+  const studyHours = Math.round((trend + rhythm) * 100) / 100;
+  const completionRate = Math.round(Math.min(96, 61 + index * 0.075 + Math.sin(index / 13) * 7 + Math.cos(index / 31) * 3));
+  const sleepHours = Math.round((7.05 + Math.sin(index / 9 + 1.4) * 0.52 + Math.cos(index / 25) * 0.24) * 100) / 100;
+  const studySticker = stickerCycle[index % stickerCycle.length];
+  const completionSticker = stickerCycle[(index + 3) % stickerCycle.length];
+  const sleepSticker = stickerCycle[(index + 6) % stickerCycle.length];
+  return {
+    id: `long-term-study-${index + 1}`,
+    x: new Date(recordedAt).toISOString().slice(0, 10),
+    values: {
+      "series-long-term-hours": studyHours,
+      "series-long-term-completion": completionRate,
+      "series-long-term-sleep": sleepHours,
+    },
+    note: `长期记录第 ${index + 1} 次：学习、完成率与睡眠均已复盘。`,
+    sticker: studySticker,
+    stickers: {
+      "series-long-term-hours": studySticker,
+      "series-long-term-completion": completionSticker,
+      "series-long-term-sleep": sleepSticker,
+    },
+    createdAt: recordedAt,
+  };
+});
+
+const dailyNodeEndAt = Date.UTC(2026, 7, 15, 8);
+const dailyNodeStartAt = dailyNodeEndAt - 299 * 86400000;
+const dailyStudyNodes = Array.from({ length: 300 }, (_, index) => {
+  const recordedAt = dailyNodeStartAt + index * 86400000;
+  const trend = 3.05 + index * 0.0074;
+  const rhythm = Math.sin(index / 8) * 0.36 + Math.cos(index / 23) * 0.15;
+  const studyHours = Math.round((trend + rhythm) * 100) / 100;
+  const sticker = stickerCycle[index % stickerCycle.length];
+  return {
+    id: `daily-study-${index + 1}`,
+    x: new Date(recordedAt).toISOString().slice(0, 10),
+    values: { "series-daily-study-hours": studyHours },
+    note: `连续记录第 ${index + 1} 天。`,
+    sticker,
+    stickers: { "series-daily-study-hours": sticker },
+    createdAt: recordedAt,
+  };
+});
+
+longTermData.exportedAt = "2026-08-22T12:00:00.000Z";
+longTermData.testDataNote = "长期用户压力测试：连续 300 天单曲线用于检查每日刻度，另有一张约两年半的三曲线 300 节点图，用于验证全局抽稀、局部放大和性能。";
+longTermData.profile = {
+  ...longTermData.profile,
+  name: "小枝（长期使用测试）",
+  signature: "把两年多的学习节奏留在同一条曲线上，看看长期变化。",
+};
+longTermData.charts.unshift({
+  id: "chart-daily-300-study-hours",
+  spaceId: "study",
+  title: "连续 300 天有效学习",
+  xLabel: "日期",
+  series: [
+    { id: "series-daily-study-hours", name: "有效学习", unit: "小时", color: "#8f7aea" },
+  ],
+  nodes: dailyStudyNodes,
+  createdAt: dailyNodeStartAt,
+}, {
+  id: "chart-long-term-study-hours",
+  spaceId: "study",
+  title: "两年半学习状态",
+  xLabel: "日期",
+  series: [
+    { id: "series-long-term-hours", name: "有效学习", unit: "小时", color: "#8f7aea" },
+    { id: "series-long-term-completion", name: "任务完成率", unit: "%", color: "#db7d74", axisMin: 45, axisMax: 100 },
+    { id: "series-long-term-sleep", name: "睡眠", unit: "小时", color: "#576690", axisMin: 5.5, axisMax: 8.5 },
+  ],
+  nodes: longTermNodes,
+  createdAt: longTermStartAt,
+});
+
 fs.writeFileSync(outputPath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+fs.writeFileSync(longTermOutputPath, `${JSON.stringify(longTermData, null, 2)}\n`, "utf8");
 console.log(`Generated ${path.relative(rootDir, outputPath)}`);
+console.log(`Generated ${path.relative(rootDir, longTermOutputPath)}`);

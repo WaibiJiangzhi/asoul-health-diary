@@ -1,0 +1,561 @@
+/* 0821 — 一个魂生活日记：统一移动端设计系统 */
+/* 0826 mobile home refresh: compact hierarchy and an intentional character stage. */
+@media (max-width:899.98px){
+  body.is-mobile-app .site-header{
+    min-height:62px !important;
+    padding:8px 13px !important;
+  }
+  body.is-mobile-app .header-tools{
+    display:flex !important;
+    width:auto !important;
+    margin-left:auto !important;
+    padding:3px !important;
+    align-items:center !important;
+    gap:1px !important;
+    border:1px solid rgba(87,102,144,.09) !important;
+    border-radius:13px !important;
+    background:rgba(255,255,255,.72) !important;
+    box-shadow:0 5px 16px rgba(62,52,70,.045) !important;
+  }
+  body.is-mobile-app .header-tools .local-badge,
+body.is-mobile-app .header-tools>.reset-data-button{ display:none !important; }
+  body.is-mobile-app .header-tools>#exportButton,
+body.is-mobile-app .header-tools>#importButton,
+body.is-mobile-app .header-tools>#installAppButton,
+body.is-mobile-app .header-tools>#updateAppButton{
+    width:auto !important;
+    min-width:34px !important;
+    min-height:31px !important;
+    height:31px !important;
+    margin:0 !important;
+    padding:0 6px !important;
+    border:0 !important;
+    border-radius:10px !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+  }
+  body.is-mobile-app .header-tools>#exportButton{ color:#576690 !important; }
+  body.is-mobile-app .header-tools>#importButton{ color:#675aa6 !important; }
+  body.is-mobile-app .header-tools>#installAppButton{ color:#39836f !important; }
+  body.is-mobile-app .header-tools>#updateAppButton{ color:#b86258 !important; background:#fff2ef !important; }
+  body.is-mobile-app .header-tools>button[hidden]{ display:none !important; }
+  body.is-mobile-app .brand{ gap:8px !important; }
+  body.is-mobile-app .brand>.brand-asoul-logo{ width:82px !important; }
+  body.is-mobile-app .brand>.brand-app-mark{ width:31px !important; height:31px !important; }
+}
+
+@media (max-width:390px){
+  body.is-mobile-app .site-header{ padding-inline:10px !important; }
+  body.is-mobile-app .brand{ gap:6px !important; }
+  body.is-mobile-app .brand>.brand-asoul-logo{ width:76px !important; }
+  body.is-mobile-app .brand>.brand-app-mark{ width:29px !important; height:29px !important; }
+  body.is-mobile-app .header-tools>#exportButton,
+body.is-mobile-app .header-tools>#importButton,
+body.is-mobile-app .header-tools>#installAppButton,
+body.is-mobile-app .header-tools>#updateAppButton{ min-width:30px !important; padding-inline:4px !important; font-size:9px !important; }
+}
+[data-app-view][hidden]{ display:none !important; }
+
+
+@media (max-width:899.98px){
+  *{ box-sizing:border-box; }
+  html{ min-width:0; scroll-behavior:smooth; }
+  body{ min-width:0; margin:0; padding:0 0 calc(88px + env(safe-area-inset-bottom)); overflow-x:hidden; color:var(--soul-ink); background:var(--soul-ivory); font-family:"PingFang SC","Microsoft YaHei UI","Noto Sans SC",system-ui,sans-serif; font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  button,
+input,
+select,
+textarea{ font-family:inherit; }
+  button,
+summary,
+a{ -webkit-tap-highlight-color:transparent; }
+  body.is-mobile-app main{ min-height:calc(100dvh - 150px); }
+  body.is-mobile-app main > [data-app-view]:not([hidden]){ animation:soul-view-in .2s ease-out; }
+  @keyframes soul-view-in{ from { opacity:.5; transform:translateY(5px); } }
+  .page-glow{ display:none !important; }
+
+  .site-header{ position:sticky; z-index:70; top:0; display:flex; width:100%; min-height:66px; margin:0; padding:9px 15px; align-items:center; border:0; border-bottom:1px solid rgba(62,53,70,.07); border-radius:0; background:rgba(255,253,249,.93); box-shadow:0 8px 30px rgba(63,50,68,.05); backdrop-filter:blur(20px); }
+  .brand{ display:flex; min-width:0; align-items:center; gap:9px; text-decoration:none; }
+  .brand>.brand-asoul-logo{ width:82px; max-height:38px; object-fit:contain; }
+  .brand>.brand-app-mark{ display:grid; width:32px; height:32px; flex:0 0 auto; place-items:center; overflow:hidden; border:1px solid rgba(76,167,140,.16); border-radius:11px; background:#f1faf7; box-shadow:0 5px 15px rgba(67,114,99,.08); }
+  .brand>.brand-app-mark img{ width:28px; height:28px; object-fit:contain; border-radius:50%; filter:saturate(.58) brightness(1.08); }
+  .brand-divider,
+.brand>span:last-child{ display:none; }
+  .header-tools{ display:flex; width:auto; margin-left:auto; align-items:center; gap:13px; }
+  .header-tools .local-badge,
+.header-tools>.reset-data-button{ display:none !important; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#updateAppButton{ min-width:0; min-height:38px; padding:0; border:0; color:#576690; background:transparent; box-shadow:none; font-size:12px; font-weight:900; }
+  .header-tools>#importButton{ color:#675aa6; }
+  .header-tools>#updateAppButton{ color:#33816e; }
+  .section-nav,
+footer{ display:none !important; }
+  main{ width:100%; padding:0; }
+
+  .eyebrow{ min-height:0 !important; margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; color:#d65f7d; background:transparent !important; box-shadow:none !important; font-size:10px; font-weight:900; letter-spacing:.18em; }
+  h1,
+h2,
+h3,
+strong{ letter-spacing:-.025em; }
+
+  /* 栏目标题与无边框工具 */
+  .section-heading{ display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:10px; }
+  .section-heading>div{ min-width:0; }
+  .section-heading h2{ margin:6px 0 0; color:var(--soul-ink); font-size:clamp(27px,7.4vw,34px); line-height:1.12; }
+  .section-heading p{ display:none; }
+
+
+  .section-action-menu{ position:relative; }
+  .section-action-menu>summary::-webkit-details-marker{ display:none; }
+  .section-action-menu[open]>div{ position:fixed; z-index:120; right:14px; bottom:calc(88px + env(safe-area-inset-bottom)); left:14px; display:grid; padding:12px; grid-template-columns:1fr 1fr; gap:8px; border:1px solid var(--soul-line); border-radius:22px; background:rgba(255,254,252,.98); box-shadow:0 20px 70px rgba(46,36,54,.24); }
+  .section-action-menu[open]>div button{ min-width:0; min-height:48px; padding:0 10px; border:1px solid rgba(125,107,210,.14); border-radius:14px; color:#6555aa; background:#f7f4ff; font-size:11px; font-weight:850; }
+  .section-action-menu[open]>div .danger-button{ color:#b65e6d; border-color:rgba(220,121,111,.18); background:#fff4f3; }
+  .item-order-actions{ display:contents !important; }
+
+
+  /* 目标与进度横向滑动 */
+
+
+  /* 日程空间与周计划 */
+
+
+  #importWeekButton{ color:#327d69; border-color:rgba(76,167,140,.24); background:var(--soul-mint-soft); }
+  #showSelectedWeekReportButton{ color:#6656ae; background:#f6f3ff; }
+
+
+  /* 曲线：切空间明确，倍数缩放整张 SVG */
+
+  .section-heading{ align-items:center; }
+
+
+  /* 移动端底部弹层；遮罩点击关闭 */
+  .dialog{ width:100%; max-width:none; padding:0; border:0; background:transparent; }
+  .dialog::backdrop{ background:rgba(43,37,51,.46); backdrop-filter:blur(4px); }
+  .dialog-card{ width:calc(100% - 20px); max-width:620px; max-height:min(88dvh,850px); margin:auto auto 10px; padding:19px 15px 16px; overflow-y:auto; border:0; border-radius:27px; background:#fffefc; box-shadow:0 28px 80px rgba(30,24,36,.25); }
+  .dialog-head{ align-items:flex-start; }
+  .dialog-head>.icon-button{ display:none !important; }
+  .dialog-head h2{ margin-top:4px; font-size:27px; }
+  .dialog-fields{ gap:11px; }
+  .dialog .field span,
+.dialog legend{ font-size:11px; }
+  .dialog input,
+.dialog select,
+.dialog textarea{ min-height:46px; border-radius:13px; font-size:13px; }
+  .dialog-actions{ position:sticky; z-index:3; bottom:-16px; margin:17px -15px -16px; padding:12px 15px calc(12px + env(safe-area-inset-bottom)); background:rgba(255,254,252,.96); backdrop-filter:blur(15px); }
+  .dialog-actions button{ min-height:45px; border-radius:13px; }
+
+
+  .space-icon-picker-head{ padding:12px; }
+  .sticker-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .sticker-item{ min-height:82px; }
+
+
+  .mobile-bottom-nav{ position:fixed; z-index:100; right:10px; bottom:calc(8px + env(safe-area-inset-bottom)); left:10px; display:grid; min-height:68px; padding:5px; grid-template-columns:repeat(5,1fr); border:1px solid rgba(70,60,79,.08); border-radius:23px; background:rgba(255,254,251,.95); box-shadow:0 16px 42px rgba(55,43,64,.16); backdrop-filter:blur(20px); }
+  .mobile-bottom-nav a{ display:grid; min-width:0; place-items:center; align-content:center; gap:2px; border-radius:18px; color:#817984; text-decoration:none; }
+  .mobile-bottom-nav a span{ font-size:18px; line-height:1; }
+  .mobile-bottom-nav a b{ font-size:10px; font-weight:800; }
+  .mobile-bottom-nav a:nth-child(1) span{ color:var(--member-bella); }
+  .mobile-bottom-nav a:nth-child(2) span{ color:var(--member-diana); }
+  .mobile-bottom-nav a:nth-child(3) span{ color:var(--member-eileen); }
+  .mobile-bottom-nav a:nth-child(4) span{ color:var(--member-bella); }
+  .mobile-bottom-nav a:nth-child(5) span{ color:var(--member-eileen); }
+  .mobile-bottom-nav a.is-active{ color:var(--member-eileen-ink); background:var(--member-eileen-soft); }
+  .toast{ z-index:160; bottom:calc(88px + env(safe-area-inset-bottom)); max-width:calc(100% - 30px); }
+}
+
+@media (max-width:390px){
+  .site-header{ padding-inline:11px; }
+  .brand>.brand-asoul-logo{ width:73px; }
+  .brand>.brand-app-mark{ width:29px; height:29px; }
+  .header-tools{ gap:10px; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#updateAppButton{ font-size:11px; }
+
+
+}
+
+/* Blank sticker state should read as optional, not as another decorative icon. */
+.space-icon-preview{
+  color:#8a838d !important;
+  background:#f7f4f2 !important;
+  border-color:rgba(48,43,54,.1) !important;
+  box-shadow:none !important;
+}
+.space-icon-preview:has(img){ background:#fff !important; }
+
+/* 0822 — 产品级收束：更清爽的枝江日记，而不是堆叠的功能面板 */
+@media (max-width:899.98px){
+  body{ --soul-shadow:0 14px 38px rgba(69,54,75,.075); color:#302c38; background:radial-gradient(circle at -8% 30%,rgba(231,143,169,.075),transparent 25rem),radial-gradient(circle at 108% 76%,rgba(76,167,140,.055),transparent 28rem),#fffbf6; }
+  .site-header{ min-height:62px; padding-block:8px; background:rgba(255,253,249,.96); box-shadow:0 5px 20px rgba(63,50,68,.035); }
+  .brand{ gap:7px; }
+  .brand>.brand-app-mark{ width:30px; height:30px; border:0; border-radius:9px; background:transparent; box-shadow:none; }
+  .brand>.brand-app-mark img{ width:29px; height:29px; border-radius:8px; filter:none; }
+  .header-tools{ padding:0 !important; gap:12px; border:0 !important; background:transparent !important; box-shadow:none !important; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#updateAppButton{ min-height:34px; }
+
+
+  .section-action-menu[open]>div{ padding-top:16px; }
+
+
+  .install-app-button img{ display:none; }
+  .install-app-button{ min-height:38px; padding-inline:11px; }
+}
+/* 0823 — mobile system pass: shared rhythm, unobtrusive controls, stable charts */
+@media (max-width:899.98px){
+  html.js body:not(.mobile-app-ready){ overflow:hidden; }
+  html.js body:not(.mobile-app-ready) [data-app-view]:not(#home){ display:none !important; }
+
+  .brand>.brand-app-mark{
+    width:29px !important;
+    height:29px !important;
+    overflow:hidden;
+    border:0 !important;
+    border-radius:50% !important;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+  .brand>.brand-app-mark img{
+    width:29px !important;
+    height:29px !important;
+    border:0 !important;
+    border-radius:50% !important;
+    clip-path:circle(47%);
+    background:transparent !important;
+    box-shadow:none !important;
+    filter:saturate(.86) brightness(1.035) !important;
+  }
+  .header-tools{ gap:11px !important; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#installAppButton,
+.header-tools>#updateAppButton{
+    min-height:32px !important;
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:11px !important;
+  }
+  .header-tools>#exportButton{ color:var(--nailin-blue) !important; }
+  .header-tools>#importButton{ color:#aa5868 !important; }
+  .header-tools>#installAppButton,
+.header-tools>#updateAppButton{ color:#33816e !important; }
+
+
+  .section-heading{ margin-bottom:10px !important; }
+  .section-heading h2{ text-wrap:balance; }
+
+  .section-action-menu>summary{ letter-spacing:-2px; }
+
+
+  .space-icon-picker-head{
+    position:relative;
+    min-height:70px;
+    padding:11px 50px 11px 11px !important;
+    align-items:center;
+  }
+  .space-icon-picker-head::after{ display:none !important; content:none !important; }
+  .space-icon-picker-head::before{ right:17px !important; }
+  .space-icon-picker-head .space-icon-preview{ margin-right:0 !important; }
+  .space-icon-preview{ width:48px !important; height:48px !important; flex:0 0 48px !important; }
+  .space-icon-preview img{ width:100% !important; height:100% !important; object-fit:contain !important; }
+
+  .dialog-card{ padding-top:17px !important; }
+  .dialog-head{ margin-bottom:12px !important; }
+  .dialog-head h2{ font-size:25px !important; line-height:1.1 !important; }
+  .dialog-fields{ row-gap:9px !important; }
+  .dialog-actions--split{ display:grid !important; grid-template-columns:1fr 1fr; gap:8px; }
+  .dialog-actions--split .dialog-spacer{ display:none !important; }
+  .dialog-actions--split .danger-button{ grid-column:1/-1; grid-row:1; }
+  .sticker-grid{ max-height:235px; overflow:auto; overscroll-behavior:contain; }
+  .sticker-item{ min-height:76px !important; }
+  .sticker-tabs{ position:sticky; z-index:2; top:0; background:#fffefc; }
+
+
+}
+
+@media (max-width:390px){
+  .header-tools{ gap:8px !important; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#installAppButton,
+.header-tools>#updateAppButton{ font-size:10px !important; }
+
+}
+
+/* 0824 — one coherent mobile language: compact, calm and A-SOUL coloured */
+@media (max-width:899.98px){
+  /* The inactive views must never flash before the mobile router is ready. */
+  body.is-mobile-app #home[hidden],
+body.is-mobile-app #goalSectionStart[hidden]{ display:none !important; }
+  body.is-mobile-app main{ min-height:0 !important; }
+  body.is-mobile-app main>[data-app-view]:not([hidden]){ min-height:0 !important; }
+
+  .site-header{
+    min-height:58px !important;
+    padding:8px 15px !important;
+    border-bottom:1px solid rgba(87,102,144,.075) !important;
+    background:rgba(255,253,249,.96) !important;
+    box-shadow:0 5px 22px rgba(63,53,68,.04) !important;
+  }
+  .brand{ gap:9px !important; }
+  .brand-asoul-logo{ width:84px !important; height:auto !important; }
+  .brand>.brand-app-mark{
+    display:block !important;
+    width:28px !important;
+    min-width:28px !important;
+    height:28px !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    border:0 !important;
+    outline:0 !important;
+    border-radius:50% !important;
+    background:#dff6fb !important;
+    box-shadow:none !important;
+    line-height:0 !important;
+  }
+  .brand>.brand-app-mark img{
+    display:block !important;
+    width:28px !important;
+    height:28px !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    outline:0 !important;
+    border-radius:50% !important;
+    clip-path:circle(49.5%) !important;
+    object-fit:cover !important;
+    box-shadow:none !important;
+  }
+  .header-tools{ margin-left:auto !important; gap:12px !important; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#installAppButton,
+.header-tools>#updateAppButton{
+    width:auto !important;
+    min-width:0 !important;
+    height:34px !important;
+    min-height:34px !important;
+    padding:0 1px !important;
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:11px !important;
+    letter-spacing:0 !important;
+  }
+
+
+  .section-heading{
+    min-height:0 !important;
+    margin:0 0 9px !important;
+    gap:9px !important;
+    align-items:end !important;
+  }
+  .section-heading h2{
+    margin:0 !important;
+    color:var(--soul-ink) !important;
+    font-size:27px !important;
+    line-height:1.08 !important;
+  }
+  .section-heading-actions{
+    align-self:end !important;
+    gap:6px !important;
+  }
+  /* One predictable bottom sheet for every overflow menu. */
+  .section-action-menu[open]>div{
+    right:10px !important;
+    bottom:calc(79px + env(safe-area-inset-bottom)) !important;
+    left:10px !important;
+    padding:10px !important;
+    gap:7px !important;
+    border:1px solid var(--soul-hairline) !important;
+    border-radius:19px !important;
+    background:rgba(255,253,251,.985) !important;
+    box-shadow:0 18px 54px rgba(49,43,61,.2) !important;
+  }
+  .section-action-menu[open]>div button{
+    min-height:43px !important;
+    border:1px solid rgba(87,102,144,.1) !important;
+    border-radius:12px !important;
+    color:var(--soul-nailin) !important;
+    background:#f7f8fb !important;
+    font-size:10px !important;
+  }
+
+  /* Status language: neutral / neutral setback / Jiaran / Bella / Nairin. */
+
+
+  /* The schedule is a full-width working surface, not a card inside a card. */
+
+
+  /* Dialogs and sticker pickers share the same density and never overlap. */
+  .dialog{ padding:0 !important; }
+  .dialog-card{
+    width:calc(100% - 14px) !important;
+    max-height:min(92dvh,820px) !important;
+    margin:auto auto 5px !important;
+    padding:16px 13px 13px !important;
+    overflow-x:hidden !important;
+    border-radius:24px !important;
+  }
+  .dialog-head{ margin-bottom:10px !important; }
+  .dialog-head>.icon-button{ display:none !important; }
+  .dialog-head h2{ font-size:24px !important; line-height:1.12 !important; }
+  .dialog-fields{ gap:8px !important; }
+  .dialog-fields .field>span{ margin-bottom:5px !important; font-size:10px !important; }
+  .dialog-fields input,
+.dialog-fields select,
+.dialog-fields textarea{ min-height:43px !important; padding-inline:11px !important; border-radius:12px !important; font-size:13px !important; }
+  .dialog-actions{ margin-top:11px !important; gap:7px !important; }
+  .dialog-actions button{ min-height:42px !important; border-radius:12px !important; }
+
+
+  .space-icon-picker{ margin-top:9px !important; border-color:var(--soul-hairline) !important; border-radius:15px !important; }
+  .space-icon-picker-head{
+    display:grid !important;
+    min-height:62px !important;
+    padding:8px 9px !important;
+    grid-template-columns:minmax(0,1fr) 45px !important;
+    gap:8px !important;
+    align-items:center !important;
+    list-style:none !important;
+  }
+  .space-icon-picker-head::-webkit-details-marker{ display:none !important; }
+  .space-icon-picker-head::before,
+.space-icon-picker-head::after{ display:none !important; content:none !important; }
+  .space-icon-picker-head>div:first-child{ min-width:0 !important; }
+  .space-icon-picker-head strong{ font-size:11px !important; }
+  .space-icon-picker-head span{ margin-top:2px !important; font-size:9px !important; }
+  .space-icon-preview{
+    position:static !important;
+    width:45px !important;
+    height:45px !important;
+    margin:0 !important;
+    overflow:hidden !important;
+    border:1px solid rgba(87,102,144,.09) !important;
+    border-radius:12px !important;
+    background:#fff !important;
+  }
+  .space-icon-preview img{ display:block !important; width:100% !important; height:100% !important; object-fit:contain !important; }
+  .space-icon-picker-body{ padding:8px !important; }
+  .sticker-tabs{ top:-8px !important; gap:5px !important; padding:7px 0 !important; background:#fffdfb !important; }
+  .sticker-tabs button{ min-height:32px !important; padding:0 8px !important; font-size:9px !important; }
+  .sticker-grid{ max-height:224px !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:6px !important; }
+  .sticker-item{ min-height:72px !important; border-radius:10px !important; }
+
+  /* Charts use the same section controls as goals, progress and spaces. */
+}
+
+@media (max-width:390px){
+  .site-header{ padding-inline:12px !important; }
+  .brand-asoul-logo{ width:78px !important; }
+  .header-tools{ gap:9px !important; }
+  .header-tools>#exportButton,
+.header-tools>#importButton,
+.header-tools>#installAppButton,
+.header-tools>#updateAppButton{ font-size:10px !important; }
+
+
+}
+
+/* 0825 quick mobile polish: calm spacing, stable cards and readable charts. */
+@media (max-width:899.98px){
+  .brand>.brand-app-mark{
+    width:30px !important;
+    height:30px !important;
+    overflow:hidden !important;
+    border:0 !important;
+    border-radius:10px !important;
+    background:transparent !important;
+    box-shadow:0 5px 14px rgba(87,102,144,.12) !important;
+  }
+  .brand>.brand-app-mark img{
+    width:100% !important;
+    height:100% !important;
+    border:0 !important;
+    border-radius:10px !important;
+    clip-path:none !important;
+    object-fit:cover !important;
+  }
+
+
+  .section-action-menu>summary{ letter-spacing:-2px !important; }
+
+
+}
+
+/* 0827 responsive contract: one geometry system for cards, schedules and charts. */
+.brand-app-mark{
+  display:grid;
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  place-items:center;
+  overflow:hidden;
+  padding:3px;
+  border-radius:12px;
+  background:#f4f1fb;
+}
+.brand-app-mark img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  border-radius:9px;
+}
+
+
+@media (max-width:899.98px){
+  body.is-mobile-app .brand > .brand-app-mark{
+    padding:3px !important;
+    background:#f4f1fb !important;
+  }
+  body.is-mobile-app .brand > .brand-app-mark img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+    border-radius:7px !important;
+  }
+}
+
+/* 0923 sticker-picker contract: keep every photo complete at compact widths. */
+@media (max-width:899.98px){
+  body.is-mobile-app .dialog .sticker-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    grid-auto-rows:auto !important;
+    max-height:min(344px,46dvh) !important;
+    gap:8px !important;
+  }
+  body.is-mobile-app .dialog .sticker-item{
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    padding:6px !important;
+    aspect-ratio:1 !important;
+    border-radius:12px !important;
+  }
+  body.is-mobile-app .dialog .sticker-item img{
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center !important;
+  }
+}
+
+@media (max-width:599.98px){
+  body.is-mobile-app .dialog .sticker-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    max-height:min(328px,48dvh) !important;
+    gap:7px !important;
+  }
+}

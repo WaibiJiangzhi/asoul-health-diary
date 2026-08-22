@@ -9,39 +9,39 @@
     <meta name="apple-mobile-web-app-title" content="一个魂日记" />
     <script>document.documentElement.classList.add("js");</script>
     <style>
-      @media (max-width: 900px) {
+      @media (max-width: 899.98px) {
         html.js body:not(.mobile-app-ready) [data-app-view]:not(#home),
         html.js body:not(.mobile-app-ready) footer {
           display: none !important;
         }
       }
     </style>
-    <link rel="icon" type="image/png" href="icons/1.png?v=0843" />
-    <link rel="apple-touch-icon" href="icons/1.png?v=0843" />
-    <link rel="manifest" href="manifest.webmanifest?v=0843" />
+    <link rel="icon" type="image/png" href="icons/icon-v3.png?v=0921" />
+    <link rel="apple-touch-icon" href="icons/icon-v3.png?v=0921" />
+    <link rel="manifest" href="manifest.webmanifest?v=0923" />
     <meta
       name="description"
       content="Asoul 一个魂生活日记——在本地记录属于你的每一点变化。"
     />
     <title>Asoul 一个魂生活日记</title>
-    <link rel="stylesheet" href="design-system.css?v=0879" />
-    <link rel="stylesheet" href="styles.css?v=0875" />
-    <link rel="stylesheet" href="weekly-polish.css?v=0863" />
-    <link rel="stylesheet" href="complete-polish.css?v=0875" />
-    <link rel="stylesheet" href="mobile-app.css?v=0894" />
-    <link rel="stylesheet" href="responsive-platform.css?v=0894" />
-    <link rel="stylesheet" href="home.css?v=0900" />
-    <link rel="stylesheet" href="goals.css?v=0900" />
-    <link rel="stylesheet" href="schedule.css?v=0897" />
-    <link rel="stylesheet" href="charts.css?v=0897" />
-    <link rel="stylesheet" href="personal.css?v=0894" />
+    <link rel="stylesheet" href="css/design-system.css?v=0879" />
+    <link rel="stylesheet" href="css/legacy/styles.css?v=0915" />
+    <link rel="stylesheet" href="css/legacy/weekly-polish.css?v=0863" />
+    <link rel="stylesheet" href="css/legacy/complete-polish.css?v=0915" />
+    <link rel="stylesheet" href="css/platform/mobile-app.css?v=0925" />
+    <link rel="stylesheet" href="css/platform/responsive-platform.css?v=0925" />
+    <link rel="stylesheet" href="css/pages/home.css?v=0925" />
+    <link rel="stylesheet" href="css/pages/goals.css?v=0900" />
+    <link rel="stylesheet" href="css/pages/schedule.css?v=0924" />
+    <link rel="stylesheet" href="css/pages/charts.css?v=0924" />
+    <link rel="stylesheet" href="css/pages/personal.css?v=0925" />
   </head>
   <body>
     <header class="site-header">
       <a class="brand" href="#top" data-nav-home aria-label="返回首页">
         <img class="brand-asoul-logo" src="图片/其他图片/Asoul-高清.png" alt="A-SOUL" />
         <span class="brand-app-mark" aria-label="一个魂生活日记">
-          <img src="icons/1.png?v=0843" alt="" />
+          <img src="icons/icon-v3.png?v=0921" alt="" />
         </span>
         <span class="brand-divider" aria-hidden="true"></span>
         <span>
@@ -92,32 +92,34 @@
             </div>
             <p id="jokeQuestion">生蚝掉进泥土里，你知道它在说什么吗？</p>
             <div class="joke-answer" id="jokeAnswer" hidden>
-              <span>答案</span>
-              <strong id="jokeAnswerText">蚝喜欢泥。</strong>
+              <span>答案：</span>
+              <strong id="jokeAnswerText">蚝喜欢泥</strong>
             </div>
             <button class="joke-reveal" id="revealJokeButton" type="button">按一下看答案</button>
+            <div class="home-joke-confetti" aria-hidden="true">
+              <i class="hero-fan-symbol hero-fan-symbol--star">
+                <svg viewBox="0 0 48 48" focusable="false"><path d="m24 5.5 5.7 11.6 12.8 1.9-9.3 9 2.2 12.7L24 34.8l-11.4 5.9L14.8 28l-9.3-9 12.8-1.9Z" /></svg>
+              </i>
+              <i class="hero-fan-symbol hero-fan-symbol--candy">
+                <svg viewBox="0 0 48 48" focusable="false"><g transform="rotate(-10 24 24)"><path d="m15 18-8-4 3 8-3 8 8-4M33 18l8-4-3 8 3 8-8-4" /><rect x="14" y="14" width="20" height="16" rx="7" /></g></svg>
+              </i>
+              <i class="hero-fan-symbol hero-fan-symbol--icecream">
+                <svg viewBox="0 0 48 48" focusable="false"><path d="M14 21h20L24 42Z" /><path d="M14 21c-1.8-5.6 1.4-10.4 6.5-10.4.8-3.1 6.5-4.2 8.3.1 4.9.3 7.2 5.3 5.2 10.3Z" /><path d="m19 27 10 6m-12 0 9 5" /></svg>
+              </i>
+            </div>
           </div>
 
           <div class="hero-cast" aria-label="贝拉、嘉然和乃琳表情插画">
             <div class="hero-sticker hero-sticker--bella">
               <img src="图片/其他图片/贝.png" alt="贝拉元气满满表情" />
-              <i class="hero-fan-symbol hero-fan-symbol--star" aria-hidden="true">
-                <svg viewBox="0 0 48 48" focusable="false"><path d="m24 5.5 5.7 11.6 12.8 1.9-9.3 9 2.2 12.7L24 34.8l-11.4 5.9L14.8 28l-9.3-9 12.8-1.9Z" /></svg>
-              </i>
               <span>元气满满！</span>
             </div>
             <div class="hero-sticker hero-sticker--diana">
               <img src="图片/其他图片/然.png" alt="嘉然比心表情" />
-              <i class="hero-fan-symbol hero-fan-symbol--candy" aria-hidden="true">
-                <svg viewBox="0 0 48 48" focusable="false"><g transform="rotate(-10 24 24)"><path d="m15 18-8-4 3 8-3 8 8-4M33 18l8-4-3 8 3 8-8-4" /><rect x="14" y="14" width="20" height="16" rx="7" /></g></svg>
-              </i>
               <span>好好吃饭~</span>
             </div>
             <div class="hero-sticker hero-sticker--eileen">
               <img src="图片/其他图片/乃.png" alt="乃琳比耶表情" />
-              <i class="hero-fan-symbol hero-fan-symbol--icecream" aria-hidden="true">
-                <svg viewBox="0 0 48 48" focusable="false"><path d="M14 21h20L24 42Z" /><path d="M14 21c-1.8-5.6 1.4-10.4 6.5-10.4.8-3.1 6.5-4.2 8.3.1 4.9.3 7.2 5.3 5.2 10.3Z" /><path d="m19 27 10 6m-12 0 9 5" /></svg>
-              </i>
               <span>稳稳向前~</span>
             </div>
             <div class="hero-line" aria-hidden="true">
@@ -177,7 +179,7 @@
         <div class="personal-preferences" aria-label="个人设置">
           <div class="personal-preference-copy">
             <span class="personal-preference-icon" aria-hidden="true">♪</span>
-            <span><strong>提示音</strong><small>记录完成时，给今天一个轻轻的回应</small></span>
+            <span><strong>提示音</strong><small>选择状态、记录今天或保存表情时，给今天一个轻轻的回应</small></span>
           </div>
           <button class="preference-switch data-sound-toggle" id="weekSoundToggle" type="button" aria-pressed="true"><span id="weekSoundLabel">开</span><i aria-hidden="true"></i></button>
         </div>
@@ -357,6 +359,10 @@
           <button class="secondary-button danger-button" id="footerResetDataButton" type="button">清空记录</button>
         </div>
       </section>
+      <div class="personal-device-note" data-app-view="personalSectionStart" aria-label="应用与数据说明">
+        <strong>Asoul 一个魂生活日记</strong>
+        <small>作者：就一枝匠纸 · AI 生成</small>
+      </div>
     </main>
 
     <footer>
@@ -505,7 +511,6 @@
           <span>快速开始</span>
           <button type="button" data-preset="weight" data-preset-space="health">体重记录</button>
           <button type="button" data-preset="run" data-preset-space="health">跑步记录</button>
-          <button type="button" data-preset="pushups" data-preset-space="health">俯卧撑数量</button>
           <button type="button" data-preset="mood" data-preset-space="health">心情指数</button>
           <button type="button" data-preset="studyHours" data-preset-space="study" hidden>学习时长</button>
           <button type="button" data-preset="questions" data-preset-space="study" hidden>刷题记录</button>
@@ -698,6 +703,7 @@
           <button class="secondary-button" id="downloadWeeklyReportImageButton" type="button">下载高清竖版</button>
           <button class="secondary-button" id="downloadWeeklySummaryImageButton" type="button">下载 4K 横版</button>
           <button class="primary-button" id="copySelectedWeekReportButton" type="button">复制纯文本</button>
+          <button class="weekly-report-back-button" type="button" data-close-dialog>← 返回日程</button>
         </div>
       </section>
     </dialog>
@@ -732,14 +738,18 @@
     </nav>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="data-model.js?v=0821"></script>
-    <script src="app-utils.js?v=0865"></script>
-    <script src="backup-codec.js?v=0867"></script>
-    <script src="milestone-domain.js?v=0868"></script>
-    <script src="chart-domain.js?v=0868"></script>
-    <script src="schedule-domain.js?v=0868"></script>
-    <script src="stickers.js?v=0821"></script>
-    <script src="冷笑话.js?v=0821"></script>
-  <script src="app.js?v=0899"></script>
+    <script src="js/core/data-model.js?v=0905"></script>
+    <script src="js/core/app-utils.js?v=0865"></script>
+    <script src="js/core/backup-codec.js?v=0905"></script>
+    <script src="js/domain/milestone-domain.js?v=0868"></script>
+    <script src="js/domain/chart-domain.js?v=0922"></script>
+    <script src="js/domain/schedule-domain.js?v=0868"></script>
+    <script src="js/ui/snap-carousel.js?v=0905"></script>
+    <script src="js/content/stickers.js?v=0821"></script>
+    <script src="js/content/冷笑话.js?v=0913"></script>
+    <script src="js/core/app-config.js?v=0921"></script>
+    <script src="js/core/state-normalizer.js?v=0905"></script>
+    <script src="js/core/state-store.js?v=0905"></script>
+    <script src="js/app.js?v=0925"></script>
   </body>
 </html>

@@ -1,0 +1,177 @@
+/*
+ * Platform layout layer
+ * ---------------------
+ * Keep cross-device geometry here. The older stylesheets remain the visual
+ * foundation; this file owns desktop composition, responsive anchors and the
+ * compact mobile density contract.
+ */
+
+.section-action-menu > summary{
+  list-style:none;
+}
+.section-action-menu > summary::marker{ content:""; }
+.section-action-menu > summary::-webkit-details-marker{ display:none; }
+.section-action-menu:not([open]) > div{ display:none !important; }
+
+:root{ --page-max-width:1180px; }
+
+.site-header,
+main,
+footer{
+  width:min(var(--page-max-width),calc(100% - 48px));
+}
+
+.header-data-action--backup{ color:var(--member-eileen); }
+.header-data-action--restore{ color:#675aa6; }
+.header-install-action{ color:#39836f; }
+.header-update-action{ color:var(--member-bella-ink); }
+.header-tools .reset-data-button{ color:var(--color-danger); }
+
+
+@media (min-width:899.99px){
+  /* Desktop section actions: remove native controls and share one menu pattern. */
+
+  .section-add-button{
+    display:inline-flex;
+    min-width:82px;
+    min-height:42px;
+    padding:0 14px;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    border:1px solid rgba(87,102,144,.12);
+    border-radius:12px;
+    color:#665982;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 6px 16px rgba(65,53,74,.05);
+    font:inherit;
+    font-size:13px;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .section-add-button span{ font-size:18px; line-height:1; }
+  .section-add-button b{ display:inline; }
+  .section-action-menu{ position:relative; }
+  .section-action-menu > summary{
+    display:grid;
+    width:40px;
+    min-width:40px;
+    height:40px;
+    padding:0;
+    place-items:center;
+    border:1px solid transparent;
+    border-radius:12px;
+    color:#665982;
+    background:transparent;
+    font-size:15px;
+    font-weight:950;
+    letter-spacing:-2px;
+    cursor:pointer;
+  }
+  .section-action-menu > summary:hover{ border-color:rgba(87,102,144,.12); background:#fff; }
+  .section-action-menu[open] > div{
+    position:absolute;
+    z-index:90;
+    top:calc(100% + 8px);
+    right:0;
+    display:grid;
+    width:240px;
+    padding:10px;
+    gap:7px;
+    border:1px solid rgba(87,102,144,.12);
+    border-radius:16px;
+    background:rgba(255,255,255,.98);
+    box-shadow:0 18px 42px rgba(57,45,67,.16);
+  }
+  .section-action-menu[open] > div > button{
+    min-height:40px;
+    border:1px solid rgba(87,102,144,.1);
+    border-radius:11px;
+    background:#faf9fc;
+    font:inherit;
+    font-size:11px;
+    font-weight:850;
+  }
+  .item-order-actions{ display:grid; padding:7px 0 0; grid-template-columns:1fr 1fr; border-top:1px dashed rgba(87,102,144,.12); border-left:0; }
+
+  /* Desktop section controls share one compact geometry across every page. */
+
+
+}
+
+@media (max-width:899.98px){
+  .site-header,
+  main,
+  footer{
+    width:100%;
+    max-width:none;
+  }
+
+  .section-add-button,
+  .section-action-menu > summary{
+    display:grid !important;
+    width:auto !important;
+    min-width:30px !important;
+    height:34px !important;
+    min-height:34px !important;
+    padding:0 2px !important;
+    place-items:center !important;
+    border:0 !important;
+    border-radius:0 !important;
+    color:var(--member-eileen) !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:19px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+    list-style:none !important;
+    cursor:pointer;
+  }
+  .section-add-button b{ display:none !important; }
+  .section-add-button span{ line-height:1 !important; }
+}
+
+
+@media (min-width:640px) and (max-width:899.98px){
+  /* Tablet typography must not drop below the phone hierarchy. */
+  body.is-mobile-app .section-heading h2{ font-size:32px !important; }
+
+
+}
+
+@media (min-width:899.99px) and (max-width:1199px){
+
+
+  .section-heading h2{ font-size:32px; }
+
+
+}
+
+@media (min-width:1440px){
+  :root{
+    --page-max-width:1320px;
+    --text-xs:12px;
+    --text-sm:14px;
+    --text-md:15px;
+    --text-lg:18px;
+    --text-xl:22px;
+  }
+
+  .section-add-button{
+    min-width:90px;
+    padding-inline:16px;
+    font-size:14px;
+  }
+  .section-add-button span{ font-size:19px; }
+  .section-action-menu > summary{ width:42px; min-width:42px; height:42px; }
+  .section-action-menu[open] > div > button{ font-size:12px; }
+  .eyebrow{ font-size:12px; }
+  .brand strong{ font-size:18px; }
+  .brand small,
+  .local-badge{ font-size:12px; }
+  .header-tools button{ font-size:13px; }
+}
+
+@media (min-width:1920px){
+  :root{ --page-max-width:1600px; }
+}

@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 
-require("../chart-domain.js");
+require("../js/domain/chart-domain.js");
 
 const domain = globalThis.ASOUL_CHART_DOMAIN;
 
@@ -45,9 +45,26 @@ assert.match(domain.buildSmoothPath([{ px: 0, py: 0 }, { px: 10, py: 10 }, { px:
 
 assert.equal(domain.getLabelEvery(18, 9), 3);
 assert.equal(domain.getLabelEvery(1, 9), 1);
+assert.deepEqual(domain.buildChartZoomLevels({
+  nodeCount: 300,
+  baseWidth: 920,
+  horizontalMargins: 132,
+  minimumNodeSpacing: 96,
+}), [1, 2, 4, 8, 16, 31.45]);
+assert.deepEqual(domain.buildChartZoomLevels({
+  nodeCount: 300,
+  baseWidth: 360,
+  horizontalMargins: 112,
+  minimumNodeSpacing: 96,
+}), [1, 2, 4, 8, 16, 32, 64, 80.32]);
+assert.deepEqual(domain.buildChartZoomLevels({ nodeCount: 1, baseWidth: 360 }), [1]);
 assert.equal(domain.getNextZoom(1, "in", [1, 2, 4, 8]), 2);
 assert.equal(domain.getNextZoom(8, "in", [1, 2, 4, 8]), 8);
 assert.equal(domain.getNextZoom(4, "out", [1, 2, 4, 8]), 2);
+assert.equal(domain.getNextZoom(3, "in", [1, 2, 4, 8]), 4);
+assert.equal(domain.getNextZoom(3, "out", [1, 2, 4, 8]), 2);
+assert.equal(domain.getNextZoom(3, "max", [1, 2, 4, 8]), 8);
+assert.equal(domain.getNextZoom(4, "min", [1, 2, 4, 8]), 1);
 assert.equal(domain.getNextZoom(4, "reset", [1, 2, 4, 8]), 1);
 
 console.log("chart domain: ok");

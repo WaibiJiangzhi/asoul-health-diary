@@ -1,5 +1,5 @@
 param(
-  [string]$OutputFile = "stickers.js"
+  [string]$OutputFile = "js/content/stickers.js"
 )
 
 $ErrorActionPreference = "Stop"
