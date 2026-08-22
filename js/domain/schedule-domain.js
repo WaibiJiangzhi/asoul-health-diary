@@ -74,6 +74,20 @@
     return weeks;
   }
 
+  function clearWeekDayContent(day, index, { startDate, templateId, normalizeDay }) {
+    if (typeof normalizeDay !== "function") return day;
+    const clearedDay = normalizeDay({}, index, startDate, templateId);
+    if (day?.id) clearedDay.id = day.id;
+    if (day?.date) clearedDay.date = day.date;
+    return clearedDay;
+  }
+
+  function clearWeekContent(days, options) {
+    const currentDays = Array.isArray(days) ? days : [];
+    if (currentDays.length !== 7) return currentDays;
+    return currentDays.map((day, index) => clearWeekDayContent(day, index, options));
+  }
+
   function shiftWeekDays(days, startIndex, { startDate, templateId, normalizeDay }) {
     const currentDays = Array.isArray(days) ? days : [];
     if (currentDays.length !== 7 || !Number.isInteger(startIndex) || startIndex < 0 || startIndex > 6) return currentDays;
@@ -86,15 +100,17 @@
       moved.date = identity.date;
       shiftedDays[index] = moved;
     }
-    const startIdentity = currentDays[startIndex];
-    const emptyStartDay = normalizeDay({}, startIndex, startDate, templateId);
-    emptyStartDay.id = startIdentity.id;
-    emptyStartDay.date = startIdentity.date;
-    shiftedDays[startIndex] = emptyStartDay;
+    shiftedDays[startIndex] = clearWeekDayContent(currentDays[startIndex], startIndex, {
+      startDate,
+      templateId,
+      normalizeDay,
+    });
     return shiftedDays;
   }
 
   globalThis.ASOUL_SCHEDULE_DOMAIN = Object.freeze({
+    clearWeekContent,
+    clearWeekDayContent,
     countWeekItemStates,
     hasScheduleDayContent,
     hasWeekDayRecord,

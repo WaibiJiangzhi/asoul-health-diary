@@ -4,10 +4,9 @@
 /发布/
 
 # Large source archive that is not used by the app
-/图片/新加卷/
+/images/新加卷/
 
 # Local/editor noise
 .DS_Store
 Thumbs.db
 *.tmp
-

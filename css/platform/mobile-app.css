@@ -388,6 +388,11 @@ body.is-mobile-app #goalSectionStart[hidden]{ display:none !important; }
     background:#f7f8fb !important;
     font-size:10px !important;
   }
+  .section-action-menu[open]>div .danger-button{
+    color:var(--color-danger) !important;
+    border-color:rgba(207,69,91,.14) !important;
+    background:#fff7f8 !important;
+  }
 
   /* Status language: neutral / neutral setback / Jiaran / Bella / Nairin. */
 

@@ -45,16 +45,17 @@
     }
 
     function safeSticker(value) {
-      const sticker = String(value || "");
-      if (!sticker) return "";
+      const rawSticker = String(value || "");
+      if (!rawSticker) return "";
+      const sticker = rawSticker.replace(/^图片\//, "images/");
       if (allLocalStickers.has(sticker)) return sticker;
-      const legacyPack = sticker.match(/^图片\/(贝拉|嘉然|乃琳)表情包\//)?.[1];
+      const legacyPack = sticker.match(/^images\/(贝拉|嘉然|乃琳)表情包\//)?.[1];
       if (legacyPack) return legacyStickerFallbacks[legacyPack] || "";
-      const numberedFolderMatch = sticker.match(/^图片\/(贝拉|嘉然|乃琳)\/(.+)$/);
+      const numberedFolderMatch = sticker.match(/^images\/(贝拉|嘉然|乃琳)\/(.+)$/);
       if (!numberedFolderMatch) return "";
       const [, packName, oldWithinPack] = numberedFolderMatch;
       return (stickerPacks[packName] || []).find((path) => {
-        const currentWithinPack = path.replace(new RegExp(`^图片/${packName}/\\d+-`), "");
+        const currentWithinPack = path.replace(new RegExp(`^images/${packName}/\\d+-`), "");
         return currentWithinPack === oldWithinPack.replace(/^\d+-/, "");
       }) || "";
     }

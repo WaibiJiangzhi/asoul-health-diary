@@ -5,9 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(toolDir, "..");
-const sourcePath = path.join(rootDir, "示例数据", "考研加健身用户示例.json");
-const outputPath = path.join(rootDir, "示例数据", "全功能测试数据.json");
-const longTermOutputPath = path.join(rootDir, "示例数据", "长期用户300节点示例.json");
+const sourcePath = path.join(rootDir, "sample-data", "考研加健身用户示例.json");
+const longTermOutputPath = path.join(rootDir, "sample-data", "长期用户300节点示例.json");
 const stickerScript = fs.readFileSync(path.join(rootDir, "js", "content", "stickers.js"), "utf8");
 const stickerContext = { window: {} };
 vm.runInNewContext(stickerScript, stickerContext);
@@ -21,7 +20,7 @@ const data = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
 data.backupType = "asoul-life-diary";
 data.exportedAt = "2026-08-18T12:00:00.000Z";
 data.version = 9;
-data.testDataNote = "全功能测试数据：个人档案、空间、倒计时、进度目标、周计划、每日记录、周报和曲线表情均已填充。";
+data.testDataNote = "完整功能基线：个人档案、空间、倒计时、进度目标、周计划、每日记录、周报和曲线表情均已填充。";
 
 data.profile = {
   name: "小枝（全功能测试）",
@@ -269,7 +268,5 @@ longTermData.charts.unshift({
   createdAt: longTermStartAt,
 });
 
-fs.writeFileSync(outputPath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 fs.writeFileSync(longTermOutputPath, `${JSON.stringify(longTermData, null, 2)}\n`, "utf8");
-console.log(`Generated ${path.relative(rootDir, outputPath)}`);
 console.log(`Generated ${path.relative(rootDir, longTermOutputPath)}`);

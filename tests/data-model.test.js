@@ -147,8 +147,8 @@ assert.deepEqual(migratedVersionNine.weeks[0].days[0].items[1], {
   state: "",
 });
 
-for (const filename of ["考研加健身用户示例.json", "全功能测试数据.json"]) {
-  const backup = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "示例数据", filename), "utf8"));
+for (const filename of ["考研加健身用户示例.json", "长期用户300节点示例.json"]) {
+  const backup = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "sample-data", filename), "utf8"));
   const migratedBackup = model.migrateState(backup);
   const legacyItemCount = backup.weeks.reduce((weekTotal, week) => weekTotal + week.days.reduce(
     (dayTotal, day) => dayTotal + Math.max(day.planItems?.length || 0, day.records?.length || 0) + (day.dietPlan ? 1 : 0),

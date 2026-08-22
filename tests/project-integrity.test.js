@@ -8,12 +8,22 @@ const projectRoot = path.resolve(__dirname, "..");
 const read = (filename) => fs.readFileSync(path.join(projectRoot, filename), "utf8");
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+assert.ok(fs.existsSync(path.join(projectRoot, "images")), "the canonical images/ directory must exist");
+assert.ok(fs.existsSync(path.join(projectRoot, "sample-data")), "the canonical sample-data/ directory must exist");
+assert.equal(fs.existsSync(path.join(projectRoot, "图片")), false, "the retired 图片/ directory must not return");
+assert.equal(fs.existsSync(path.join(projectRoot, "示例数据")), false, "the retired 示例数据/ directory must not return");
+assert.deepEqual(
+  fs.readdirSync(path.join(projectRoot, "sample-data")).filter((filename) => filename.endsWith(".json")).sort(),
+  ["考研加健身用户示例.json", "长期用户300节点示例.json"].sort(),
+  "sample-data/ should keep only the realistic and long-term representative fixtures",
+);
+
 const source = [
   read("index.html"),
   read("js/app.js"),
   read("js/content/stickers.js"),
 ].join("\n");
-const imageRefs = [...new Set(source.match(/图片\/[^"'`\r\n]+?\.(?:png|jpe?g|gif|webp)/gi) || [])];
+const imageRefs = [...new Set(source.match(/images\/[^"'`\r\n]+?\.(?:png|jpe?g|gif|webp)/gi) || [])];
 const missingImages = imageRefs.filter((reference) => {
   const absolutePath = path.join(projectRoot, ...reference.split("/"));
   return !fs.existsSync(absolutePath);
@@ -49,12 +59,15 @@ const milestoneDomain = read("js/domain/milestone-domain.js");
 const chartDomain = read("js/domain/chart-domain.js");
 const scheduleDomain = read("js/domain/schedule-domain.js");
 const snapCarousel = read("js/ui/snap-carousel.js");
+const canvasUtils = read("js/ui/canvas-utils.js");
+const weeklyReportRenderer = read("js/ui/weekly-report-renderer.js");
+const chartRenderer = read("js/ui/chart-renderer.js");
 const stateNormalizer = read("js/core/state-normalizer.js");
 const stateStore = read("js/core/state-store.js");
 const coldJokes = read("js/content/冷笑话.js");
 const packageRelease = read("tools/package-release.ps1");
-const generateFullTestData = read("tools/generate-full-test-data.mjs");
-const longTermDemo = JSON.parse(read("示例数据/长期用户300节点示例.json"));
+const generateLongTermData = read("tools/generate-long-term-data.mjs");
+const longTermDemo = JSON.parse(read("sample-data/长期用户300节点示例.json"));
 const generateStickers = read("tools/generate-stickers.ps1");
 const designSystemCss = read("css/design-system.css");
 const homeCss = read("css/pages/home.css");
@@ -129,6 +142,8 @@ for (const requiredId of [
   "chartsEyebrow",
   "chartsTitle",
   "emptyChartExample",
+  "clearSelectedDayButton",
+  "clearSelectedWeekButton",
   "shiftWeekButton",
   "copyPreviousWeekButton",
   "aiPreviousWeekSummary",
@@ -138,22 +153,23 @@ for (const requiredId of [
   assert.ok(ids.includes(requiredId), `missing HTML id: ${requiredId}`);
 }
 
-assert.doesNotMatch(source, /图片\/(?:贝拉|嘉然|乃琳)表情包\//, "legacy sticker directories must not be referenced");
+assert.doesNotMatch(source, /images\/(?:贝拉|嘉然|乃琳)表情包\//, "legacy sticker directories must not be referenced");
 
 const stickerSource = read("js/content/stickers.js");
 for (const [packName, expectedFirstFolder] of [["贝拉", "5-"], ["嘉然", "5-"], ["乃琳", "4-"]]) {
   const packStart = stickerSource.indexOf(`"${packName}": [`);
-  const firstPath = stickerSource.slice(packStart).match(/"图片\/[^\"]+"/)?.[0] || "";
-  assert.ok(firstPath.includes(`图片/${packName}/${expectedFirstFolder}`), `${packName} stickers should start with the highest numbered folder`);
+  const firstPath = stickerSource.slice(packStart).match(/"images\/[^\"]+"/)?.[0] || "";
+  assert.ok(firstPath.includes(`images/${packName}/${expectedFirstFolder}`), `${packName} stickers should start with the highest numbered folder`);
 }
 
 assert.match(html, /AI 规划本周/);
-for (const directory of ["js", "css", "icons"]) {
+for (const directory of ["js", "css", "icons", "images"]) {
   assert.match(packageRelease, new RegExp(`Join-Path \\$projectRoot "${directory}"`), `release packaging must include ${directory}/`);
 }
 assert.doesNotMatch(packageRelease, /Join-Path \\$projectRoot "(?:app|data-model|styles|weekly-polish|stickers)\.(?:js|css)"/, "release packaging must not use retired root-level asset paths");
-assert.match(generateFullTestData, /path\.join\(rootDir, "js", "content", "stickers\.js"\)/, "full test-data generation must load the organized sticker manifest");
-assert.match(generateFullTestData, /长期用户300节点示例\.json/, "test-data generation must maintain the long-term chart fixture");
+assert.match(generateLongTermData, /path\.join\(rootDir, "js", "content", "stickers\.js"\)/, "long-term test-data generation must load the organized sticker manifest");
+assert.match(generateLongTermData, /path\.join\(rootDir, "sample-data", "考研加健身用户示例\.json"\)/, "long-term test-data generation must use the canonical sample-data directory");
+assert.match(generateLongTermData, /长期用户300节点示例\.json/, "test-data generation must maintain the long-term chart fixture");
 const longTermChart = longTermDemo.charts.find((chart) => chart.id === "chart-long-term-study-hours");
 const dailyLongTermChart = longTermDemo.charts.find((chart) => chart.id === "chart-daily-300-study-hours");
 assert.equal(dailyLongTermChart?.nodes.length, 300, "the daily long-term fixture must keep exactly 300 chart nodes");
@@ -176,7 +192,7 @@ assert.match(app, /data-shift-current-day/);
 assert.match(html, /class="hero-jump" href="#goalSectionStart"[^>]*>点击开始/, "hero action must open countdowns");
 assert.doesNotMatch(html, /AI 规划本月/);
 assert.match(html, /href="icons\/icon-v3\.png(?:\?v=\d+)?"/, "current app icon must be linked with an optional cache version");
-assert.ok(fs.existsSync(path.join(projectRoot, "icons", "1.png")), "missing current yigehun icon master");
+assert.ok(fs.existsSync(path.join(projectRoot, "icons", "icon-v3.png")), "missing current yigehun icon master");
 assert.match(html, /rel="manifest" href="manifest\.webmanifest(?:\?[^\"]+)?"/, "PWA manifest must be linked");
 assert.match(html, /src="js\/core\/app-utils\.js\?v=\d+"/, "shared app utilities must be loaded");
 assert.ok(html.indexOf("js/core/app-utils.js") < html.indexOf("js/app.js"), "shared app utilities must load before the application entry");
@@ -188,7 +204,7 @@ const utilityExports = appUtils.match(/ASOUL_APP_UTILS\s*=\s*Object\.freeze\(\{(
   .split(",")
   .map((name) => name.trim())
   .filter(Boolean) || [];
-const utilityConsumers = `${app}\n${stateNormalizer}\n${appConfig}`;
+const utilityConsumers = `${app}\n${stateNormalizer}\n${appConfig}\n${weeklyReportRenderer}\n${chartRenderer}`;
 assert.deepEqual(
   utilityExports.filter((name) => !new RegExp(`\\b${name}\\b`).test(utilityConsumers)),
   [],
@@ -225,6 +241,9 @@ for (const [filename, globalName, moduleSource] of [
   ["js/domain/chart-domain.js", "ASOUL_CHART_DOMAIN", chartDomain],
   ["js/domain/schedule-domain.js", "ASOUL_SCHEDULE_DOMAIN", scheduleDomain],
   ["js/ui/snap-carousel.js", "ASOUL_SNAP_CAROUSEL", snapCarousel],
+  ["js/ui/canvas-utils.js", "ASOUL_CANVAS_UTILS", canvasUtils],
+  ["js/ui/weekly-report-renderer.js", "ASOUL_WEEKLY_REPORT_RENDERER", weeklyReportRenderer],
+  ["js/ui/chart-renderer.js", "ASOUL_CHART_RENDERER", chartRenderer],
   ["js/core/state-normalizer.js", "ASOUL_STATE_NORMALIZER", stateNormalizer],
   ["js/core/state-store.js", "ASOUL_STATE_STORE", stateStore],
 ]) {
@@ -263,6 +282,8 @@ assert.doesNotMatch(app, /【备注】/, "AI plan format must not ask AI to writ
 assert.doesNotMatch(app, /day\.note\s*=\s*plannedDay\.note/, "AI import must preserve daily notes");
 assert.match(app, /selectedDayByWeek\.get\(week\.id\)/, "schedule shift must start from the selected day");
 assert.match(scheduleDomain, /index\s*>\s*startIndex/, "schedule shift must preserve days before the selected day");
+assert.match(scheduleDomain, /function clearWeekDayContent\(/, "day-card clearing must stay in the schedule domain");
+assert.match(scheduleDomain, /function clearWeekContent\(/, "week-card clearing must stay in the schedule domain");
 assert.match(app, /if \(!\$\("#spaceIconPicker"\)\.open\)/, "collapsed space sticker picker must avoid rendering sticker images");
 assert.match(app, /function renderGoals\(/, "global goals must be rendered independently of spaces");
 assert.match(app, /renderWeeklyReportGoals/, "weekly reports must include goal countdowns");
@@ -299,7 +320,7 @@ assert.match(scheduleCss, /week-node-head/, "week overview cards must be styled"
 assert.doesNotMatch(scheduleCss, /week-node-dot/, "legacy circular week nodes must be removed");
 assert.match(weeklyCss, /grid-auto-rows:\s*96px/, "photo sticker rows must not be compressed");
 
-const demoBackup = JSON.parse(read("示例数据/考研加健身用户示例.json"));
+const demoBackup = JSON.parse(read("sample-data/考研加健身用户示例.json"));
 assert.equal(demoBackup.backupType, "asoul-life-diary", "demo data must be an importable diary backup");
 assert.equal(demoBackup.version, 8, "the existing demo backup should remain untouched and migrate from version 8");
 assert.equal(demoBackup.spaces.length, 2, "demo data should contain study and fitness spaces");
@@ -330,43 +351,45 @@ assert.match(app, /--goal-color:\$\{escapeAttr\(getCardColor\(goal, index\)\)\}/
 assert.match(app, /--progress-color:\$\{escapeAttr\(getCardColor\(goal, index\)\)\}/, "progress cards must use the resolved colour");
 assert.match(app, /--space-color:\$\{escapeAttr\(color\)\}/, "space cards must use the resolved colour");
 assert.match(scheduleCss, /\.space-switcher-button::before\{[\s\S]*?background:\s*var\(--space-color\)/, "every space card must expose its colour even when inactive");
-assert.match(app, /const tone = getCardColor\(item\.data, toneIndex\)/, "downloaded milestones must use the same colour as the app");
+assert.match(weeklyReportRenderer, /const tone = getCardColor\(item\.data, toneIndex\)/, "downloaded milestones must use the same colour as the app");
 assert.doesNotMatch(`${html}\n${app}\n${read("docs/使用说明.md")}`, /折线图|折线颜色|每条折线/, "user-facing chart terminology must use 曲线图");
-assert.match(app, /formatChartAxisLabel/, "curve charts must format readable date labels");
-assert.match(app, /const minimumLabelGap = Math\.max\(72, 88 \* visualScale\);/, "long-running curves must keep a safe horizontal gap between date labels");
-assert.doesNotMatch(app, /visibleStickerKeys/, "dense curve decoration must not depend on a second sampled data collection");
-assert.match(app, /const densityScale = chart\.nodes\.length >= 12/, "dense curve charts must scale their sticker presentation");
-assert.match(app, /const lineWidth = \(compactChart \? 2\.5 : 2\.7\) \* visualScale;/, "screen curves must retain the refined lighter line weight");
-assert.match(app, /context\.lineWidth = seriesIndex === 0 \? 7\.2 : 5\.4;/, "downloaded curves must match the lighter on-screen line hierarchy");
-assert.match(app, /const desiredStickerSize = 44 \* nodeVisualScale \* densityScale;/, "single and multi-series curves must share one enlarged sticker-size baseline");
-assert.match(app, /const visibleNodeSpacing = nodeSpacing \* \(declutterDensePoints \? denseMarkerEvery : 1\);/, "dense curve sticker sizing must use the distance between visible sampled nodes");
-assert.match(app, /const targetVisibleMarkers = \(phoneChart \? 6 : compactChart \? 10 : 12\) \* zoom;/, "zooming in must reveal more sampled nodes inside the visible chart window");
+assert.match(chartRenderer, /formatChartAxisLabel/, "curve charts must format readable date labels");
+assert.match(chartRenderer, /const minimumLabelGap = Math\.max\(72, 88 \* visualScale\);/, "long-running curves must keep a safe horizontal gap between date labels");
+assert.doesNotMatch(chartRenderer, /visibleStickerKeys/, "dense curve decoration must not depend on a second sampled data collection");
+assert.match(chartRenderer, /const densityScale = chart\.nodes\.length >= 12/, "dense curve charts must scale their sticker presentation");
+assert.match(chartRenderer, /const lineWidth = \(compactChart \? 2\.5 : 2\.7\) \* visualScale;/, "screen curves must retain the refined lighter line weight");
+assert.match(chartRenderer, /context\.lineWidth = seriesIndex === 0 \? 7\.2 : 5\.4;/, "downloaded curves must match the lighter on-screen line hierarchy");
+assert.match(chartRenderer, /const desiredStickerSize = 44 \* nodeVisualScale \* densityScale;/, "single and multi-series curves must share one enlarged sticker-size baseline");
+assert.match(chartRenderer, /const visibleNodeSpacing = nodeSpacing \* \(declutterDensePoints \? denseMarkerEvery : 1\);/, "dense curve sticker sizing must use the distance between visible sampled nodes");
+assert.match(chartRenderer, /const targetVisibleMarkers = \(phoneChart \? 6 : compactChart \? 10 : 12\) \* zoom;/, "zooming in must reveal more sampled nodes inside the visible chart window");
 assert.match(app, /buildChartZoomLevels\(\{[\s\S]*?minimumNodeSpacing:\s*96/, "maximum curve zoom must be derived from the node count and readable date spacing");
-assert.match(app, /data-zoom-action="max"/, "curve controls must offer a direct maximum-detail action");
-assert.match(app, /data-zoom-action="min"/, "curve controls must offer a direct minimum global-view action");
+assert.match(chartRenderer, /data-zoom-action="max"/, "curve controls must offer a direct maximum-detail action");
+assert.match(chartRenderer, /data-zoom-action="min"/, "curve controls must offer a direct minimum global-view action");
 assert.match(chartsCss, /grid-template-columns:72px minmax\(0,1fr\) 54px minmax\(0,1fr\) 72px;/, "desktop curve zoom controls must reserve symmetric endpoint actions");
 assert.match(chartsCss, /\.chart-card-actions > \.chart-action--add\{[\s\S]*?border-color:var\(--chart-color\);[\s\S]*?background:var\(--chart-color\);/, "the primary chart action must use its first series colour");
 assert.match(chartsCss, /\.chart-zoom-bar button\{[\s\S]*?color-mix\(in srgb,var\(--chart-color\)[\s\S]*?background:color-mix\(in srgb,var\(--chart-color\)/, "chart zoom controls must use the first series colour family");
 assert.match(chartsCss, /@media \(max-width:899\.98px\)[\s\S]*?\.chart-heading-line\{[\s\S]*?grid-template-columns:minmax\(0,1fr\) auto;[\s\S]*?align-items:end;/, "compact curve metadata must share the title baseline");
 assert.match(chartsCss, /\.chart-space-context button\{[\s\S]*?min-height:54px;[\s\S]*?font-size:13px;/, "desktop curve space controls must use a readable touch and type scale");
-assert.match(app, /compactChart && pointValues\.length > 1 && chart\.nodes\.length > 8/, "compact multi-series charts must avoid stacking every sticker at one node");
-assert.match(app, /const declutterDensePoints = chart\.nodes\.length > 8 && nodeSpacing < denseSpacingThreshold \* visualScale;/, "dense curves must declutter nodes and stickers at every viewport size");
-assert.match(app, /const stickerPointValues = !declutterDensePoints \|\| showPointMarker \? availableStickerPointValues : \[\]/, "curve decluttering must preserve node data while reducing stickers");
-assert.match(app, /<g class="chart-point[\s\S]*?data-node-id=[\s\S]*?<rect class="node-hit-area"/, "decluttered chart nodes must retain their full interactive hit areas");
+assert.match(chartRenderer, /compactChart && pointValues\.length > 1 && chart\.nodes\.length > 8/, "compact multi-series charts must avoid stacking every sticker at one node");
+assert.match(chartRenderer, /const declutterDensePoints = chart\.nodes\.length > 8 && nodeSpacing < denseSpacingThreshold \* visualScale;/, "dense curves must declutter nodes and stickers at every viewport size");
+assert.match(chartRenderer, /const stickerPointValues = !declutterDensePoints \|\| showPointMarker \? availableStickerPointValues : \[\]/, "curve decluttering must preserve node data while reducing stickers");
+assert.match(chartRenderer, /<g class="chart-point[\s\S]*?data-node-id=[\s\S]*?<rect class="node-hit-area"/, "decluttered chart nodes must retain their full interactive hit areas");
 assert.match(app, /function downloadWeeklyReportImage\(/, "weekly reports must support PNG download");
-assert.match(app, /canvas\.toDataURL\("image\/png"\)/, "weekly report download must stay inside the user's click gesture");
+assert.match(canvasUtils, /canvas\.toDataURL\("image\/png"\)/, "weekly report download must stay inside the user's click gesture");
 assert.match(app, /function downloadWeeklySummaryImage\(/, "weekly reports must provide a landscape summary image");
-const weeklySummaryCanvasSource = app.slice(
-  app.indexOf("function createWeeklySummaryCanvas"),
-  app.indexOf("function drawWeeklySummaryBackground"),
+assert.doesNotMatch(app, /function createWeekly(?:Report|Summary)Canvas\(/, "the application entry must not duplicate weekly canvas rendering");
+assert.match(app, /createWeeklyReportCanvas\(week, state\)/, "the application entry must pass the current state explicitly to the weekly renderer");
+const weeklySummaryCanvasSource = weeklyReportRenderer.slice(
+  weeklyReportRenderer.indexOf("function createWeeklySummaryCanvas"),
+  weeklyReportRenderer.indexOf("function drawWeeklySummaryBackground"),
 );
 assert.match(weeklySummaryCanvasSource, /const daysY = milestones\.length > 2 \? 576 : 450;[\s\S]*?const height = daysY \+ 374;/, "landscape weekly exports must derive their height from their content");
 assert.doesNotMatch(weeklySummaryCanvasSource, /const height = 1080;/, "landscape weekly exports must not keep a fixed blank canvas height");
 assert.match(scheduleCss, /\.weekly-report-goal-list\{ display:grid; grid-template-columns:1fr; gap:7px; \}/, "phone weekly-report milestones must render in one column");
 assert.match(scheduleCss, /\.weekly-report-milestone-group \+ \.weekly-report-milestone-group\{[\s\S]*?margin-top:10px/, "phone weekly-report countdowns and progress goals must remain visually separated");
-assert.match(app, /const dayCardWidth = \(width - outer \* 2 - gap\) \/ 2;/, "portrait weekly exports must use two daily cards per row");
-assert.match(app, /const cardX = outer \+ index % 2 \* \(dayCardWidth \+ gap\);/, "an odd portrait daily card must keep half-row width");
-assert.match(app, /if \(day\.note\) \{[\s\S]*?drawCanvasText\(context, day\.note,/, "landscape daily cards must show the actual note when present");
+assert.match(weeklyReportRenderer, /const dayCardWidth = \(width - outer \* 2 - gap\) \/ 2;/, "portrait weekly exports must use two daily cards per row");
+assert.match(weeklyReportRenderer, /const cardX = outer \+ index % 2 \* \(dayCardWidth \+ gap\);/, "an odd portrait daily card must keep half-row width");
+assert.match(weeklyReportRenderer, /if \(day\.note\) \{[\s\S]*?drawCanvasText\(context, day\.note,/, "landscape daily cards must show the actual note when present");
 assert.doesNotMatch(app, /把一周摊开看见，也把下一步留给自己。/, "the retired weekly-export slogan must stay removed");
 assert.match(scheduleCss, /@media \(min-width:899\.99px\)[\s\S]*?\.space-section-copy\{[\s\S]*?grid-template-areas:"space-eyebrow space-actions" "space-title space-actions"/, "desktop spaces must share the cross-page heading and action grammar from the shared 900px breakpoint");
 assert.match(app, /<nav class="week-day-navigation"[\s\S]*?data-week-day-step="-1"[\s\S]*?data-week-day-step="1"/, "day navigation must live inside the selected day editor");
@@ -396,8 +419,10 @@ assert.match(scheduleCss, /\.week-node-actions > button\{ border-style:solid; \}
 assert.match(app, /class="week-item-legend"[\s\S]*?is-done[\s\S]*?is-changed[\s\S]*?is-missed/, "the day editor must expose a readable semantic status legend");
 assert.match(app, /function downloadChartImage\(/, "curve charts must support PNG download");
 assert.doesNotMatch(app, /曲线图会采用每条曲线自己的纵轴范围/, "downloaded curve images must not include the retired axis explanation");
-assert.ok((app.match(/drawCanvasAppIcon\(/g) || []).length >= 4, "every exported image type must use the current app icon");
-assert.ok((app.match(/const scale = 2;/g) || []).length >= 3, "weekly and curve PNG exports must use 2x canvas resolution");
+assert.ok((`${app}\n${weeklyReportRenderer}\n${chartRenderer}\n${canvasUtils}`.match(/drawCanvasAppIcon\(/g) || []).length >= 4, "every exported image type must use the current app icon");
+assert.ok((`${app}\n${weeklyReportRenderer}\n${chartRenderer}`.match(/const scale = 2;/g) || []).length >= 3, "weekly and curve PNG exports must use 2x canvas resolution");
+assert.match(app, /CHART_RENDERER_MODULE\.createChartRenderer\(/, "app.js must configure the curve-rendering boundary once");
+assert.doesNotMatch(app, /function (?:createChartCanvas|renderChartSvg|createChartSvgLayout)\(/, "the application entry must not duplicate curve rendering");
 assert.match(app, /function moveSelectedMilestone\(/, "countdowns and progress goals must be reorderable");
 assert.match(html, /class="section-nav"/, "desktop section navigation must exist");
 assert.match(html, /class="mobile-bottom-nav"/, "mobile section navigation must exist");
@@ -452,7 +477,7 @@ assert.match(chartsCss, /\.chart-meta\s*>\s*span\s*\{[\s\S]*?min-height:27px;[\s
 assert.match(chartsCss, /\.chart-series-fixed\{[\s\S]*?left:auto;[\s\S]*?justify-content:flex-end;/, "curve legends must stay in the upper-right safe area away from the y axis");
 assert.match(chartsCss, /\.selected-node-heading\{[\s\S]*?display:grid;[\s\S]*?grid-template-columns:auto minmax\(0,1fr\)/, "curve node dates and metric values must use an explicit non-overlapping layout");
 assert.match(chartsCss, /\.selected-node-detail p\{[\s\S]*?min-height:0;[\s\S]*?margin:0;/, "empty curve notes must not reserve a large blank panel");
-assert.match(app, /left: Math\.round\(\(compactChart \? 84 : chart\.series\.length > 1 \? 112 : 98\)/, "curve plots must reserve a safe inset for first-node stickers");
+assert.match(chartRenderer, /left: Math\.round\(\(compactChart \? 84 : chart\.series\.length > 1 \? 112 : 98\)/, "curve plots must reserve a safe inset for first-node stickers");
 assert.doesNotMatch(`${html}\n${app}`, /pushups|俯卧撑数量|俯卧撑记录/, "the retired push-up quick-start preset must be removed");
 assert.doesNotMatch(chartsCss, /\.chart-meta span \+ span::before\{[\s\S]*?content:"·"/, "curve metadata must not fall back to the retired tiny dot-separated label");
 assert.doesNotMatch(responsivePlatformCss, /Homepage: every character|Tablet \/ narrow window: the same stage/, "retired responsive layout fragments must be removed");
@@ -532,25 +557,26 @@ assert.match(app, /data-series-axis-min/, "each curve must expose an optional y-
 assert.match(app, /data-series-axis-max/, "each curve must expose an optional y-axis maximum");
 assert.match(chartsCss, /grid-template-columns:31px minmax\(0,1fr\) minmax\(220px,\.72fr\) 34px;/, "desktop curve colour fields must be wide enough for complete supporter-colour names");
 assert.match(chartDomain, /customMin \?\? automaticMin/, "curve rendering must respect custom y-axis bounds");
-assert.match(app, /getChartSeriesGeometry\(chart,/, "the chart UI must use the shared geometry boundary");
+assert.match(chartRenderer, /getChartSeriesGeometry\(chart,/, "the chart renderer must use the shared geometry boundary");
 
-const fullDemoBackup = JSON.parse(read("示例数据/全功能测试数据.json"));
-assert.equal(fullDemoBackup.version, 9, "the full demo backup should remain a migration test for version 9");
-assert.equal(fullDemoBackup.goals.length, 4, "full demo data must exercise every countdown layout slot");
-assert.equal(fullDemoBackup.progressGoals.length, 4, "full demo data must contain several progress goals");
-assert.ok(fullDemoBackup.progressGoals.every((goal) => goal.sticker && Array.isArray(goal.spaceIds) && goal.updates.length), "full demo progress goals must include stickers, report spaces, and updates");
-assert.ok(fullDemoBackup.weeks.every((week) => week.days.every((day) => day.recorded === true && day.sticker)), "full demo days must be recorded and carry stickers");
-assert.ok(fullDemoBackup.charts.some((chart) => chart.series.length > 1), "full demo data must include a multi-series curve chart");
-assert.ok(fullDemoBackup.charts.every((chart) => chart.nodes.every((node) => Object.keys(node.stickers || {}).length)), "every full demo curve node must carry a sticker");
-const fullDemoStickerRefs = JSON.stringify(fullDemoBackup).match(/图片\/[^"'`\r\n]+?\.(?:png|jpe?g|gif|webp)/gi) || [];
-const missingFullDemoStickers = [...new Set(fullDemoStickerRefs)].filter((reference) => !fs.existsSync(path.join(projectRoot, ...reference.split("/"))));
-assert.deepEqual(missingFullDemoStickers, [], `full demo data references missing stickers: ${missingFullDemoStickers.join(", ")}`);
+assert.equal(longTermDemo.version, 9, "the long-term demo backup should remain a migration test for version 9");
+assert.equal(longTermDemo.goals.length, 4, "long-term demo data must exercise every countdown layout slot");
+assert.equal(longTermDemo.progressGoals.length, 4, "long-term demo data must contain several progress goals");
+assert.ok(longTermDemo.progressGoals.every((goal) => goal.sticker && Array.isArray(goal.spaceIds) && goal.updates.length), "long-term demo progress goals must include stickers, report spaces, and updates");
+assert.ok(longTermDemo.weeks.every((week) => week.days.every((day) => day.recorded === true && day.sticker)), "long-term demo days must be recorded and carry stickers");
+assert.ok(longTermDemo.charts.some((chart) => chart.series.length > 1), "long-term demo data must include a multi-series curve chart");
+assert.ok(longTermDemo.charts.every((chart) => chart.nodes.every((node) => Object.keys(node.stickers || {}).length)), "every long-term demo curve node must carry a sticker");
+const longTermDemoStickerRefs = JSON.stringify(longTermDemo).match(/images\/[^"'`\r\n]+?\.(?:png|jpe?g|gif|webp)/gi) || [];
+const missingLongTermDemoStickers = [...new Set(longTermDemoStickerRefs)].filter((reference) => !fs.existsSync(path.join(projectRoot, ...reference.split("/"))));
+assert.deepEqual(missingLongTermDemoStickers, [], `long-term demo data references missing stickers: ${missingLongTermDemoStickers.join(", ")}`);
 
 const weekActionOrder = [
   "importWeekButton",
   "showSelectedWeekReportButton",
   "addWeekButton",
   "deleteSelectedPeriodButton",
+  "clearSelectedWeekButton",
+  "clearSelectedDayButton",
   "shiftWeekButton",
 ];
 for (let index = 1; index < weekActionOrder.length; index += 1) {

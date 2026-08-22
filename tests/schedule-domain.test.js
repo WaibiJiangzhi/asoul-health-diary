@@ -49,6 +49,27 @@ const normalizeDay = (day, index, startDate) => ({
   title: day.title || "空白",
   items: Array.isArray(day.items) ? day.items.map((item) => ({ ...item })) : [],
 });
+const clearedDay = domain.clearWeekDayContent(days[2], 2, {
+  startDate: "2026-08-17",
+  templateId: "study",
+  normalizeDay,
+});
+assert.equal(clearedDay.id, "day-3");
+assert.equal(clearedDay.date, "2026-08-19");
+assert.equal(clearedDay.title, "空白");
+assert.deepEqual(clearedDay.items, []);
+assert.equal(days[2].title, "内容 3", "clearing a day must not mutate the source day");
+
+const clearedWeek = domain.clearWeekContent(days, {
+  startDate: "2026-08-17",
+  templateId: "study",
+  normalizeDay,
+});
+assert.equal(clearedWeek.length, 7);
+assert.deepEqual(clearedWeek.map((day) => day.id), days.map((day) => day.id));
+assert.deepEqual(clearedWeek.map((day) => day.date), days.map((day) => day.date));
+assert.ok(clearedWeek.every((day) => day.title === "空白" && day.items.length === 0));
+
 const shifted = domain.shiftWeekDays(days, 2, {
   startDate: "2026-08-17",
   templateId: "study",

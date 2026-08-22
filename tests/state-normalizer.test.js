@@ -57,6 +57,10 @@ assert.notEqual(normalizer.cloneDefault(), normalizer.cloneDefault(), "fresh sta
 assert.equal(normalizer.safeCardColor("#e799b0"), "#E799B0");
 assert.equal(normalizer.safeCardColor("red"), "");
 assert.equal(normalizer.safeTemplateId("missing"), "custom");
+const canonicalSticker = stickerPacks.嘉然[0];
+const legacyRootSticker = canonicalSticker.replace(/^images\//, "图片/");
+assert.equal(normalizer.safeSticker(canonicalSticker), canonicalSticker, "current image paths must remain unchanged");
+assert.equal(normalizer.safeSticker(legacyRootSticker), canonicalSticker, "legacy 图片/ paths must migrate to images/");
 
 const publishedV4Path = path.join(__dirname, "fixtures", "published-v4-backup.json");
 const publishedV4 = JSON.parse(fs.readFileSync(publishedV4Path, "utf8"));

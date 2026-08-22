@@ -85,12 +85,6 @@
   cursor: not-allowed;
 }
 
-.goal-section-actions #deleteGoalButton {
-  color: #a95768;
-  border-color: rgba(190, 84, 103, .2);
-  background: #fff6f7;
-}
-
 .goal-section-actions .order-button,
 .progress-goal-actions .order-button {
   min-width: auto;

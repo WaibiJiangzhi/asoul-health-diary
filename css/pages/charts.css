@@ -203,9 +203,10 @@
   min-height:27px;
   padding:0 9px;
   align-items:center;
-  border:1px solid rgba(87,102,144,.08);
+  border:1px solid color-mix(in srgb,var(--chart-color) 18%,white);
   border-radius:999px;
-  background:rgba(87,102,144,.045);
+  color:color-mix(in srgb,var(--chart-color) 74%,#302b3d);
+  background:color-mix(in srgb,var(--chart-color) 7%,white);
   font-weight:800;
   line-height:1;
 }
@@ -376,15 +377,15 @@
   overflow-x:auto;
   overflow-y:hidden;
   overscroll-behavior-inline:contain;
-  scrollbar-color:#b9a9ee #f1edf7;
+  scrollbar-color:color-mix(in srgb,var(--chart-color) 54%,white) color-mix(in srgb,var(--chart-color) 9%,white);
   scrollbar-width:thin;
 }
 .chart-scroll::-webkit-scrollbar{ height:9px; }
-.chart-scroll::-webkit-scrollbar-track{ border-radius:999px; background:#f1edf7; }
+.chart-scroll::-webkit-scrollbar-track{ border-radius:999px; background:color-mix(in srgb,var(--chart-color) 9%,white); }
 .chart-scroll::-webkit-scrollbar-thumb{
-  border:2px solid #f1edf7;
+  border:2px solid color-mix(in srgb,var(--chart-color) 9%,white);
   border-radius:999px;
-  background:#b9a9ee;
+  background:color-mix(in srgb,var(--chart-color) 54%,white);
 }
 .chart-svg{
   display:block;
@@ -896,12 +897,17 @@
     min-width:0;
     min-height:33px;
     padding:0 7px;
-    border:1px solid rgba(87,102,144,.1);
+    border:1px solid color-mix(in srgb,var(--chart-color) 24%,white);
     border-radius:10px;
-    color:var(--soul-nailin);
-    background:#f7f7fb;
+    color:color-mix(in srgb,var(--chart-color) 76%,#302b3d);
+    background:color-mix(in srgb,var(--chart-color) 7%,white);
     box-shadow:none;
     font-size:10.5px;
+  }
+  .chart-card-actions > .chart-action--add{
+    color:#fff;
+    border-color:var(--chart-color);
+    background:var(--chart-color);
   }
   .chart-action-menu{ position:relative; align-self:center; }
   .chart-action-menu > summary{
@@ -914,7 +920,7 @@
     place-items:center;
     border:0;
     border-radius:0;
-    color:var(--soul-nailin);
+    color:var(--chart-color);
     background:transparent;
     box-shadow:none;
     font-size:18px;
@@ -969,7 +975,7 @@
     min-height:0;
     padding-left:0;
     overflow-x:auto;
-    scrollbar-color:rgba(125,107,210,.28) transparent;
+    scrollbar-color:color-mix(in srgb,var(--chart-color) 46%,transparent) transparent;
   }
   .chart-svg{ min-width:100%; min-height:0; }
   .chart-y-axis-fixed{

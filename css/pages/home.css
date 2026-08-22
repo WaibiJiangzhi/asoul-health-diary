@@ -44,7 +44,10 @@
   bottom: 26px;
   left: 20px;
   width: 26px;
-  background: radial-gradient(circle, #eadfce 0 7px, transparent 7.5px) center top / 26px 59px repeat-y;
+  background-image: radial-gradient(circle, #eadfce 0 7px, transparent 7.5px);
+  background-position: center;
+  background-size: 26px 59px;
+  background-repeat: no-repeat space;
   content: "";
   pointer-events: none;
 }

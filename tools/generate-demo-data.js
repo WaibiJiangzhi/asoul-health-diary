@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-const OUTPUT_DIR = path.join(PROJECT_ROOT, "示例数据");
+const OUTPUT_DIR = path.join(PROJECT_ROOT, "sample-data");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "考研加健身用户示例.json");
 const TODAY = "2026-08-18";
 const EXPORTED_AT = "2026-08-18T08:00:00.000Z";
@@ -14,9 +14,9 @@ const WEEK_STARTS = [
   "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24", "2026-08-31",
 ];
 
-const STUDY_STICKER = "图片/嘉然/5-2026嘉然的画册动态表情包/[2026嘉然的画册动态表情包_看我表现].gif";
-const HEALTH_STICKER = "图片/贝拉/5-2026贝拉的冒险/[2026贝拉的冒险_自我安慰].jpg";
-const CHEER_STICKER = "图片/嘉然/3-脑洞波系列主题装扮-嘉然/[脑洞波系列主题装扮-嘉然_加油].jpg";
+const STUDY_STICKER = "images/嘉然/5-2026嘉然的画册动态表情包/[2026嘉然的画册动态表情包_看我表现].gif";
+const HEALTH_STICKER = "images/贝拉/5-2026贝拉的冒险/[2026贝拉的冒险_自我安慰].jpg";
+const CHEER_STICKER = "images/嘉然/3-脑洞波系列主题装扮-嘉然/[脑洞波系列主题装扮-嘉然_加油].jpg";
 
 function addDays(isoDate, days) {
   const date = new Date(`${isoDate}T12:00:00Z`);

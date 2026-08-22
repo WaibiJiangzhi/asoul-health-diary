@@ -66,8 +66,8 @@ assert.throws(
   "malformed JSON must be rejected before state normalization",
 );
 
-for (const filename of ["考研加健身用户示例.json", "全功能测试数据.json"]) {
-  const text = fs.readFileSync(path.join(projectRoot, "示例数据", filename), "utf8");
+for (const filename of ["考研加健身用户示例.json", "长期用户300节点示例.json"]) {
+  const text = fs.readFileSync(path.join(projectRoot, "sample-data", filename), "utf8");
   const imported = codec.parseDiaryBackup(text);
   const migrated = model.migrateState(imported);
   assert.equal(migrated.version, model.CURRENT_STATE_VERSION, `${filename} must still reach the current state version`);

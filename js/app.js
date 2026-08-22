@@ -16,13 +16,11 @@
     escapeAttr,
     escapeHtml,
     escapeXml,
-    formatChartAxisLabel,
     formatCompactDate,
     formatDateRange,
     formatFriendlyDate,
     formatGoalDate,
     formatMonthDay,
-    formatNumber,
     formatProgressInput,
     formatProgressNumber,
     formatProgressUpdateTime,
@@ -31,7 +29,6 @@
     formatWeight,
     getGoalCountdown,
     getMonthMondays,
-    parseChartDate,
     parseSeriesValue,
     safeString,
     shortLabel,
@@ -55,15 +52,14 @@
   const CHART_DOMAIN = globalThis.ASOUL_CHART_DOMAIN;
   if (!CHART_DOMAIN) throw new Error("js/domain/chart-domain.js must load before js/app.js");
   const {
-    buildSmoothPath,
     buildChartZoomLevels,
-    getChartSeriesGeometry,
-    getLabelEvery,
     getNextZoom,
   } = CHART_DOMAIN;
   const SCHEDULE_DOMAIN = globalThis.ASOUL_SCHEDULE_DOMAIN;
   if (!SCHEDULE_DOMAIN) throw new Error("js/domain/schedule-domain.js must load before js/app.js");
   const {
+    clearWeekContent,
+    clearWeekDayContent,
     countWeekItemStates,
     hasScheduleDayContent,
     hasWeekDayRecord,
@@ -75,6 +71,13 @@
   const SNAP_CAROUSEL = globalThis.ASOUL_SNAP_CAROUSEL;
   if (!SNAP_CAROUSEL) throw new Error("js/ui/snap-carousel.js must load before js/app.js");
   const { bindSnapSelection, revealSelectedCard } = SNAP_CAROUSEL;
+  const CANVAS_UTILS = globalThis.ASOUL_CANVAS_UTILS;
+  if (!CANVAS_UTILS) throw new Error("js/ui/canvas-utils.js must load before js/app.js");
+  const { downloadCanvasAsPng } = CANVAS_UTILS;
+  const WEEKLY_REPORT_RENDERER_MODULE = globalThis.ASOUL_WEEKLY_REPORT_RENDERER;
+  if (!WEEKLY_REPORT_RENDERER_MODULE) throw new Error("js/ui/weekly-report-renderer.js must load before js/app.js");
+  const CHART_RENDERER_MODULE = globalThis.ASOUL_CHART_RENDERER;
+  if (!CHART_RENDERER_MODULE) throw new Error("js/ui/chart-renderer.js must load before js/app.js");
   const APP_CONFIG = globalThis.ASOUL_APP_CONFIG;
   if (!APP_CONFIG) throw new Error("js/core/app-config.js must load before js/app.js");
   const {
@@ -198,6 +201,34 @@
   let deferredInstallPrompt = null;
   let waitingServiceWorker = null;
   const canvasImageCache = new Map();
+  const weeklyReportRenderer = WEEKLY_REPORT_RENDERER_MODULE.createWeeklyReportRenderer({
+    utils: APP_UTILS,
+    scheduleDomain: SCHEDULE_DOMAIN,
+    milestoneDomain: MILESTONE_DOMAIN,
+    canvasUtils: CANVAS_UTILS,
+    getSpaceTemplate,
+    getCardColor,
+    imageCache: canvasImageCache,
+    dayStatusPalette: DAY_STATUS_PALETTE,
+    itemSummaryPalette: ITEM_SUMMARY_PALETTE,
+  });
+  const { createWeeklyReportCanvas, createWeeklySummaryCanvas } = weeklyReportRenderer;
+  const chartRenderer = CHART_RENDERER_MODULE.createChartRenderer({
+    utils: APP_UTILS,
+    chartDomain: CHART_DOMAIN,
+    canvasUtils: CANVAS_UTILS,
+    getSpaceTemplate,
+    safeSticker,
+    assetUrl,
+    imageCache: canvasImageCache,
+    defaultColor: ALLOWED_COLORS[0],
+  });
+  const {
+    createChartCanvas,
+    createChartSvgLayout,
+    renderChartSvg,
+    renderEmptyChart,
+  } = chartRenderer;
 
   const profileForm = $("#profileForm");
   const goalList = $("#goalList");
@@ -326,6 +357,8 @@
     $("#copySelectedWeekReportButton").addEventListener("click", () => selectedWeekId && copyWeekReportText(selectedWeekId));
     $("#downloadWeeklyReportImageButton").addEventListener("click", () => selectedWeekId && downloadWeeklyReportImage(selectedWeekId));
     $("#downloadWeeklySummaryImageButton").addEventListener("click", () => selectedWeekId && downloadWeeklySummaryImage(selectedWeekId));
+    $("#clearSelectedDayButton").addEventListener("click", clearSelectedDayCard);
+    $("#clearSelectedWeekButton").addEventListener("click", clearSelectedWeekCard);
     $("#deleteSelectedPeriodButton").addEventListener("click", deleteSelectedPeriod);
     weekForm.addEventListener("submit", savePeriodFromDialog);
     weekStickerForm.addEventListener("submit", saveWeekSticker);
@@ -1273,6 +1306,14 @@
     return state.weeks.find((week) => week.id === id);
   }
 
+  function getSelectedWeekDayIndex(week) {
+    if (!week?.days?.length) return -1;
+    const visibleDayId = weekDetail.querySelector("[data-inline-day]")?.dataset.inlineDay;
+    const selectedDayId = visibleDayId || selectedDayByWeek.get(week.id) || week.days[0].id;
+    const selectedIndex = week.days.findIndex((day) => day.id === selectedDayId);
+    return selectedIndex >= 0 ? selectedIndex : 0;
+  }
+
   function openPeriodDialog() {
     if (!getSpace()) {
       showToast("请先新建一个空间");
@@ -1344,13 +1385,43 @@
     showToast(`${label} 已删除`);
   }
 
+  function clearSelectedDayCard() {
+    const week = findWeek(selectedWeekId);
+    const selectedIndex = getSelectedWeekDayIndex(week);
+    if (!week || selectedIndex < 0) return;
+    const day = week.days[selectedIndex];
+    const label = `Day${day.dayNumber}（${formatMonthDay(day.date)}）`;
+    if (!window.confirm(`确定清空 ${label} 吗？\n\n今日标题、重点、安排、完成状态、表情和当天小记都会清空；日期与日卡位置会保留。`)) return;
+    week.days[selectedIndex] = clearWeekDayContent(day, selectedIndex, {
+      startDate: week.startDate,
+      templateId: getSpace(week.spaceId).templateId,
+      normalizeDay: normalizeWeekDay,
+    });
+    selectedDayByWeek.set(week.id, week.days[selectedIndex].id);
+    persistState(["schedule"]);
+    showToast(`${label} 已清空`);
+  }
+
+  function clearSelectedWeekCard() {
+    const week = findWeek(selectedWeekId);
+    if (!week) return;
+    const label = formatDateRange(week.startDate);
+    if (!window.confirm(`确定清空 ${label} 的整张周卡吗？\n\n七张日卡里的标题、重点、安排、完成状态、表情和当天小记都会清空；所属空间、日期和周卡本身会保留。`)) return;
+    week.days = clearWeekContent(week.days, {
+      startDate: week.startDate,
+      templateId: getSpace(week.spaceId).templateId,
+      normalizeDay: normalizeWeekDay,
+    });
+    persistState(["schedule"]);
+    showToast(`${label} 的周卡已清空`);
+  }
+
   function shiftWeekScheduleByOneDay(weekId) {
     const week = findWeek(weekId);
     if (!week) return;
-    const visibleDayId = weekDetail.querySelector("[data-inline-day]")?.dataset.inlineDay;
-    const selectedDayId = visibleDayId || selectedDayByWeek.get(week.id) || week.days[0]?.id;
-    selectedDayByWeek.set(week.id, selectedDayId);
-    const startIndex = Math.max(0, week.days.findIndex((day) => day.id === selectedDayId));
+    const startIndex = getSelectedWeekDayIndex(week);
+    if (startIndex < 0) return;
+    selectedDayByWeek.set(week.id, week.days[startIndex].id);
     const startDayNumber = startIndex + 1;
     const hasLastDayData = hasScheduleDayContent(week.days[6]);
     const warning = hasLastDayData
@@ -1388,6 +1459,8 @@
     $("#emptyAddWeekButton").disabled = !hasActiveSpace;
     $("#shiftWeekButton").hidden = true;
     $("#shiftWeekButton").disabled = filteredWeeks.length === 0;
+    $("#clearSelectedDayButton").disabled = filteredWeeks.length === 0;
+    $("#clearSelectedWeekButton").disabled = filteredWeeks.length === 0;
     $("#showSelectedWeekReportButton").disabled = filteredWeeks.length === 0;
     if (!filteredWeeks.length) {
       $("#shiftWeekButton").textContent = "日程顺延一天";
@@ -2082,7 +2155,7 @@
     button.disabled = true;
     button.textContent = "正在生成竖版…";
     try {
-      const canvas = createWeeklyReportCanvas(week);
+      const canvas = createWeeklyReportCanvas(week, state);
       downloadCanvasAsPng(canvas, `Asoul-${getSpaceTemplate(week.spaceId).name}完整周报-${week.startDate}.png`);
       showToast("竖版完整周报已经下载");
     } catch {
@@ -2100,7 +2173,7 @@
     button.disabled = true;
     button.textContent = "正在生成横版…";
     try {
-      const canvas = createWeeklySummaryCanvas(week);
+      const canvas = createWeeklySummaryCanvas(week, state);
       downloadCanvasAsPng(canvas, `Asoul-${getSpaceTemplate(week.spaceId).name}周报摘要-${week.startDate}.png`);
       showToast("横版周报摘要已经下载");
     } catch {
@@ -2111,511 +2184,6 @@
     }
   }
 
-  function downloadCanvasAsPng(canvas, filename) {
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = filename.replace(/[\\/:*?"<>|]/g, "-");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }
-
-  function createWeeklyReportCanvas(week) {
-    const template = getSpaceTemplate(week.spaceId);
-    const goals = state.goals.filter((goal) => goal.spaceIds.includes(week.spaceId));
-    const progressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(week.spaceId));
-    const milestones = [
-      ...goals.map((goal) => ({ type: "countdown", data: goal })),
-      ...progressGoals.map((goal) => ({ type: "progress", data: goal })),
-    ];
-    const scale = 2;
-    const width = 1080;
-    const outer = 54;
-    const gap = 14;
-    const milestoneCardHeight = 104;
-    const milestoneRows = Math.ceil(milestones.length / 2);
-    const milestoneHeight = milestones.length ? 70 + milestoneRows * (milestoneCardHeight + gap) : 0;
-    const dayCardWidth = (width - outer * 2 - gap) / 2;
-    const dayHeights = week.days.map((day) => getCanvasDayHeight(day));
-    const dayRowHeights = Array.from({ length: Math.ceil(week.days.length / 2) }, (_, rowIndex) => (
-      Math.max(...dayHeights.slice(rowIndex * 2, rowIndex * 2 + 2))
-    ));
-    const daySectionHeight = dayRowHeights.reduce((sum, value) => sum + value, 0) + gap * Math.max(0, dayRowHeights.length - 1);
-    const height = outer + 176 + milestoneHeight + 72 + daySectionHeight + 72;
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(width * scale);
-    canvas.height = Math.round(height * scale);
-    const context = canvas.getContext("2d");
-    context.scale(scale, scale);
-    const background = context.createLinearGradient(0, 0, width, height);
-    background.addColorStop(0, "#fffdfb");
-    background.addColorStop(0.48, "#faf8ff");
-    background.addColorStop(1, "#fff7f8");
-    context.fillStyle = background;
-    context.fillRect(0, 0, width, height);
-
-    drawCanvasAppIcon(context, width - outer - 58, outer + 5, 58);
-
-    const itemCounts = countWeekItemStates(week);
-    const recordedCount = week.days.filter((day) => day.recorded === true).length;
-    context.fillStyle = "#7865cf";
-    context.font = "800 14px system-ui, sans-serif";
-    context.fillText(`ASOUL ${template.id.toUpperCase()} WEEKLY`, outer, outer + 20);
-    context.fillStyle = "#29263d";
-    context.font = "850 38px system-ui, sans-serif";
-    drawCanvasText(context, week.title, outer, outer + 70, width - outer * 2 - 130, 44, 1);
-    context.fillStyle = "#777287";
-    context.font = "650 17px system-ui, sans-serif";
-    context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 104);
-    drawCanvasPill(context, outer, outer + 124, 126, 38, `${itemCounts.done} 项完成`, ITEM_SUMMARY_PALETTE.done.fill, ITEM_SUMMARY_PALETTE.done.ink);
-    drawCanvasPill(context, outer + 136, outer + 124, 126, 38, `${itemCounts.changed} 项调整`, ITEM_SUMMARY_PALETTE.changed.fill, ITEM_SUMMARY_PALETTE.changed.ink);
-    drawCanvasPill(context, outer + 272, outer + 124, 126, 38, `${itemCounts.missed} 项未完成`, ITEM_SUMMARY_PALETTE.missed.fill, ITEM_SUMMARY_PALETTE.missed.ink);
-    drawCanvasPill(context, outer + 408, outer + 124, 126, 38, `${recordedCount} 天记录`, "#f1edff", "#6d59be");
-
-    let y = outer + 176;
-    if (milestones.length) {
-      context.fillStyle = "#6c5bc5";
-      context.font = "850 14px system-ui, sans-serif";
-      context.fillText("WEEKLY MILESTONES · 本周坐标", outer, y + 20);
-      context.fillStyle = "#8c8798";
-      context.font = "550 13px system-ui, sans-serif";
-      context.fillText("只显示关联到这个空间的倒计时与进度目标", outer, y + 43);
-      const cardWidth = (width - outer * 2 - gap) / 2;
-      milestones.forEach((item, index) => {
-        const cardX = outer + index % 2 * (cardWidth + gap);
-        const cardY = y + 58 + Math.floor(index / 2) * (milestoneCardHeight + gap);
-        drawCanvasMilestone(context, item, cardX, cardY, cardWidth, milestoneCardHeight, week, canvasImageCache, index);
-      });
-      y += milestoneHeight;
-    }
-
-    const statusSummary = week.days.reduce((summary, day) => {
-      const key = day.status || "未设置";
-      summary[key] = (summary[key] || 0) + 1;
-      return summary;
-    }, {});
-    const statuses = ["好好好", "还不错", "这期拉了", "未设置"]
-      .map((label) => [label, DAY_STATUS_PALETTE[label].fill, DAY_STATUS_PALETTE[label].ink]);
-    let statusX = outer;
-    statuses.forEach(([label, fill, color]) => {
-      drawCanvasPill(context, statusX, y + 14, 118, 36, `${label} ${statusSummary[label] || 0}`, fill, color);
-      statusX += 128;
-    });
-    y += 72;
-
-    const dayRowOffsets = dayRowHeights.map((_, rowIndex) => (
-      dayRowHeights.slice(0, rowIndex).reduce((sum, value) => sum + value, 0) + rowIndex * gap
-    ));
-    week.days.forEach((day, index) => {
-      const rowIndex = Math.floor(index / 2);
-      const cardX = outer + index % 2 * (dayCardWidth + gap);
-      const cardY = y + dayRowOffsets[rowIndex];
-      drawCanvasDayVertical(context, day, template, cardX, cardY, dayCardWidth, dayRowHeights[rowIndex], canvasImageCache, index);
-    });
-    context.fillStyle = "#938d9b";
-    context.font = "600 12px system-ui, sans-serif";
-    context.textAlign = "center";
-    context.fillText("ASOUL 一个魂生活日记 · 数据保存在你的设备中", width / 2, height - 30);
-    context.textAlign = "left";
-    return canvas;
-  }
-
-  function drawCanvasMilestone(context, item, x, y, width, height, week, stickerImages, toneIndex = 0) {
-    const tone = getCardColor(item.data, toneIndex);
-    drawCanvasCard(context, x, y, width, height, "#ffffff", "#e9e3f3");
-    context.fillStyle = tone;
-    context.fillRect(x, y, 5, height);
-    const sticker = stickerImages.get(item.data.sticker);
-    const contentX = x + 18;
-    if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, contentX, y + 20, 62);
-    const textX = sticker?.complete && sticker.naturalWidth ? contentX + 76 : contentX;
-    context.fillStyle = "#343044";
-    context.font = "750 17px system-ui, sans-serif";
-    drawCanvasText(context, item.data.title, textX, y + 35, width - (textX - x) - 148, 22, 2);
-    context.fillStyle = tone;
-    context.textAlign = "right";
-    context.font = "850 21px system-ui, sans-serif";
-    if (item.type === "countdown") {
-      const countdown = getGoalCountdown(item.data.targetDate, addDaysIso(week.startDate, 6));
-      context.fillText(countdown.phrase, x + width - 18, y + 39);
-      context.font = "550 12px system-ui, sans-serif";
-      context.fillText(formatGoalDate(item.data.targetDate), x + width - 18, y + 64);
-    } else {
-      const percent = getProgressPercent(item.data);
-      context.font = "850 16px system-ui, sans-serif";
-      context.fillText(`${formatProgressNumber(item.data.current)} / ${formatProgressNumber(item.data.target)} ${item.data.unit}`, x + width - 18, y + 38);
-      drawCanvasProgress(context, textX, y + height - 24, x + width - 18 - textX, percent, tone);
-    }
-    context.textAlign = "left";
-  }
-
-  function getCanvasDayEntries(day) {
-    return day.items
-      .filter((item) => item.text || item.state)
-      .map((item) => ({ text: item.text, state: item.state }));
-  }
-
-  function getCanvasDayHeight(day) {
-    const entries = getCanvasDayEntries(day);
-    const visibleEntries = (entries.length ? entries : [{ text: "当天没有安排事项" }]).slice(0, 7);
-    const listHeight = visibleEntries.reduce((sum, entry) => {
-      const lineCount = Math.min(2, Math.max(1, Math.ceil([...String(entry.text || "未填写安排")].length / 18)));
-      return sum + lineCount * 18 + 11;
-    }, 0);
-    const hasFooter = Boolean(day.focus || day.note);
-    return 132 + listHeight + (entries.length > 7 ? 22 : 0) + (hasFooter ? 80 : 28);
-  }
-
-  function drawCanvasDayVertical(context, day, template, x, y, width, height, stickerImages, index) {
-    const tones = ["#8871ec", "#e88da9", "#4ea78e", "#dd756b"];
-    const tone = DAY_STATUS_PALETTE[day.status]?.fill || tones[index % tones.length];
-    drawCanvasCard(context, x, y, width, height, "rgba(255,255,255,.95)", colorMixForCanvas(tone, .18));
-    context.fillStyle = tone;
-    drawCanvasRoundedRectPath(context, x, y, 8, height, 4);
-    context.fill();
-    context.fillStyle = colorMixForCanvas(tone, .09);
-    drawCanvasRoundedRectPath(context, x + 22, y + 22, 86, 82, 22);
-    context.fill();
-    context.fillStyle = tone;
-    context.font = "900 12px system-ui, sans-serif";
-    context.fillText("DAY", x + 43, y + 48);
-    context.font = "900 31px system-ui, sans-serif";
-    context.fillText(String(day.dayNumber).padStart(2, "0"), x + 39, y + 82);
-    context.fillStyle = "#3a3548";
-    context.font = "820 20px system-ui, sans-serif";
-    drawCanvasText(context, day.title || `Day${day.dayNumber}`, x + 128, y + 39, width - 300, 25, 1);
-    context.fillStyle = "#898291";
-    context.font = "650 13px system-ui, sans-serif";
-    context.fillText(`${formatFriendlyDate(day.date)} · ${day.recorded ? "已记录" : "未记录"}`, x + 128, y + 64);
-    if (day.status) drawCanvasPill(context, x + 128, y + 76, 88, 28, day.status, colorMixForCanvas(tone, .1), tone);
-    const sticker = stickerImages.get(day.sticker);
-    if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, x + width - 84, y + 22, 58);
-
-    const entries = getCanvasDayEntries(day);
-    const listX = x + 128;
-    const listY = y + 132;
-    let rowY = listY;
-    (entries.length ? entries : [{ text: "当天没有安排事项", state: "" }]).slice(0, 7).forEach((entry) => {
-      const mark = weekItemStateMark(entry.state);
-      context.fillStyle = entry.state === "done" ? "#32977c" : entry.state === "changed" ? "#d69a31" : entry.state === "missed" ? "#cc626c" : "#9a929f";
-      context.font = "900 17px system-ui, sans-serif";
-      context.fillText(mark, listX, rowY);
-      context.fillStyle = "#484251";
-      context.font = "760 14px system-ui, sans-serif";
-      const lineCount = Math.min(2, Math.max(1, Math.ceil([...String(entry.text || "未填写安排")].length / 18)));
-      drawCanvasText(context, entry.text || "未填写安排", listX + 28, rowY, width - 176, 18, 2);
-      rowY += lineCount * 18 + 11;
-    });
-    if (entries.length > 7) {
-      context.fillStyle = "#8e8794";
-      context.font = "550 12px system-ui, sans-serif";
-      context.fillText(`另有 ${entries.length - 7} 项，请在网页中查看`, listX + 28, rowY);
-    }
-    const footerParts = [];
-    if (day.focus) footerParts.push(`${template.firstFieldLabel}：${day.focus}`);
-    if (day.note) footerParts.push(`当天小记：${day.note}`);
-    if (footerParts.length) {
-      context.strokeStyle = "#ede9f0";
-      context.setLineDash([5, 6]);
-      context.beginPath();
-      context.moveTo(listX, y + height - 67);
-      context.lineTo(x + width - 26, y + height - 67);
-      context.stroke();
-      context.setLineDash([]);
-      context.fillStyle = "#736d79";
-      context.font = "520 12px system-ui, sans-serif";
-      drawCanvasText(context, footerParts.join(" · "), listX, y + height - 40, width - 176, 17, 2);
-    }
-  }
-
-  function createWeeklySummaryCanvas(week) {
-    const scale = 2;
-    const width = 1920;
-    const outer = 78;
-    const template = getSpaceTemplate(week.spaceId);
-    const goals = state.goals.filter((goal) => goal.spaceIds.includes(week.spaceId));
-    const progressGoals = state.progressGoals.filter((goal) => goal.spaceIds.includes(week.spaceId));
-    const milestones = [
-      ...goals.map((goal) => ({ type: "countdown", data: goal })),
-      ...progressGoals.map((goal) => ({ type: "progress", data: goal })),
-    ].slice(0, 4);
-    const daysY = milestones.length > 2 ? 576 : 450;
-    const height = daysY + 374;
-    const contextCanvas = document.createElement("canvas");
-    contextCanvas.width = width * scale;
-    contextCanvas.height = height * scale;
-    const context = contextCanvas.getContext("2d");
-    context.scale(scale, scale);
-    const itemCounts = countWeekItemStates(week);
-    const recordedCount = week.days.filter((day) => day.recorded === true).length;
-
-    drawWeeklySummaryBackground(context, width, height, outer);
-    drawWeeklySummaryHeader(context, week, template, itemCounts, recordedCount, width, outer);
-    drawWeeklySummaryMilestones(context, milestones, week, width, outer);
-    drawWeeklySummaryDays(context, week, daysY, width, outer);
-
-    context.fillStyle = "#8c8693";
-    context.font = "600 17px system-ui, sans-serif";
-    context.textAlign = "center";
-    context.fillText("ASOUL 一个魂生活日记", width / 2, height - 54);
-    context.textAlign = "left";
-    return contextCanvas;
-  }
-
-  function drawWeeklySummaryBackground(context, width, height, outer) {
-    const background = context.createLinearGradient(0, 0, width, height);
-    background.addColorStop(0, "#fffdfb");
-    background.addColorStop(.52, "#faf8ff");
-    background.addColorStop(1, "#fff4f7");
-    context.fillStyle = background;
-    context.fillRect(0, 0, width, height);
-    context.fillStyle = "rgba(143,122,234,.08)";
-    context.beginPath();
-    context.arc(width - 90, 30, 360, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = "rgba(85,165,143,.06)";
-    context.beginPath();
-    context.arc(80, height - 50, 300, 0, Math.PI * 2);
-    context.fill();
-    drawCanvasAppIcon(context, width - outer - 76, outer - 3, 76);
-  }
-
-  function drawWeeklySummaryHeader(context, week, template, itemCounts, recordedCount, width, outer) {
-    context.fillStyle = "#7865cf";
-    context.font = "850 22px system-ui, sans-serif";
-    context.fillText(`ASOUL ${template.id.toUpperCase()} WEEKLY`, outer, outer + 24);
-    context.fillStyle = "#29263d";
-    context.font = "900 54px system-ui, sans-serif";
-    drawCanvasText(context, week.title, outer, outer + 88, 1040, 62, 1);
-    context.fillStyle = "#777287";
-    context.font = "650 24px system-ui, sans-serif";
-    context.fillText(`${formatDateRange(week.startDate)} · 已记录 ${recordedCount}/7 天`, outer, outer + 132);
-    drawCanvasPill(context, width - outer - 560, outer + 102, 132, 50, `${itemCounts.done} 完成`, ITEM_SUMMARY_PALETTE.done.fill, ITEM_SUMMARY_PALETTE.done.ink);
-    drawCanvasPill(context, width - outer - 414, outer + 102, 132, 50, `${itemCounts.changed} 调整`, ITEM_SUMMARY_PALETTE.changed.fill, ITEM_SUMMARY_PALETTE.changed.ink);
-    drawCanvasPill(context, width - outer - 268, outer + 102, 132, 50, `${itemCounts.missed} 未完成`, ITEM_SUMMARY_PALETTE.missed.fill, ITEM_SUMMARY_PALETTE.missed.ink);
-  }
-
-  function drawWeeklySummaryMilestones(context, milestones, week, width, outer) {
-    const milestoneY = 280;
-    context.fillStyle = "#6252ad";
-    context.font = "850 18px system-ui, sans-serif";
-    context.fillText("WEEKLY MILESTONES · 本周坐标", outer, milestoneY - 24);
-    if (milestones.length) {
-      const cardWidth = (width - outer * 2 - 22) / 2;
-      milestones.forEach((item, index) => {
-        const x = outer + index % 2 * (cardWidth + 22);
-        const y = milestoneY + Math.floor(index / 2) * 132;
-        drawCanvasMilestone(context, item, x, y, cardWidth, 112, week, canvasImageCache, index);
-      });
-    } else {
-      context.fillStyle = "#918a98";
-      context.font = "600 19px system-ui, sans-serif";
-      context.fillText("这个空间暂时没有关联的倒计时或进度目标。", outer, milestoneY + 45);
-    }
-  }
-
-  function drawWeeklySummaryDays(context, week, daysY, width, outer) {
-    context.fillStyle = "#6252ad";
-    context.font = "850 18px system-ui, sans-serif";
-    context.fillText("SEVEN DAYS · 一周足迹", outer, daysY - 24);
-    const dayGap = 13;
-    const dayWidth = (width - outer * 2 - dayGap * 6) / 7;
-    week.days.forEach((day, index) => {
-      const x = outer + index * (dayWidth + dayGap);
-      const tone = DAY_STATUS_PALETTE[day.status]?.fill || "#8a838d";
-      drawCanvasCard(context, x, daysY, dayWidth, 286, "rgba(255,255,255,.94)", colorMixForCanvas(tone, .18));
-      context.fillStyle = tone;
-      drawCanvasRoundedRectPath(context, x, daysY, dayWidth, 7, 4);
-      context.fill();
-      context.fillStyle = "#383346";
-      context.font = "900 28px system-ui, sans-serif";
-      context.fillText(`D${day.dayNumber}`, x + 18, daysY + 46);
-      context.fillStyle = tone;
-      context.font = "850 14px system-ui, sans-serif";
-      context.fillText(formatCompactDate(day.date), x + 18, daysY + 72);
-      const sticker = canvasImageCache.get(day.sticker);
-      if (sticker?.complete && sticker.naturalWidth) drawCanvasSticker(context, sticker, x + dayWidth - 64, daysY + 18, 48);
-      if (day.status) drawCanvasPill(context, x + 16, daysY + 88, Math.min(92, dayWidth - 32), 30, day.status, colorMixForCanvas(tone, .1), tone);
-      const entries = getCanvasDayEntries(day);
-      const done = entries.filter((entry) => entry.state === "done").length;
-      const changed = entries.filter((entry) => entry.state === "changed").length;
-      const missed = entries.filter((entry) => entry.state === "missed").length;
-      context.fillStyle = "#4a4553";
-      context.font = "780 15px system-ui, sans-serif";
-      drawCanvasText(context, day.title || "生活日", x + 18, daysY + 148, dayWidth - 36, 20, 2);
-      context.fillStyle = "#817b88";
-      context.font = "600 13px system-ui, sans-serif";
-      context.fillText(`${done} 完成 · ${changed} 调整 · ${missed} 未完成`, x + 18, daysY + 180);
-      if (day.note) {
-        context.fillStyle = "#817b88";
-        context.font = "600 12px system-ui, sans-serif";
-        drawCanvasText(context, day.note, x + 18, daysY + 204, dayWidth - 36, 16, 2);
-      }
-      drawCanvasProgress(context, x + 18, daysY + 244, dayWidth - 36, entries.length ? (done + changed) / entries.length * 100 : 0, tone);
-    });
-  }
-
-  function drawCanvasSoulMark(context, x, y, size) {
-    context.save();
-    context.translate(x, y);
-    context.scale(size / 64, size / 64);
-    const background = context.createLinearGradient(5, 4, 59, 61);
-    background.addColorStop(0, "#7665d7");
-    background.addColorStop(.58, "#9a7ce5");
-    background.addColorStop(1, "#e89bb4");
-    context.fillStyle = background;
-    drawCanvasRoundedRectPath(context, 3, 3, 58, 58, 18);
-    context.fill();
-    context.fillStyle = "#fff4b3";
-    context.beginPath();
-    context.moveTo(49, 12);
-    context.lineTo(50.5, 15.5);
-    context.lineTo(54, 17);
-    context.lineTo(50.5, 18.5);
-    context.lineTo(49, 22);
-    context.lineTo(47.5, 18.5);
-    context.lineTo(44, 17);
-    context.lineTo(47.5, 15.5);
-    context.closePath();
-    context.fill();
-    const ghost = context.createLinearGradient(22, 15, 42, 51);
-    ghost.addColorStop(0, "#fffefc");
-    ghost.addColorStop(1, "#f3eaff");
-    context.fillStyle = ghost;
-    context.beginPath();
-    context.moveTo(18, 47);
-    context.lineTo(18, 31);
-    context.bezierCurveTo(18, 21, 24, 14, 32, 14);
-    context.bezierCurveTo(40, 14, 46, 21, 46, 31);
-    context.lineTo(46, 47);
-    context.bezierCurveTo(46, 50, 43, 51, 41, 49);
-    context.lineTo(39, 47);
-    context.lineTo(35.5, 50);
-    context.bezierCurveTo(34, 51.3, 32.7, 50.7, 32, 49.7);
-    context.lineTo(30, 47);
-    context.lineTo(27, 50);
-    context.bezierCurveTo(25.4, 51.2, 24, 50.5, 23.3, 49.5);
-    context.lineTo(22, 48);
-    context.bezierCurveTo(20.3, 50, 18, 49, 18, 47);
-    context.fill();
-    context.fillStyle = "#403854";
-    context.beginPath();
-    context.arc(27.2, 31, 2.8, 0, Math.PI * 2);
-    context.arc(36.8, 31, 2.8, 0, Math.PI * 2);
-    context.fill();
-    context.strokeStyle = "#6f6188";
-    context.lineWidth = 1.5;
-    context.lineCap = "round";
-    context.beginPath();
-    context.moveTo(29.5, 37.2);
-    context.quadraticCurveTo(32, 39.2, 34.5, 37.2);
-    context.stroke();
-    context.fillStyle = "rgba(243,164,184,.72)";
-    context.beginPath();
-    context.arc(23.2, 36, 2.2, 0, Math.PI * 2);
-    context.arc(40.8, 36, 2.2, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
-  }
-
-  function drawCanvasAppIcon(context, x, y, size) {
-    const image = canvasImageCache.get("icons/icon-v3.png");
-    if (!image?.complete || !image.naturalWidth) {
-      drawCanvasSoulMark(context, x, y, size);
-      return;
-    }
-    context.save();
-    drawCanvasRoundedRectPath(context, x, y, size, size, size * .24);
-    context.clip();
-    context.drawImage(image, x, y, size, size);
-    context.restore();
-  }
-
-  function colorMixForCanvas(hex, opacity) {
-    const match = String(hex).match(/^#([0-9a-f]{6})$/i);
-    if (!match) return `rgba(143,122,234,${opacity})`;
-    const value = Number.parseInt(match[1], 16);
-    return `rgba(${value >> 16},${value >> 8 & 255},${value & 255},${opacity})`;
-  }
-
-  function drawCanvasCard(context, x, y, width, height, fill, stroke) {
-    drawCanvasRoundedRectPath(context, x, y, width, height, 22);
-    context.fillStyle = fill;
-    context.fill();
-    context.strokeStyle = stroke;
-    context.lineWidth = 1;
-    context.stroke();
-  }
-
-  function drawCanvasPill(context, x, y, width, height, text, fill, color) {
-    drawCanvasRoundedRectPath(context, x, y, width, height, height / 2);
-    context.fillStyle = fill;
-    context.fill();
-    context.fillStyle = color;
-    context.font = "700 16px system-ui, sans-serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(text, x + width / 2, y + height / 2);
-    context.textAlign = "left";
-    context.textBaseline = "alphabetic";
-  }
-
-  function drawCanvasProgress(context, x, y, width, percent, color) {
-    context.fillStyle = "#eeebf2";
-    drawCanvasRoundedRectPath(context, x, y, width, 10, 5);
-    context.fill();
-    context.fillStyle = color;
-    drawCanvasRoundedRectPath(context, x, y, Math.max(4, width * percent / 100), 10, 5);
-    context.fill();
-  }
-
-  function drawCanvasSticker(context, image, x, y, size) {
-    context.save();
-    context.fillStyle = "#fff";
-    drawCanvasRoundedRectPath(context, x, y, size, size, 18);
-    context.fill();
-    context.clip();
-    context.drawImage(image, x, y, size, size);
-    context.restore();
-  }
-
-  function drawCanvasRoundedRectPath(context, x, y, width, height, radius) {
-    const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
-    context.beginPath();
-    context.moveTo(x + safeRadius, y);
-    context.lineTo(x + width - safeRadius, y);
-    context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
-    context.lineTo(x + width, y + height - safeRadius);
-    context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
-    context.lineTo(x + safeRadius, y + height);
-    context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
-    context.lineTo(x, y + safeRadius);
-    context.quadraticCurveTo(x, y, x + safeRadius, y);
-    context.closePath();
-  }
-
-  function drawCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines) {
-    const characters = [...String(text || "")];
-    const lines = [];
-    let line = "";
-    characters.forEach((character) => {
-      const candidate = line + character;
-      if (line && context.measureText(candidate).width > maxWidth) {
-        lines.push(line);
-        line = character;
-      } else {
-        line = candidate;
-      }
-    });
-    if (line) lines.push(line);
-    const visible = lines.slice(0, maxLines);
-    if (lines.length > maxLines && visible.length) {
-      let last = visible[visible.length - 1];
-      while (last && context.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
-      visible[visible.length - 1] = `${last}…`;
-    }
-    visible.forEach((value, index) => context.fillText(value, x, y + index * lineHeight));
-  }
 
   function openChartDialog(chartId = null) {
     if (!getSpace()) {
@@ -2904,7 +2472,9 @@
          </div>
          <button class="secondary-button" type="button" data-chart-id="${chart.id}" data-edit-selected-node="${selectedNode.id}">设置当前节点</button>`
       : "";
-    const chartBody = chart.nodes.length ? renderChartSvg(chart) : renderEmptyChart(chart);
+    const chartBody = chart.nodes.length
+      ? renderChartSvg(chart, { ...getChartZoomState(chart), selectedNodeId: selectedNode?.id || "" })
+      : renderEmptyChart(chart);
 
     return `
       <article class="chart-card" style="--chart-color:${primaryColor}">
@@ -2952,230 +2522,6 @@
     }
   }
 
-  function createChartCanvas(chart) {
-    const scale = 2;
-    const width = 1920;
-    const height = 1080;
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const context = canvas.getContext("2d");
-    context.scale(scale, scale);
-    const template = getSpaceTemplate(chart.spaceId);
-    drawChartCanvasHeader(context, chart, template, width, height);
-
-    const plot = { left: 134, top: 304, right: 106, bottom: 150 };
-    const plotWidth = width - plot.left - plot.right;
-    const plotHeight = height - plot.top - plot.bottom;
-    const xAt = (index) => chart.nodes.length === 1
-      ? plot.left + plotWidth / 2
-      : plot.left + index / (chart.nodes.length - 1) * plotWidth;
-    const seriesData = getChartSeriesGeometry(chart, {
-      xAt,
-      yAt: (value, min, max) => plot.top + (max - value) / (max - min) * plotHeight,
-      anchorCustomMax: false,
-    });
-
-    drawChartCanvasGrid(context, seriesData[0], plot, plotHeight, width);
-    drawChartCanvasSeries(context, seriesData, plot, plotHeight);
-    drawChartCanvasNodes(context, chart, seriesData[0], { xAt, plotWidth, height });
-    return canvas;
-  }
-
-  function drawChartCanvasHeader(context, chart, template, width, height) {
-    const primaryColor = chart.series[0]?.color || "#8f7aea";
-    const background = context.createLinearGradient(0, 0, width, height);
-    background.addColorStop(0, "#fffdfb");
-    background.addColorStop(.52, "#faf8ff");
-    background.addColorStop(1, colorMixForCanvas(primaryColor, .08));
-    context.fillStyle = background;
-    context.fillRect(0, 0, width, height);
-    context.fillStyle = colorMixForCanvas(primaryColor, .07);
-    context.beginPath();
-    context.arc(width - 80, 60, 350, 0, Math.PI * 2);
-    context.fill();
-    drawCanvasAppIcon(context, width - 145, 64, 76);
-    context.fillStyle = primaryColor;
-    context.font = "850 22px system-ui, sans-serif";
-    context.fillText(`ASOUL ${template.id.toUpperCase()} CURVE`, 86, 88);
-    context.fillStyle = "#2f2a40";
-    context.font = "900 54px system-ui, sans-serif";
-    context.fillText(chart.title, 86, 154);
-    context.fillStyle = "#817a89";
-    context.font = "650 20px system-ui, sans-serif";
-    context.fillText(`${chart.nodes.length} 个节点 · ${chart.xLabel} · 生成于 ${formatFriendlyDate(todayIso())}`, 88, 194);
-    let legendX = 88;
-    chart.series.forEach((series) => {
-      context.fillStyle = series.color;
-      context.beginPath();
-      context.arc(legendX + 7, 232, 7, 0, Math.PI * 2);
-      context.fill();
-      context.fillStyle = "#554f5d";
-      context.font = "750 17px system-ui, sans-serif";
-      context.fillText(series.name, legendX + 23, 238);
-      legendX += 44 + context.measureText(series.name).width;
-    });
-  }
-
-  function drawChartCanvasGrid(context, primarySeries, plot, plotHeight, width) {
-    for (let index = 0; index < 5; index += 1) {
-      const ratio = index / 4;
-      const y = plot.top + ratio * plotHeight;
-      context.strokeStyle = "rgba(87,102,144,.11)";
-      context.lineWidth = 2;
-      context.beginPath();
-      context.moveTo(plot.left, y);
-      context.lineTo(width - plot.right, y);
-      context.stroke();
-      context.fillStyle = "#858091";
-      context.font = "650 16px system-ui, sans-serif";
-      context.textAlign = "right";
-      context.fillText(formatSeriesValue(primarySeries, primarySeries.max - ratio * (primarySeries.max - primarySeries.min)), plot.left - 18, y + 6);
-    }
-    context.textAlign = "left";
-  }
-
-  function drawChartCanvasSeries(context, seriesData, plot, plotHeight) {
-    seriesData.forEach((series, seriesIndex) => {
-      if (!series.points.length) return;
-      if (seriesIndex === 0 && series.points.length > 1) {
-        const gradient = context.createLinearGradient(0, plot.top, 0, plot.top + plotHeight);
-        gradient.addColorStop(0, colorMixForCanvas(series.color, .18));
-        gradient.addColorStop(1, colorMixForCanvas(series.color, 0));
-        context.beginPath();
-        drawCanvasSmoothPath(context, series.points);
-        context.lineTo(series.points.at(-1).x, plot.top + plotHeight);
-        context.lineTo(series.points[0].x, plot.top + plotHeight);
-        context.closePath();
-        context.fillStyle = gradient;
-        context.fill();
-      }
-      context.beginPath();
-      drawCanvasSmoothPath(context, series.points);
-      context.strokeStyle = series.color;
-      context.lineWidth = seriesIndex === 0 ? 7.2 : 5.4;
-      context.lineCap = "round";
-      context.lineJoin = "round";
-      context.stroke();
-      series.points.forEach((point) => {
-        context.fillStyle = "#fff";
-        context.beginPath();
-        context.arc(point.x, point.y, 13, 0, Math.PI * 2);
-        context.fill();
-        context.strokeStyle = series.color;
-        context.lineWidth = 6;
-        context.stroke();
-      });
-    });
-  }
-
-  function drawChartCanvasNodes(context, chart, primarySeries, { xAt, plotWidth, height }) {
-    const labelEvery = getLabelEvery(chart.nodes.length, 9);
-    chart.nodes.forEach((node, index) => {
-      const x = xAt(index);
-      if (index === 0 || index === chart.nodes.length - 1 || index % labelEvery === 0) {
-        context.fillStyle = "#777182";
-        context.font = "700 17px system-ui, sans-serif";
-        context.textAlign = "center";
-        context.fillText(formatChartAxisLabel(node.x, index === 0), x, height - 102);
-      }
-      const sticker = Object.values(node.stickers || {}).map(safeSticker).find(Boolean) || safeSticker(node.sticker);
-      const image = canvasImageCache.get(sticker);
-      if (image?.complete && image.naturalWidth) {
-        const spacing = plotWidth / Math.max(1, chart.nodes.length - 1);
-        const size = Math.max(28, Math.min(58, spacing * .42));
-        const primaryPoint = primarySeries.points.find((point) => point.node.id === node.id);
-        if (primaryPoint) drawCanvasSticker(context, image, primaryPoint.x - size / 2, primaryPoint.y - size - 26, size);
-      }
-    });
-  }
-
-  function drawCanvasSmoothPath(context, points) {
-    if (!points.length) return;
-    context.moveTo(points[0].x, points[0].y);
-    for (let index = 0; index < points.length - 1; index += 1) {
-      const current = points[index];
-      const next = points[index + 1];
-      const offset = (next.x - current.x) * .38;
-      context.bezierCurveTo(current.x + offset, current.y, next.x - offset, next.y, next.x, next.y);
-    }
-  }
-
-  function renderEmptyChart(chart) {
-    const names = chart.series.map((item) => item.name).join("、");
-    return `
-      <div class="chart-empty">
-        <div class="chart-empty-inner">
-          <div class="chart-empty-line" aria-hidden="true"></div>
-          <h4>这张图还没有节点</h4>
-        <p>添加第一个“${escapeHtml(chart.xLabel)} / ${escapeHtml(names)}”记录后，曲线就会从这里开始生长。</p>
-          <button class="secondary-button" type="button" data-add-node="${chart.id}">
-            <span aria-hidden="true">＋</span> 添加第一个节点
-          </button>
-        </div>
-      </div>`;
-  }
-
-  function renderChartSvg(chart) {
-    const { zoom, levels: zoomLevels } = getChartZoomState(chart);
-    const minimumZoom = zoomLevels[0];
-    const maximumZoom = zoomLevels.at(-1);
-    const canZoom = zoomLevels.length > 1;
-    const isMinimumZoom = zoom <= minimumZoom + 0.001;
-    const isMaximumZoom = zoom >= maximumZoom - 0.001;
-    const layout = createChartSvgLayout(chart, zoom);
-    const { compactChart, visualScale, nodeVisualScale, width, height, margin, axisFontSize, plotWidth, plotHeight, xAt } = layout;
-    const seriesData = getChartSeriesGeometry(chart, {
-      xAt,
-      yAt: (value, min, max) => margin.top + ((max - value) / (max - min)) * plotHeight,
-    });
-
-    const baseline = margin.top + plotHeight;
-    const primary = seriesData[0];
-    const primaryPath = buildSmoothPath(primary.points);
-    const areaPath = primary.points.length > 1
-      ? `${primaryPath} L ${primary.points.at(-1).px.toFixed(2)} ${baseline} L ${primary.points[0].px.toFixed(2)} ${baseline} Z`
-      : "";
-    const gradientId = `gradient-${chart.id}-${primary.id}`;
-    const tickCount = 5;
-    const grid = renderChartSvgGrid(chart, seriesData, layout, tickCount);
-
-    const nodeSpacing = plotWidth / Math.max(chart.nodes.length - 1, 1);
-    const labelEvery = getLabelEvery(chart.nodes.length, Math.max(2, Math.floor(plotWidth / 96)));
-    const xLabels = renderChartSvgXLabels(chart, layout, labelEvery);
-    const lineMarkup = renderChartSvgLines(seriesData, compactChart, visualScale);
-    const pointMarkup = renderChartSvgPoints(chart, seriesData, layout, { compactChart, labelEvery, nodeSpacing });
-    const { fixedYAxis, fixedYAxisUnits, fixedSeriesLegend } = renderChartFixedAxes(seriesData, layout, tickCount);
-
-    return `
-      <div class="chart-zoom-bar" aria-label="曲线图缩放">
-        <button class="chart-zoom-min" type="button" data-zoom-chart="${chart.id}" data-zoom-action="min" aria-label="回到最小全局视图"${!canZoom || isMinimumZoom ? " disabled" : ""}>最小</button>
-        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="out"${!canZoom || isMinimumZoom ? " disabled" : ""}>− 缩小</button>
-        <strong>${formatChartZoom(zoom)}×</strong>
-        <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || isMaximumZoom ? " disabled" : ""}>＋ 放大</button>
-        <button class="chart-zoom-max" type="button" data-zoom-chart="${chart.id}" data-zoom-action="max" aria-label="放大到每个记录日期都能显示"${!canZoom || isMaximumZoom ? " disabled" : ""}>最大</button>
-      </div>
-      <div class="chart-plot-shell">
-      <div class="chart-y-axis-fixed" aria-hidden="true"><em class="chart-y-axis-unit">${fixedYAxisUnits}</em>${fixedYAxis}</div>
-      <div class="chart-series-fixed" aria-hidden="true">${fixedSeriesLegend}</div>
-      <div class="chart-x-axis-fixed" aria-hidden="true">${escapeHtml(chart.xLabel)}</div>
-      <div class="chart-scroll" data-chart-scroll="${chart.id}" tabindex="0" aria-label="可横向滑动的${escapeAttr(chart.title)}曲线图">
-      <svg class="chart-svg" style="width:${(zoom * 100).toFixed(2)}%;min-width:${(zoom * 100).toFixed(2)}%;max-width:none;aspect-ratio:${width}/${height};--chart-visual-scale:${visualScale}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(chart.title)}曲线图">
-        <defs>
-          <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${primary.color}" stop-opacity="0.24" />
-            <stop offset="100%" stop-color="${primary.color}" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-        ${grid}
-        ${areaPath ? `<path class="chart-area" d="${areaPath}" fill="url(#${gradientId})" />` : ""}
-        ${lineMarkup}
-        ${xLabels}
-        ${pointMarkup}
-      </svg>
-      </div>
-      </div>`;
-  }
 
   function getChartZoomState(chart) {
     const baseLayout = createChartSvgLayout(chart, 1);
@@ -3191,183 +2537,6 @@
     return { zoom, levels };
   }
 
-  function formatChartZoom(zoom) {
-    return Number.isInteger(zoom) ? String(zoom) : zoom.toFixed(1).replace(/\.0$/, "");
-  }
-
-  function createChartSvgLayout(chart, zoom) {
-    const compactChart = window.matchMedia("(max-width: 899.98px)").matches;
-    const phoneChart = window.matchMedia("(max-width: 520px)").matches;
-    const visualScale = 1;
-    const nodeVisualScale = phoneChart ? 1 : 0.92;
-    const baseWidth = phoneChart
-      ? 360
-      : compactChart
-        ? Math.max(560, Math.min(820, window.innerWidth - 56))
-        : 920;
-    const width = Math.round(baseWidth * zoom);
-    const height = phoneChart ? 360 : 370;
-    const margin = {
-      top: Math.round((compactChart ? 54 : 58) * visualScale),
-      right: Math.round((compactChart ? 28 : 34) * visualScale),
-      bottom: Math.round((compactChart ? 51 : 62) * visualScale),
-      left: Math.round((compactChart ? 84 : chart.series.length > 1 ? 112 : 98) * visualScale),
-    };
-    const axisFontSize = (phoneChart ? 10 : compactChart ? 12 : 11) * visualScale;
-    const plotWidth = width - margin.left - margin.right;
-    const plotHeight = height - margin.top - margin.bottom;
-    const xAt = (index) => chart.nodes.length === 1
-      ? margin.left + plotWidth / 2
-      : margin.left + (index / (chart.nodes.length - 1)) * plotWidth;
-    return { compactChart, phoneChart, visualScale, nodeVisualScale, zoom, width, height, margin, axisFontSize, plotWidth, plotHeight, xAt };
-  }
-
-  function renderChartSvgGrid(chart, seriesData, layout, tickCount) {
-    const { margin, plotHeight, width, axisFontSize, visualScale } = layout;
-    const primary = seriesData[0];
-    return Array.from({ length: tickCount }, (_, index) => {
-      const ratio = index / (tickCount - 1);
-      const y = margin.top + ratio * plotHeight;
-      const value = primary.max - ratio * (primary.max - primary.min);
-      const scaleLabels = seriesData
-        .filter((item) => item.hasData)
-        .map((item, seriesIndex) => `${seriesIndex ? '<tspan class="chart-axis-separator"> / </tspan>' : ""}<tspan style="fill:${item.color}">${escapeXml(formatSeriesValue(item, item.max - ratio * (item.max - item.min)))}</tspan>`)
-        .join("");
-      return `
-        <line class="chart-grid-line" x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" />
-        <text class="chart-axis-text chart-axis-text--y${chart.series.length > 1 ? " chart-axis-text--multi" : ""}" style="font-size:${axisFontSize.toFixed(2)}px" x="${margin.left - 9 * visualScale}" y="${y + 4 * visualScale}" text-anchor="end">${chart.series.length === 1 ? escapeXml(formatNumber(value)) : scaleLabels}</text>`;
-    }).join("");
-  }
-
-  function renderChartSvgXLabels(chart, layout, labelEvery) {
-    const { axisFontSize, xAt, height, visualScale } = layout;
-    const parsedNodeDates = chart.nodes.map((node) => parseChartDate(node.x));
-    const candidates = chart.nodes.map((node, index) => {
-      const date = parsedNodeDates[index];
-      const previousDate = parsedNodeDates[index - 1];
-      const yearChanged = Boolean(date?.year && previousDate?.year && date.year !== previousDate.year);
-      const isEdge = index === 0 || index === chart.nodes.length - 1;
-      if (!isEdge && index % labelEvery !== 0 && !yearChanged) return null;
-      return { index, node, x: xAt(index), yearChanged, isEdge };
-    }).filter(Boolean);
-    const minimumLabelGap = Math.max(72, 88 * visualScale);
-    const visible = [];
-    candidates.forEach((candidate) => {
-      const previous = visible.at(-1);
-      if (!previous) {
-        visible.push(candidate);
-        return;
-      }
-      if (candidate.index === chart.nodes.length - 1) {
-        if (candidate.x - previous.x < minimumLabelGap && previous.index !== 0) visible.pop();
-        visible.push(candidate);
-        return;
-      }
-      if (candidate.x - previous.x >= minimumLabelGap) {
-        visible.push(candidate);
-        return;
-      }
-      if (candidate.yearChanged && !previous.yearChanged && previous.index !== 0) {
-        visible.pop();
-        const nextPrevious = visible.at(-1);
-        if (!nextPrevious || candidate.x - nextPrevious.x >= minimumLabelGap) visible.push(candidate);
-      }
-    });
-    return visible.map(({ index, node, x, yearChanged }) =>
-      `<text class="chart-axis-text" style="font-size:${axisFontSize.toFixed(2)}px" x="${x}" y="${height - 21 * visualScale}" text-anchor="middle">${escapeXml(formatChartAxisLabel(node.x, index === 0 || yearChanged))}</text>`
-    ).join("");
-  }
-
-  function renderChartSvgLines(seriesData, compactChart, visualScale) {
-    return seriesData.map((item) => {
-      const path = buildSmoothPath(item.points);
-      const lineWidth = (compactChart ? 2.5 : 2.7) * visualScale;
-      return `<path class="chart-line" style="--chart-color:${item.color};stroke-width:${lineWidth.toFixed(2)}" d="${path}" />`;
-    }).join("");
-  }
-
-  function renderChartSvgPoints(chart, seriesData, layout, { compactChart, labelEvery, nodeSpacing }) {
-    const { phoneChart, nodeVisualScale, visualScale, zoom, plotWidth, plotHeight, margin, xAt } = layout;
-    const targetVisibleMarkers = (phoneChart ? 6 : compactChart ? 10 : 12) * zoom;
-    const denseMarkerEvery = Math.max(1, Math.ceil((chart.nodes.length - 1) / targetVisibleMarkers));
-    const denseSpacingThreshold = phoneChart ? 44 : compactChart ? 32 : chart.series.length > 1 ? 44 : 28;
-    const declutterDensePoints = chart.nodes.length > 8 && nodeSpacing < denseSpacingThreshold * visualScale;
-    return chart.nodes.map((node, nodeIndex) => {
-      const pointValues = seriesData.map((item) => ({
-        series: item,
-        point: item.pointByNode.get(node.id),
-      })).filter((item) => item.point);
-      const label = `${node.x}：${pointValues.map(({ series, point }) => `${series.name} ${formatSeriesValue(series, point.value)}`).join("；")}`;
-      const isSelected = selectedNodeByChart.get(chart.id) === node.id;
-      const isEdgeNode = nodeIndex === 0 || nodeIndex === chart.nodes.length - 1;
-      const showPointMarker = isSelected || isEdgeNode || (declutterDensePoints
-        ? nodeIndex % denseMarkerEvery === 0
-        : nodeSpacing >= 14 || nodeIndex % labelEvery === 0);
-      const availableStickerPointValues = compactChart && pointValues.length > 1 && chart.nodes.length > 8 && declutterDensePoints
-        ? pointValues.filter(({ series }, pointIndex) => safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""))).slice(0, 1)
-        : pointValues;
-      const stickerPointValues = !declutterDensePoints || showPointMarker ? availableStickerPointValues : [];
-      const hasMultipleStickers = stickerPointValues.length > 1;
-      const densityScale = chart.nodes.length >= 12 ? .9 : chart.nodes.length >= 9 ? .96 : 1;
-      const desiredStickerSize = 44 * nodeVisualScale * densityScale;
-      const minimumStickerSize = 22 * nodeVisualScale;
-      const visibleNodeSpacing = nodeSpacing * (declutterDensePoints ? denseMarkerEvery : 1);
-      const stickerGap = (hasMultipleStickers ? 2 : 4) * visualScale;
-      const spacingCap = hasMultipleStickers
-        ? Math.max(minimumStickerSize, (visibleNodeSpacing - stickerGap * (stickerPointValues.length - 1)) / stickerPointValues.length)
-        : Math.max(minimumStickerSize, visibleNodeSpacing * .84);
-      const stickerSize = Math.max(minimumStickerSize, Math.min(desiredStickerSize, spacingCap));
-      const stickerMarkup = stickerPointValues.map(({ series, point }, pointIndex) => {
-        const sticker = safeSticker(node.stickers?.[series.id] ?? (pointIndex === 0 ? node.sticker : ""));
-        if (!sticker) return "";
-        const centerX = point.px + (pointIndex - (stickerPointValues.length - 1) / 2) * (stickerSize + stickerGap);
-        const centerY = point.py - stickerSize / 2 - 12 * visualScale;
-        const clipRadius = stickerSize / 2;
-        const clipId = `clip-${chart.id}-${node.id}-${series.id}`;
-        return `<circle class="point-sticker-bg" cx="${centerX}" cy="${centerY}" r="${clipRadius + 3}" />
-          <clipPath id="${clipId}"><circle cx="${centerX}" cy="${centerY}" r="${clipRadius}" /></clipPath>
-          <image href="${escapeAttr(assetUrl(sticker))}" x="${centerX - clipRadius}" y="${centerY - clipRadius}" width="${stickerSize}" height="${stickerSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})" />`;
-      }).join("");
-      const cores = showPointMarker ? pointValues.map(({ series, point }) => `
-        <circle class="point-halo" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(10 * nodeVisualScale).toFixed(2)}" />
-        <circle class="point-core" style="--chart-color:${series.color}" cx="${point.px}" cy="${point.py}" r="${(6 * nodeVisualScale).toFixed(2)}" />
-      `).join("") : "";
-      const hitWidth = Math.max(10 * visualScale, Math.min(42 * visualScale, plotWidth / Math.max(chart.nodes.length, 1)));
-      return `
-        <g class="chart-point${isSelected ? " is-selected" : ""}" role="button" tabindex="0" aria-pressed="${isSelected}" aria-label="${escapeAttr(label)}，点击查看" data-chart-id="${chart.id}" data-node-id="${node.id}">
-          <title>${escapeXml(label)}，点击查看当天记录</title>
-          <rect class="node-hit-area" x="${xAt(nodeIndex) - hitWidth / 2}" y="${margin.top}" width="${hitWidth}" height="${plotHeight}" />
-          ${stickerMarkup}
-          ${cores}
-        </g>`;
-    }).join("");
-  }
-
-  function renderChartFixedAxes(seriesData, layout, tickCount) {
-    const { margin, plotHeight, height } = layout;
-    const fixedYAxis = Array.from({ length: tickCount }, (_, index) => {
-      const ratio = index / (tickCount - 1);
-      const top = ((margin.top + ratio * plotHeight) / height) * 100;
-      const labels = seriesData
-        .filter((item) => item.hasData)
-        .map((item) => `<b style="color:${item.color}">${escapeHtml(formatSeriesValue(item, item.max - ratio * (item.max - item.min)))}</b>`)
-        .join("<i>/</i>");
-      return `<span style="top:${top.toFixed(3)}%">${labels}</span>`;
-    }).join("");
-    const fixedYAxisUnits = seriesData
-      .filter((item) => item.hasData)
-      .map((item) => {
-        const parts = String(item.name || "").split("/");
-        const unit = item.unit || (parts.length > 1 ? parts.at(-1).trim() : item.name);
-        return `<b style="color:${item.color}">${escapeHtml(unit)}</b>`;
-      })
-      .join("<i>·</i>");
-    const fixedSeriesLegend = seriesData
-      .filter((item) => item.hasData)
-      .map((item) => `<b style="color:${item.color}"><i></i>${escapeHtml(item.name)}</b>`)
-      .join("");
-    return { fixedYAxis, fixedYAxisUnits, fixedSeriesLegend };
-  }
 
   function openNodeDialog(chartId, nodeId = null) {
     const chart = findChart(chartId);

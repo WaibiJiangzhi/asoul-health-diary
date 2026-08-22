@@ -26,7 +26,6 @@
 .space-section-actions{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 15px; }
 .space-section-actions > span{ color: #91899a; font-size: 12px; font-weight: 800; }
 .space-section-actions button{ min-height: 42px; padding: 0 14px; font-size: 13px; font-weight: 800; }
-.space-section-actions #deleteSpaceButton{ color: #ae5a68; border-color: rgba(190, 84, 103, .2); background: #fff6f7; font-size: 14px; }
 .space-switcher{
   display: grid;
   gap: 11px;
@@ -937,7 +936,7 @@
 .week-action-menu>summary::-webkit-details-marker{ display:none; }
 .week-action-menu[open]>div{ position:fixed; z-index:120; right:14px; bottom:calc(88px + env(safe-area-inset-bottom)); left:14px; display:grid; padding:12px; grid-template-columns:1fr 1fr; gap:8px; border:1px solid var(--soul-line); border-radius:22px; background:rgba(255,254,252,.98); box-shadow:0 20px 70px rgba(46,36,54,.24); }
 .week-action-menu[open]>div button{ min-width:0; min-height:48px; padding:0 10px; border:1px solid rgba(125,107,210,.14); border-radius:14px; color:#6555aa; background:#f7f4ff; font-size:11px; font-weight:850; }
-.week-action-menu[open]>div .is-danger{ color:#b65e6d; border-color:rgba(220,121,111,.18); background:#fff4f3; }
+.week-action-menu[open]>div .is-danger{ color:var(--color-danger); border-color:rgba(207,69,91,.14); background:#fff7f8; }
 .space-section-actions .section-add-button,
 .space-section-actions .section-action-menu>summary{ color:#6e61a8; }
 .space-section{ background:linear-gradient(155deg,rgba(248,252,251,.97),rgba(255,251,253,.95)); }
@@ -1722,6 +1721,11 @@ body.is-mobile-app .week-item-row{
     box-shadow:0 18px 42px rgba(57,45,67,.16);
   }
   .week-action-menu[open] > div > button{ min-height:40px; border:1px solid rgba(87,102,144,.1); border-radius:11px; background:#faf9fc; font:inherit; font-size:11px; font-weight:850; }
+  .week-action-menu[open] > div > .is-danger{
+    color:var(--color-danger);
+    border-color:rgba(207,69,91,.14);
+    background:#fff7f8;
+  }
 
   .week-detail{ margin-top:14px; }
   .week-board{ border:0; background:transparent; box-shadow:none; }

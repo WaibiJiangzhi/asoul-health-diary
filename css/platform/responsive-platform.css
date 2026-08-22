@@ -92,6 +92,11 @@ footer{
     font-size:11px;
     font-weight:850;
   }
+  .section-action-menu[open] > div > .danger-button{
+    color:var(--color-danger);
+    border-color:rgba(207,69,91,.14);
+    background:#fff7f8;
+  }
   .item-order-actions{ display:grid; padding:7px 0 0; grid-template-columns:1fr 1fr; border-top:1px dashed rgba(87,102,144,.12); border-left:0; }
 
   /* Desktop section controls share one compact geometry across every page. */

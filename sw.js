@@ -1,4 +1,4 @@
-const VERSION = "asoul-life-v120-0925";
+const VERSION = "asoul-life-v130-0935";
 const SHELL_CACHE = `${VERSION}-shell`;
 const IMAGE_CACHE = `${VERSION}-images`;
 const SHELL = [
@@ -8,34 +8,37 @@ const SHELL = [
   "./css/legacy/styles.css?v=0915",
   "./css/legacy/weekly-polish.css?v=0863",
   "./css/legacy/complete-polish.css?v=0915",
-  "./css/platform/mobile-app.css?v=0925",
-  "./css/platform/responsive-platform.css?v=0925",
-  "./css/pages/home.css?v=0925",
-  "./css/pages/goals.css?v=0900",
-  "./css/pages/schedule.css?v=0924",
-  "./css/pages/charts.css?v=0924",
+  "./css/platform/mobile-app.css?v=0932",
+  "./css/platform/responsive-platform.css?v=0932",
+  "./css/pages/home.css?v=0926",
+  "./css/pages/goals.css?v=0932",
+  "./css/pages/schedule.css?v=0934",
+  "./css/pages/charts.css?v=0932",
   "./css/pages/personal.css?v=0925",
   "./js/core/data-model.js?v=0905",
   "./js/core/app-utils.js?v=0865",
   "./js/core/backup-codec.js?v=0905",
   "./js/domain/milestone-domain.js?v=0868",
   "./js/domain/chart-domain.js?v=0922",
-  "./js/domain/schedule-domain.js?v=0868",
+  "./js/domain/schedule-domain.js?v=0932",
   "./js/ui/snap-carousel.js?v=0905",
-  "./js/content/stickers.js?v=0821",
+  "./js/ui/canvas-utils.js?v=0930",
+  "./js/ui/weekly-report-renderer.js?v=0930",
+  "./js/ui/chart-renderer.js?v=0931",
+  "./js/content/stickers.js?v=0929",
   "./js/content/冷笑话.js?v=0913",
-  "./js/core/app-config.js?v=0921",
-  "./js/core/state-normalizer.js?v=0905",
+  "./js/core/app-config.js?v=0929",
+  "./js/core/state-normalizer.js?v=0929",
   "./js/core/state-store.js?v=0905",
-  "./js/app.js?v=0925",
+  "./js/app.js?v=0932",
   "./manifest.webmanifest?v=0923",
   "./icons/icon-v3-192.png",
   "./icons/icon-v3-512.png",
   "./icons/icon-v3.png?v=0921",
-  "./图片/其他图片/Asoul-高清.png",
-  "./图片/其他图片/贝.png",
-  "./图片/其他图片/然.png",
-  "./图片/其他图片/乃.png"
+  "./images/其他图片/Asoul-高清.png",
+  "./images/其他图片/贝.png",
+  "./images/其他图片/然.png",
+  "./images/其他图片/乃.png"
 ];
 
 self.addEventListener("install", (event) => {
