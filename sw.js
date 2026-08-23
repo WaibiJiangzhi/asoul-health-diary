@@ -1,4 +1,4 @@
-const VERSION = "asoul-life-v135-0942";
+const VERSION = "asoul-life-v136-0943";
 const SHELL_CACHE = `${VERSION}-shell`;
 const IMAGE_CACHE = `${VERSION}-images`;
 const SHELL = [
@@ -30,7 +30,7 @@ const SHELL = [
   "./js/core/app-config.js?v=0929",
   "./js/core/state-normalizer.js?v=0929",
   "./js/core/state-store.js?v=0905",
-  "./js/app.js?v=0932",
+  "./js/app.js?v=0943",
   "./manifest.webmanifest?v=0923",
   "./icons/icon-v3-192.png",
   "./icons/icon-v3-512.png",
@@ -42,7 +42,11 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(
+    caches.open(SHELL_CACHE)
+      .then((cache) => cache.addAll(SHELL))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener("activate", (event) => {

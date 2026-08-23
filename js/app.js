@@ -1464,8 +1464,12 @@
       $("#shiftWeekButton").textContent = "日程顺延一天";
       $("#shiftWeekButton").removeAttribute("title");
     }
+    const hasAnyWeek = filteredWeeks.length > 0;
+    const hasSelectedWeek = Boolean(getAvailableAiPlanWeek(filteredWeeks, true));
+    $("#importWeekButton").disabled = !hasAnyWeek;
     $("#deleteSelectedPeriodButton").disabled = !getActiveSpacePeriods().some((period) => period.yearMonth === `${weekYearFilter}-${weekMonthFilter}`);
-    $("#importWeekButton").disabled = filteredWeeks.length === 0;
+    $("#copyPreviousWeekButton").disabled = !hasSelectedWeek;
+    $("#copyAiPromptButton").disabled = !hasSelectedWeek;
     weekEmpty.hidden = getActiveSpacePeriods().length > 0;
     weekDetail.hidden = getActiveSpacePeriods().length === 0 || filteredWeeks.length === 0;
 
@@ -1816,9 +1820,24 @@
     });
   }
 
+  function getAvailableAiPlanWeek(weekCandidates = null, autoPick = false) {
+    const candidates = Array.isArray(weekCandidates)
+      ? weekCandidates
+      : getActiveSpaceWeeks();
+    const current = candidates.find((item) => item.id === selectedWeekId && item.spaceId === activeSpaceId);
+    if (current) return current;
+    if (!autoPick) return null;
+    const picked = pickRelevantWeek(candidates);
+    if (picked?.spaceId === activeSpaceId) {
+      selectedWeekId = picked.id;
+      return picked;
+    }
+    return null;
+  }
+
   function openWeekImportDialog() {
-    const week = findWeek(selectedWeekId);
-    if (!week || week.spaceId !== activeSpaceId) {
+    const week = getAvailableAiPlanWeek(null, true);
+    if (!week) {
       showToast("请先选择要规划的周条");
       return;
     }
@@ -1885,9 +1904,13 @@
   }
 
   async function copyPreviousWeekContext() {
-    const week = findWeek(selectedWeekId);
-    if (!week) return;
+    const week = getAvailableAiPlanWeek(null, true);
+    if (!week) {
+      showToast("请先选择要规划的周条");
+      return;
+    }
     const space = getSpace();
+    if (!space) return;
     const contextText = [
       `这是我在“${space.name}”空间的真实情况，请先读完，稍后我会继续发送网页要求的计划模板。`,
     ];
@@ -1897,13 +1920,26 @@
       buildPreviousWeekSummary(week),
     );
     const context = contextText.join("\n");
-    await copyText(context);
+    const copied = await copyText(context);
+    if (!copied) {
+      showToast("复制失败，请先确认浏览器允许页面访问剪贴板");
+      return;
+    }
     showToast("上周情况已复制，请先粘贴给 AI");
   }
 
   async function copyAiPlanningPrompt() {
-    const prompt = buildAiPlanningPrompt(findWeek(selectedWeekId));
-    await copyText(prompt);
+    const week = getAvailableAiPlanWeek(null, true);
+    if (!week) {
+      showToast("请先选择要规划的周条");
+      return;
+    }
+    const prompt = buildAiPlanningPrompt(week);
+    const copied = await copyText(prompt);
+    if (!copied) {
+      showToast("复制失败，请先确认浏览器允许页面访问剪贴板");
+      return;
+    }
     showToast("计划模板已复制，请继续粘贴到同一个 AI 对话");
   }
 
@@ -1943,8 +1979,10 @@
   }
 
   async function copyText(value) {
+    if (typeof value !== "string") return false;
     try {
       await navigator.clipboard.writeText(value);
+      return true;
     } catch {
       const helper = document.createElement("textarea");
       helper.value = value;
@@ -1953,8 +1991,9 @@
       helper.style.opacity = "0";
       document.body.appendChild(helper);
       helper.select();
-      document.execCommand("copy");
+      const copied = document.execCommand("copy");
       helper.remove();
+      return Boolean(copied);
     }
   }
 
@@ -3036,18 +3075,25 @@
     if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
     navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload());
     navigator.serviceWorker.register("sw.js").then((registration) => {
-      const offerUpdate = (worker) => {
+      const offerUpdate = (worker, autoApply = false) => {
         waitingServiceWorker = worker;
-        if (!updateAction) return;
+        if (!updateAction) {
+          waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+          return;
+        }
+        if (autoApply) {
+          waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+          return;
+        }
         updateAction.hidden = false;
         updateAction.title = "点击刷新到刚刚部署的新版本";
       };
-      if (registration.waiting) offerUpdate(registration.waiting);
+      if (registration.waiting) offerUpdate(registration.waiting, true);
       registration.addEventListener("updatefound", () => {
         const worker = registration.installing;
         if (!worker) return;
         worker.addEventListener("statechange", () => {
-          if (worker.state === "installed" && navigator.serviceWorker.controller) offerUpdate(worker);
+          if (worker.state === "installed" && navigator.serviceWorker.controller) offerUpdate(worker, true);
         });
       });
     }).catch(() => {
