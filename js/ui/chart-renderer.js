@@ -280,7 +280,9 @@
         top: Math.round((compactChart ? 54 : 58) * visualScale),
         right: Math.round((compactChart ? 28 : 34) * visualScale),
         bottom: Math.round((compactChart ? 51 : 62) * visualScale),
-        left: Math.round((compactChart ? 82 : chart.series.length > 1 ? 112 : 98) * visualScale),
+        left: Math.round((compactChart
+          ? (chart.series.length > 1 ? 82 : 72)
+          : chart.series.length > 1 ? 106 : 84) * visualScale),
       };
       const axisRailWidth = margin.left;
       const axisFontSize = (phoneChart ? 10 : compactChart ? 12 : 11) * visualScale;
@@ -378,7 +380,11 @@
           : pointValues;
         const stickerPointValues = !declutterDensePoints || showPointMarker ? availableStickerPointValues : [];
         const hasMultipleStickers = stickerPointValues.length > 1;
-        const densityScale = chart.nodes.length >= 12 ? .9 : chart.nodes.length >= 9 ? .96 : 1;
+        const densityScale = chart.nodes.length >= 12
+          ? (phoneChart ? .9 : 1)
+          : (chart.nodes.length >= 9
+            ? (phoneChart ? .96 : 1)
+            : 1);
         const desiredStickerSize = 44 * nodeVisualScale * densityScale;
         const minimumStickerSize = 22 * nodeVisualScale;
         const visibleNodeSpacing = nodeSpacing * (declutterDensePoints ? denseMarkerEvery : 1);

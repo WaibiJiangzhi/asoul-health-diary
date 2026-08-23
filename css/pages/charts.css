@@ -961,7 +961,7 @@
   .chart-wrap{
     min-height:250px;
     padding:12px 0 0;
-    overflow:hidden;
+    overflow:visible;
   }
   .chart-zoom-bar{
     margin:5px 10px 4px;
@@ -970,7 +970,7 @@
   }
   .chart-zoom-bar button{ min-height:34px; border-radius:10px; font-size:9px; }
   .chart-zoom-bar strong{ min-width:35px; font-size:11px; }
-  .chart-plot-shell{ overflow:hidden; }
+  .chart-plot-shell{ overflow:visible; }
   .chart-scroll{
     min-height:0;
     padding-left:0;
@@ -979,7 +979,7 @@
   }
   .chart-svg{ min-width:100%; min-height:0; }
   .chart-y-axis-fixed{
-    width:var(--chart-axis-rail,60px);
+    width:clamp(52px, calc(var(--chart-axis-rail, 60px) - 12px), 72px);
     background:linear-gradient(90deg,#fff 80%,rgba(255,255,255,0));
   }
   .chart-y-axis-fixed span{ left:3px; font-size:8px; }

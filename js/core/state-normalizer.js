@@ -177,17 +177,6 @@
       };
     }
 
-    function normalizeAiContext(candidate) {
-      const context = candidate && typeof candidate === "object" ? candidate : {};
-      return {
-        profile: safeString(context.profile, 2000),
-        goal: safeString(context.goal, 600),
-        current: safeString(context.current, 1000),
-        availability: safeString(context.availability, 600),
-        constraints: safeString(context.constraints, 600),
-      };
-    }
-
     function normalizeSpaces(candidate) {
       const source = Array.isArray(candidate) ? candidate : defaultSpaces;
       const seen = new Set();
@@ -207,7 +196,6 @@
           icon: safeString(item?.icon, 2) || template.icon,
           iconSticker: safeSticker(item?.iconSticker),
           color: safeCardColor(item?.color),
-          aiContext: normalizeAiContext(item?.aiContext),
           createdAt: Number(item?.createdAt) || Date.now(),
         });
       });
@@ -383,7 +371,6 @@
     return Object.freeze({
       cloneDefault,
       makeId,
-      normalizeAiContext,
       normalizeGoal,
       normalizeProgressGoal,
       normalizeSpaces,

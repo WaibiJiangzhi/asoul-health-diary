@@ -479,7 +479,7 @@ assert.match(chartsCss, /\.chart-series-fixed\{[\s\S]*?left:auto;[\s\S]*?justify
 assert.match(chartsCss, /\.selected-node-heading\{[\s\S]*?display:grid;[\s\S]*?grid-template-columns:auto minmax\(0,1fr\)/, "curve node dates and metric values must use an explicit non-overlapping layout");
 assert.match(chartsCss, /\.selected-node-detail p\{[\s\S]*?min-height:0;[\s\S]*?margin:0;/, "empty curve notes must not reserve a large blank panel");
 assert.match(chartRenderer, /Math\.max\(920, Math\.min\(1600, viewportWidth - 104\)\)/, "desktop curve viewBoxes must follow the readable canvas width and avoid collapsing into a fixed narrow mobile-style canvas");
-assert.match(chartRenderer, /left: Math\.round\(\(compactChart \? 82 : chart\.series\.length > 1 \? 112 : 98\)/, "curve plots must keep a compact safe inset for first-node stickers");
+assert.match(chartRenderer, /left: Math\.round\(\(compactChart\s*\?\s*\(chart\.series\.length > 1 \? 82 : 72\)\s*:\s*chart\.series\.length > 1 \? 106 : 84\)/, "curve plots must keep a compact safe inset for first-node stickers");
 assert.match(chartRenderer, /--chart-axis-rail:\$\{axisRailWidth\}px/, "single and multi-series curves must expose their fixed y-axis rail width to CSS");
 assert.doesNotMatch(`${html}\n${app}`, /pushups|俯卧撑数量|俯卧撑记录/, "the retired push-up quick-start preset must be removed");
 assert.doesNotMatch(chartsCss, /\.chart-meta span \+ span::before\{[\s\S]*?content:"·"/, "curve metadata must not fall back to the retired tiny dot-separated label");

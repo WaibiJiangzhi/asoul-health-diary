@@ -16,7 +16,6 @@ const utils = globalThis.ASOUL_APP_UTILS;
 const defaultSpaces = dataModel.DEFAULT_SPACES.map((space) => ({
   ...space,
   iconSticker: "",
-  aiContext: { profile: "", goal: "", current: "", availability: "", constraints: "" },
 }));
 const spaceTemplates = {
   health: { id: "health", name: "健康", icon: "♡", activeDayLabel: "训练日" },
