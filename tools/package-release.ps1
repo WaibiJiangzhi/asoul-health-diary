@@ -20,7 +20,7 @@ $corePaths = @(
   (Join-Path $projectRoot "sw.js"),
   (Join-Path $projectRoot "manifest.webmanifest"),
   (Join-Path $projectRoot "local-server.ps1"),
-  (Join-Path $projectRoot "Asoul一个魂健康日记.cmd"),
+  (Join-Path $projectRoot "Asoul一个魂生活日记.cmd"),
   (Join-Path $projectRoot "README.md")
 )
 $coreDirectories = @(
