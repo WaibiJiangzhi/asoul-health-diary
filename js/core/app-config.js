@@ -28,7 +28,6 @@
   const DEFAULT_SPACES = dataModel.DEFAULT_SPACES.map((space) => ({
     ...space,
     iconSticker: "",
-    aiContext: { profile: "", goal: "", current: "", availability: "", constraints: "" },
   }));
   const SPACE_TEMPLATES = {
     health: {
@@ -46,7 +45,6 @@
       chartEyebrow: "一个魂的健康轨迹",
       chartHeading: "身体状态，有怎样的变化？",
       emptyChartExample: "例如：横轴写“日期”，指标写“体重 / 斤”，明天再来添加一个新节点。",
-      aiContextExample: "例如：我身高 175cm、体重 70kg，之前每周跑步 2 次；这周想减脂并恢复力量训练。工作日晚上有 45 分钟，周末时间更多。不吃香菜，膝盖偶尔不舒服，希望饮食按拳头估算、任务不要排太满。",
       defaultSeries: { name: "体重 / 斤", color: "#E799B0" },
     },
     study: {
@@ -64,7 +62,6 @@
       chartEyebrow: "一个魂的备考趋势",
       chartHeading: "努力正在怎样积累？",
       emptyChartExample: "例如：横轴写“日期”，指标写“有效学习 / 小时”或“正确率 / %”。",
-      aiContextExample: "例如：我准备考研，英语阅读基础一般，专业课刚开始第一轮；这周想完成 3 章并保持每天背词。工作日可学 2 小时，周末 5 小时，周三晚上没空，喜欢上午做难题。",
       defaultSeries: { name: "有效学习 / 小时", color: "#8f7aea" },
     },
     work: {
@@ -82,7 +79,6 @@
       chartEyebrow: "一个魂的工作趋势",
       chartHeading: "这一阶段，产出与节奏如何？",
       emptyChartExample: "例如：横轴写“日期”，指标写“深度工作 / 小时”或“完成任务 / 项”。",
-      aiContextExample: "例如：我是产品经理，本周要完成需求文档并在周五前评审；上午适合深度工作，周二下午开会，周四要出差。希望每天最多安排 3 件重点，不把临时沟通排进固定计划。",
       defaultSeries: { name: "深度工作 / 小时", color: "#4f8edb" },
     },
     custom: {
@@ -100,7 +96,6 @@
       chartEyebrow: "一个魂的变化轨迹",
       chartHeading: "坚持正在怎样积累？",
       emptyChartExample: "例如：横轴写“日期”，指标写“投入时间 / 分钟”或“完成数量 / 项”。",
-      aiContextExample: "例如：我目前的基础和进度是……，这周想达成……；每天大约能投入……，我喜欢……，需要避开……，希望每天任务量……。",
       defaultSeries: { name: "投入时间 / 分钟", color: "#a77957" },
     },
   };

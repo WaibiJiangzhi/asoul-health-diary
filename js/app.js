@@ -119,7 +119,6 @@
   const {
     cloneDefault,
     makeId,
-    normalizeAiContext,
     normalizeGoal,
     normalizeProgressGoal,
     normalizeState,
@@ -1254,7 +1253,6 @@
       icon: safeString(formData.get("icon"), 2) || template.icon,
       iconSticker: safeSticker(pendingSpaceIconSticker),
       color: safeCardColor(formData.get("color")),
-      aiContext: existing?.aiContext || normalizeAiContext(),
       createdAt: existing?.createdAt || Date.now(),
     };
     if (existing) state.spaces[state.spaces.indexOf(existing)] = space;
@@ -1825,35 +1823,12 @@
       return;
     }
     weekImportForm.reset();
-    const context = getSpace().aiContext || normalizeAiContext();
-    weekImportForm.elements.profile.value = getAiContextProfile(context);
-    const template = getSpaceTemplate();
-    weekImportForm.elements.profile.placeholder = template.aiContextExample;
     $("#weekImportDialogTitle").textContent = `AI 规划本周 · ${formatDateRange(week.startDate)}`;
     const previousWeek = findPreviousWeek(week);
     $("#aiPreviousWeekSummary").textContent = previousWeek
       ? `${formatDateRange(previousWeek.startDate)} · 已读取 ${previousWeek.days.filter(hasWeekDayRecord).length}/7 天真实记录`
       : "当前空间还没有更早一周；会明确告诉 AI 不要虚构历史记录。";
     weekImportDialog.showModal();
-  }
-
-  function getAiContextProfile(context) {
-    const normalized = normalizeAiContext(context);
-    if (normalized.profile) return normalized.profile;
-    return [
-      normalized.goal && `目标：${normalized.goal}`,
-      normalized.current && `目前情况：${normalized.current}`,
-      normalized.availability && `可投入时间：${normalized.availability}`,
-      normalized.constraints && `限制与偏好：${normalized.constraints}`,
-    ].filter(Boolean).join("\n");
-  }
-
-  function collectAiContext() {
-    const formData = new FormData(weekImportForm);
-    return normalizeAiContext({
-      ...getSpace().aiContext,
-      profile: formData.get("profile"),
-    });
   }
 
   function findPreviousWeek(week) {
@@ -1913,26 +1888,21 @@
     const week = findWeek(selectedWeekId);
     if (!week) return;
     const space = getSpace();
-    space.aiContext = collectAiContext();
-    persistState();
     const contextText = [
       `这是我在“${space.name}”空间的真实情况，请先读完，稍后我会继续发送网页要求的计划模板。`,
-      "",
-      "我的情况与偏好：",
-      getAiContextProfile(space.aiContext) || "这次没有额外补充，请按保守、容易调整的节奏规划。",
+    ];
+    contextText.push(
       "",
       "上一周真实记录（没有记录的部分不要自行假设）：",
       buildPreviousWeekSummary(week),
-    ].join("\n");
-    await copyText(contextText);
+    );
+    const context = contextText.join("\n");
+    await copyText(context);
     showToast("上周情况已复制，请先粘贴给 AI");
   }
 
   async function copyAiPlanningPrompt() {
-    const space = getSpace();
-    space.aiContext = collectAiContext();
     const prompt = buildAiPlanningPrompt(findWeek(selectedWeekId));
-    persistState();
     await copyText(prompt);
     showToast("计划模板已复制，请继续粘贴到同一个 AI 对话");
   }
@@ -1952,7 +1922,6 @@
       showToast("没有识别到当前周计划，请确认从【周开始】开始完整复制");
       return;
     }
-    getSpace().aiContext = collectAiContext();
     imported.forEach((week) => {
       const existing = state.weeks.find((item) => item.spaceId === activeSpaceId && item.startDate === week.startDate);
       if (!existing) return;
