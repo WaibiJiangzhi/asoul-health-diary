@@ -530,15 +530,16 @@ body.is-mobile-app #goalSectionStart[hidden]{ display:none !important; }
   }
 }
 
-/* 0923 sticker-picker contract: keep every photo complete at compact widths. */
+/* Compact sticker-picker contract: fixed content-sized rows scroll instead of collapsing. */
 @media (max-width:899.98px){
-  body.is-mobile-app .dialog .sticker-grid{
+  .dialog .sticker-grid{
     grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-    grid-auto-rows:auto !important;
+    grid-auto-rows:max-content !important;
+    align-content:start !important;
     max-height:min(344px,46dvh) !important;
     gap:8px !important;
   }
-  body.is-mobile-app .dialog .sticker-item{
+  .dialog .sticker-item{
     width:100% !important;
     height:auto !important;
     min-height:0 !important;
@@ -546,7 +547,7 @@ body.is-mobile-app #goalSectionStart[hidden]{ display:none !important; }
     aspect-ratio:1 !important;
     border-radius:12px !important;
   }
-  body.is-mobile-app .dialog .sticker-item img{
+  .dialog .sticker-item img{
     display:block !important;
     width:100% !important;
     height:100% !important;
@@ -558,7 +559,7 @@ body.is-mobile-app #goalSectionStart[hidden]{ display:none !important; }
 }
 
 @media (max-width:599.98px){
-  body.is-mobile-app .dialog .sticker-grid{
+  .dialog .sticker-grid{
     grid-template-columns:repeat(3,minmax(0,1fr)) !important;
     max-height:min(328px,48dvh) !important;
     gap:7px !important;

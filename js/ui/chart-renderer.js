@@ -206,7 +206,7 @@
       const isMinimumZoom = zoom <= minimumZoom + 0.001;
       const isMaximumZoom = zoom >= maximumZoom - 0.001;
       const layout = createChartSvgLayout(chart, zoom);
-      const { compactChart, visualScale, width, height, margin, plotWidth, plotHeight, xAt } = layout;
+      const { compactChart, visualScale, axisRailWidth, width, height, margin, plotWidth, plotHeight, xAt } = layout;
       const seriesData = getChartSeriesGeometry(chart, {
         xAt,
         yAt: (value, min, max) => margin.top + ((max - value) / (max - min)) * plotHeight,
@@ -237,7 +237,7 @@
           <button type="button" data-zoom-chart="${chart.id}" data-zoom-action="in"${!canZoom || isMaximumZoom ? " disabled" : ""}>＋ 放大</button>
           <button class="chart-zoom-max" type="button" data-zoom-chart="${chart.id}" data-zoom-action="max" aria-label="放大到每个记录日期都能显示"${!canZoom || isMaximumZoom ? " disabled" : ""}>最大</button>
         </div>
-        <div class="chart-plot-shell">
+        <div class="chart-plot-shell" style="--chart-axis-rail:${axisRailWidth}px">
         <div class="chart-y-axis-fixed" aria-hidden="true"><em class="chart-y-axis-unit">${fixedYAxisUnits}</em>${fixedYAxis}</div>
         <div class="chart-series-fixed" aria-hidden="true">${fixedSeriesLegend}</div>
         <div class="chart-x-axis-fixed" aria-hidden="true">${escapeHtml(chart.xLabel)}</div>
@@ -267,27 +267,29 @@
       const compactChart = window.matchMedia("(max-width: 899.98px)").matches;
       const phoneChart = window.matchMedia("(max-width: 520px)").matches;
       const visualScale = 1;
-      const nodeVisualScale = phoneChart ? 1 : 0.92;
+      const nodeVisualScale = 1;
+      const viewportWidth = Math.max(280, Number(window.innerWidth) || 1280);
       const baseWidth = phoneChart
         ? 360
         : compactChart
-          ? Math.max(560, Math.min(820, window.innerWidth - 56))
-          : 920;
+          ? Math.max(560, Math.min(820, viewportWidth - 56))
+          : Math.max(920, Math.min(1600, viewportWidth - 104));
       const width = Math.round(baseWidth * zoom);
       const height = phoneChart ? 360 : 370;
       const margin = {
         top: Math.round((compactChart ? 54 : 58) * visualScale),
         right: Math.round((compactChart ? 28 : 34) * visualScale),
         bottom: Math.round((compactChart ? 51 : 62) * visualScale),
-        left: Math.round((compactChart ? 84 : chart.series.length > 1 ? 112 : 98) * visualScale),
+        left: Math.round((compactChart ? 82 : chart.series.length > 1 ? 112 : 98) * visualScale),
       };
+      const axisRailWidth = margin.left;
       const axisFontSize = (phoneChart ? 10 : compactChart ? 12 : 11) * visualScale;
       const plotWidth = width - margin.left - margin.right;
       const plotHeight = height - margin.top - margin.bottom;
       const xAt = (index) => chart.nodes.length === 1
         ? margin.left + plotWidth / 2
         : margin.left + (index / (chart.nodes.length - 1)) * plotWidth;
-      return { compactChart, phoneChart, visualScale, nodeVisualScale, zoom, width, height, margin, axisFontSize, plotWidth, plotHeight, xAt };
+      return { compactChart, phoneChart, visualScale, nodeVisualScale, axisRailWidth, zoom, width, height, margin, axisFontSize, plotWidth, plotHeight, xAt };
     }
 
     function renderChartSvgGrid(chart, seriesData, layout, tickCount) {

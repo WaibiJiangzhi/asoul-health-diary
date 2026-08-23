@@ -991,8 +991,11 @@
     height: 56px;
   }
 
-  #progressGoalForm .dialog-fields,
   .goal-space-options {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  #progressGoalForm .dialog-fields > .field {
+    min-width: 0;
   }
 }

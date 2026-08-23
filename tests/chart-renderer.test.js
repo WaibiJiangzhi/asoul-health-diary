@@ -90,8 +90,12 @@ function makeChart(nodeCount = 3) {
 
 const chart = makeChart();
 const desktopLayout = renderer.createChartSvgLayout(chart, 1);
-assert.equal(desktopLayout.width, 920);
+assert.equal(desktopLayout.width, 1176);
 assert.equal(desktopLayout.height, 370);
+assert.equal(desktopLayout.axisRailWidth, 98);
+assert.equal(desktopLayout.xAt(0) - desktopLayout.axisRailWidth, 0, "desktop minimum zoom anchors first node at the y-axis rail gap");
+const desktopZoomedLayout = renderer.createChartSvgLayout(chart, 2);
+assert.equal(desktopZoomedLayout.xAt(0), desktopLayout.xAt(0), "zooming must not enlarge the blank area before the first node");
 
 const selectedMarkup = renderer.renderChartSvg(chart, {
   zoom: 1,
@@ -113,6 +117,10 @@ window.innerWidth = 425;
 const phoneLayout = renderer.createChartSvgLayout(chart, 1);
 assert.equal(phoneLayout.width, 360);
 assert.equal(phoneLayout.height, 360);
+assert.equal(phoneLayout.axisRailWidth, 82);
+assert.equal(phoneLayout.xAt(0) - phoneLayout.axisRailWidth, 0, "phone minimum zoom must keep only the first-node safety gap after the fixed y axis");
+const phoneZoomedLayout = renderer.createChartSvgLayout(chart, 2);
+assert.equal(phoneZoomedLayout.xAt(0), phoneLayout.xAt(0), "phone zooming must keep the same left-side starting position");
 
 const denseChart = makeChart(300);
 const denseMarkup = renderer.renderChartSvg(denseChart, {

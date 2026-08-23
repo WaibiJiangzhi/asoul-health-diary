@@ -438,7 +438,7 @@
   top:0;
   bottom:0;
   left:0;
-  width:78px;
+  width:var(--chart-axis-rail,78px);
   background:linear-gradient(90deg,#fff 78%,rgba(255,255,255,0));
   pointer-events:none;
 }
@@ -979,7 +979,7 @@
   }
   .chart-svg{ min-width:100%; min-height:0; }
   .chart-y-axis-fixed{
-    width:60px;
+    width:var(--chart-axis-rail,60px);
     background:linear-gradient(90deg,#fff 80%,rgba(255,255,255,0));
   }
   .chart-y-axis-fixed span{ left:3px; font-size:8px; }

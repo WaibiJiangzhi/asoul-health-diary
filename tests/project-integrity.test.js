@@ -409,8 +409,9 @@ assert.match(scheduleCss, /body\.is-mobile-app \.week-day-statuses \.week-day-st
 assert.match(scheduleCss, /body\.is-mobile-app \.week-day-statuses \.week-day-status--pending\.is-active\{[\s\S]*?border-color:#576690;[\s\S]*?background:#576690;/, "compact day cards must use Eileen dark blue-gray for the pending state");
 assert.match(app, /const DAY_STATUS_PALETTE = Object\.freeze\([\s\S]*?"这期拉了": Object\.freeze\(\{ fill: "#89777f", ink: "#ffffff" \}\)[\s\S]*?"未设置": Object\.freeze\(\{ fill: "#576690", ink: "#ffffff" \}\)/, "downloaded weekly cards must use the same brown missed and Eileen pending colours");
 assert.match(app, /const ITEM_SUMMARY_PALETTE = Object\.freeze\([\s\S]*?changed:[\s\S]*?fill: "#fff7df"[\s\S]*?ink: "#9a6c25"/, "downloaded weekly reports must share the yellow adjusted-item palette");
-assert.match(mobileAppCss, /@media \(max-width:899\.98px\)\{[\s\S]*?body\.is-mobile-app \.dialog \.sticker-grid\{[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\) !important;[\s\S]*?grid-auto-rows:auto !important;/, "medium compact sticker pickers must show complete images in four columns");
-assert.match(mobileAppCss, /@media \(max-width:599\.98px\)\{[\s\S]*?body\.is-mobile-app \.dialog \.sticker-grid\{[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\) !important;/, "phone sticker pickers must use a readable three-column grid");
+assert.match(mobileAppCss, /@media \(max-width:899\.98px\)\{[\s\S]*?\.dialog \.sticker-grid\{[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\) !important;[\s\S]*?grid-auto-rows:max-content !important;[\s\S]*?align-content:start !important;/, "medium compact sticker pickers must show complete images in non-collapsing four-column rows");
+assert.match(mobileAppCss, /@media \(max-width:599\.98px\)\{[\s\S]*?\.dialog \.sticker-grid\{[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\) !important;/, "phone sticker pickers must use a readable three-column grid");
+assert.doesNotMatch(goalsCss, /@media \(max-width: 379px\)[\s\S]*?#progressGoalForm \.dialog-fields\s*,[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/, "narrow progress forms must keep target/unit and progress/adjustment pairs on two-column rows");
 assert.match(app, /class="week-day-title-help">点击今日标题可以直接修改哟~<\/small>/, "day cards must explain title editing below the status controls");
 assert.match(scheduleCss, /\.week-day-title-edit input:focus\{[\s\S]*?border-bottom-color:/, "editable day titles must retain a restrained focus underline");
 assert.doesNotMatch(scheduleCss, /\.week-day-title-edit::after/, "editable day titles must not keep the rejected inline edit label");
@@ -477,7 +478,9 @@ assert.match(chartsCss, /\.chart-meta\s*>\s*span\s*\{[\s\S]*?min-height:27px;[\s
 assert.match(chartsCss, /\.chart-series-fixed\{[\s\S]*?left:auto;[\s\S]*?justify-content:flex-end;/, "curve legends must stay in the upper-right safe area away from the y axis");
 assert.match(chartsCss, /\.selected-node-heading\{[\s\S]*?display:grid;[\s\S]*?grid-template-columns:auto minmax\(0,1fr\)/, "curve node dates and metric values must use an explicit non-overlapping layout");
 assert.match(chartsCss, /\.selected-node-detail p\{[\s\S]*?min-height:0;[\s\S]*?margin:0;/, "empty curve notes must not reserve a large blank panel");
-assert.match(chartRenderer, /left: Math\.round\(\(compactChart \? 84 : chart\.series\.length > 1 \? 112 : 98\)/, "curve plots must reserve a safe inset for first-node stickers");
+assert.match(chartRenderer, /Math\.max\(920, Math\.min\(1600, viewportWidth - 104\)\)/, "desktop curve viewBoxes must follow the readable canvas width and avoid collapsing into a fixed narrow mobile-style canvas");
+assert.match(chartRenderer, /left: Math\.round\(\(compactChart \? 82 : chart\.series\.length > 1 \? 112 : 98\)/, "curve plots must keep a compact safe inset for first-node stickers");
+assert.match(chartRenderer, /--chart-axis-rail:\$\{axisRailWidth\}px/, "single and multi-series curves must expose their fixed y-axis rail width to CSS");
 assert.doesNotMatch(`${html}\n${app}`, /pushups|俯卧撑数量|俯卧撑记录/, "the retired push-up quick-start preset must be removed");
 assert.doesNotMatch(chartsCss, /\.chart-meta span \+ span::before\{[\s\S]*?content:"·"/, "curve metadata must not fall back to the retired tiny dot-separated label");
 assert.doesNotMatch(responsivePlatformCss, /Homepage: every character|Tablet \/ narrow window: the same stage/, "retired responsive layout fragments must be removed");
