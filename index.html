@@ -6,9 +6,11 @@
     <meta name="theme-color" content="#fffaf7" />
     <meta
       name="description"
-      content="Asoul 一个魂健康日记——在本地记录身体与生活的每一条变化。"
+      content="Asoul一个魂健康日记旧版数据迁移入口。请先下载旧版备份，再前往新版恢复数据。"
     />
-    <title>Asoul 一个魂健康日记</title>
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://asoul-diary.pages.dev/" />
+    <title>旧版迁移入口｜Asoul一个魂健康日记</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="weekly-planner.css" />
     <link rel="stylesheet" href="weekly-polish.css" />
@@ -34,6 +36,18 @@
         <input id="importInput" type="file" accept="application/json" hidden />
       </div>
     </header>
+
+    <aside class="legacy-migration-banner" aria-labelledby="legacyMigrationTitle">
+      <div class="legacy-migration-copy">
+        <span class="legacy-migration-label">旧版迁移提醒</span>
+        <strong id="legacyMigrationTitle">这个是旧网页，已经不再维护啦</strong>
+        <p>建议大家先下载旧版数据，再前往新网页恢复数据~ 迁移完成前，请不要清理这个浏览器的数据或卸载旧应用。</p>
+      </div>
+      <div class="legacy-migration-actions">
+        <button class="legacy-migration-button legacy-migration-button--export" id="legacyMigrationExportButton" type="button">下载旧版数据</button>
+        <a class="legacy-migration-button legacy-migration-button--new" href="https://asoul-diary.pages.dev/" target="_blank" rel="noopener noreferrer">前往新网页 <span aria-hidden="true">↗</span></a>
+      </div>
+    </aside>
 
     <main id="top">
       <section class="welcome-section" aria-labelledby="profileTitle">

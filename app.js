@@ -240,6 +240,7 @@
     $("#deleteSelectedWeekButton").addEventListener("click", () => selectedWeekId && deleteWeekById(selectedWeekId));
     $("#avatarButton").addEventListener("click", openAvatarDialog);
     $("#exportButton").addEventListener("click", exportBackup);
+    $("#legacyMigrationExportButton").addEventListener("click", exportBackup);
     $("#importButton").addEventListener("click", () => $("#importInput").click());
     $("#footerExportButton").addEventListener("click", exportBackup);
     $("#footerImportButton").addEventListener("click", () => $("#importInput").click());
